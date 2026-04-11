@@ -1,5 +1,5 @@
 import { FileText, ShoppingCart, User } from 'lucide-react'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
 function Layout() {
@@ -11,9 +11,9 @@ function Layout() {
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <h1 className="text-xl font-extrabold tracking-wide">Aldes Burger</h1>
           <div className="flex items-center gap-5">
-            <button className="rounded-xl p-2 transition hover:bg-white/10" aria-label="Transactions">
+            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-white/10" aria-label="Transactions">
               <FileText className="h-6 w-6" />
-            </button>
+            </Link>
             <button className="relative rounded-xl p-2 transition hover:bg-white/10" aria-label="Cart">
               <ShoppingCart className="h-6 w-6" />
               <span className="absolute -right-1 -top-1 rounded-xl border-2 border-white bg-aldesRed px-1.5 text-xs font-bold text-white">

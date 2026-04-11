@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import { CartProvider } from './context/CartContext'
 import Home from './pages/Home'
 import Kitchen from './pages/Kitchen'
+import Transactions from './pages/Transactions'
 
 function App() {
   const [cartCount, setCartCount] = useState(0)
@@ -36,6 +37,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/kitchen" element={<Kitchen />} />
+            <Route path="/transactions" element={<Transactions />} />
           </Route>
         </Routes>
       </BrowserRouter>
