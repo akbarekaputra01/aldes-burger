@@ -7,29 +7,31 @@ function Layout() {
 
   return (
     <div className="min-h-screen bg-aldesCream">
-      <header className="sticky top-0 z-50 bg-aldesRed text-white shadow-md">
+      <header className="sticky top-0 z-50 bg-aldesRed text-aldesYellow shadow-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <h1 className="text-xl font-extrabold tracking-wide">Aldes Burger</h1>
+          <Link to="/" className="text-xl font-extrabold tracking-wide hover:opacity-90 transition">
+            Aldes Burger
+          </Link>
           <div className="flex items-center gap-5">
-            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-white/10" aria-label="Transactions">
+            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Transactions">
               <FileText className="h-6 w-6" />
             </Link>
-            <button className="relative rounded-xl p-2 transition hover:bg-white/10" aria-label="Cart">
+            <Link to="/cart" className="relative rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Cart">
               <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-white bg-aldesRed px-1.5 text-xs font-bold text-white">
+              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-aldesCream bg-aldesRed px-1.5 text-xs font-bold text-aldesYellow">
                 {cartCount}
               </span>
-            </button>
-            <button className="rounded-xl p-2 transition hover:bg-white/10" aria-label="Profile">
+            </Link>
+            <Link to="/profile" className="rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Profile">
               <User className="h-6 w-6" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
 
       <Outlet />
 
-      <footer className="mt-12 bg-aldesRed p-8 text-white">
+      <footer className="mt-12 bg-aldesRed p-8 text-aldesYellow">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 sm:grid-cols-3">
           <div>
             <h4 className="mb-3 text-lg font-bold">Menu Links</h4>

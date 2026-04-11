@@ -1,50 +1,40 @@
-import { Award, Coins } from 'lucide-react'
+import { User } from 'lucide-react'
 
 function Profile() {
   return (
     <div className="bg-aldesCream min-h-screen p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <section className="bg-white rounded-2xl shadow p-6 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-aldesYellow text-black font-bold flex items-center justify-center text-xl">
-            JD
+          <div className="w-16 h-16 rounded-full bg-aldesRed text-aldesYellow flex items-center justify-center">
+            <User className="w-8 h-8" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-aldesRed">John Doe</h1>
-            <p className="text-gray-600">john.doe@email.com</p>
+            <p className="text-gray-600">john.doe@example.com</p>
           </div>
-        </section>
-
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <article className="bg-white rounded-2xl shadow p-5">
-            <h2 className="text-sm font-semibold text-gray-500 mb-3">Aldes Coins</h2>
-            <div className="flex items-center gap-3">
-              <Coins className="w-8 h-8 text-aldesYellow" />
-              <p className="text-3xl font-bold text-aldesYellow">120</p>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl shadow p-5">
-            <h2 className="text-sm font-semibold text-gray-500 mb-3">Chef Badge</h2>
-            <div className="flex items-start gap-3">
-              <Award className="w-8 h-8 text-aldesRed mt-1" />
-              <p className="font-semibold text-gray-700">Master Chef - 5 Custom Burgers Built</p>
-            </div>
-          </article>
         </section>
 
         <section className="bg-white rounded-2xl shadow p-6">
-          <h2 className="text-lg font-bold text-aldesRed mb-3">Saved Addresses</h2>
-          <div className="rounded-xl border border-aldesYellow bg-aldesCream p-4 text-gray-800">
-            123 Burger Street, Patty District, New York, NY 10001
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-aldesRed mb-2">Saved Address</h2>
+              <p className="text-gray-700">Home - Jl. Sudirman No. 123, Jakarta</p>
+            </div>
+            <button
+              type="button"
+              className="rounded-lg bg-aldesRed px-4 py-2 text-aldesYellow font-semibold hover:opacity-90 transition"
+            >
+              Edit
+            </button>
           </div>
-
-          <button
-            type="button"
-            className="w-full border border-aldesRed text-aldesRed mt-6 py-3 rounded-lg font-semibold hover:bg-aldesRed hover:text-white transition"
-          >
-            Logout
-          </button>
         </section>
+
+        <button
+          type="button"
+          className="w-full border border-aldesRed text-aldesRed py-3 rounded-lg font-semibold hover:bg-aldesRed hover:text-aldesYellow transition"
+        >
+          Log Out
+        </button>
       </div>
     </div>
   )
