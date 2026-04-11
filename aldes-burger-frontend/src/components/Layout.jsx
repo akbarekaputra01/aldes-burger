@@ -16,7 +16,7 @@ function Layout() {
             </button>
             <button className="relative rounded-xl p-2 transition hover:bg-white/10" aria-label="Cart">
               <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 rounded-xl bg-aldesYellow px-1.5 text-xs font-bold text-black">
+              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-white bg-aldesRed px-1.5 text-xs font-bold text-white">
                 {cartCount}
               </span>
             </button>
