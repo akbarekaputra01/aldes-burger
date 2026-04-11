@@ -1,10 +1,23 @@
-import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import Layout from './components/Layout'
+import { CartProvider } from './context/CartContext'
+import Home from './pages/Home'
+import Kitchen from './pages/Kitchen'
 
 function App() {
   return (
-    <h1 className="text-3xl font-bold text-aldesRed bg-aldesYellow p-10">
-      Halo Tim ALDES! Tailwind Sudah Jalan!
-    </h1>
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/kitchen" element={<Kitchen />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   )
 }
+
 export default App
