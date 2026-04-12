@@ -67,8 +67,8 @@ function Cart() {
 
   if (isCartEmpty) {
     return (
-      <main className="bg-aldesCream min-h-screen pb-32 px-4 py-8">
-        <section className="mx-auto max-w-3xl rounded-xl bg-white p-8 text-center shadow">
+      <main className="min-h-screen bg-aldesCream px-4 py-8 pb-32">
+        <section className="mx-auto max-w-3xl rounded-2xl border border-aldesRed/10 bg-white p-8 text-center shadow">
           <h2 className="text-2xl font-bold text-aldesRed">Your cart is empty</h2>
           <p className="mt-2 text-gray-600">Looks like you have not added any items yet.</p>
           <button
@@ -89,9 +89,9 @@ function Cart() {
   const grandTotal = subtotal + deliveryFee + platformFee
 
   return (
-    <main className="bg-aldesCream min-h-screen pb-32 px-4 py-6">
+    <main className="min-h-screen bg-aldesCream px-4 py-6 pb-32">
       <div className="mx-auto w-full max-w-4xl">
-        <section className="bg-white rounded-xl shadow p-4 mb-6">
+        <section className="mb-6 rounded-2xl border border-aldesRed/10 bg-white p-4 shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-aldesRed" />
@@ -104,9 +104,9 @@ function Cart() {
           <p className="mt-3 text-sm text-gray-600">Jl. Sudirman No. 123, Jakarta</p>
         </section>
 
-        <section className="mb-6">
+        <section className="mb-6 space-y-4">
           {cart.map((item) => (
-            <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-start justify-between gap-4">
+            <article key={item.id} className="flex items-start justify-between gap-4 rounded-2xl border border-aldesRed/10 bg-white p-4 shadow">
               <div>
                 <h3 className="text-base font-bold text-gray-900">{item.name}</h3>
                 {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
@@ -149,7 +149,7 @@ function Cart() {
           ))}
         </section>
 
-        <section className="bg-white rounded-xl shadow p-4 mb-6">
+        <section className="mb-6 rounded-2xl border border-aldesRed/10 bg-white p-4 shadow">
           <h2 className="mb-4 text-lg font-bold text-gray-900">Payment Summary</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between text-gray-700">
@@ -173,7 +173,7 @@ function Cart() {
         </section>
       </div>
 
-      <section className="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 z-40">
+      <section className="fixed bottom-0 left-0 z-40 w-full border-t border-aldesRed/10 bg-white/95 p-4 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.1)] backdrop-blur">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div>
             <p className="text-sm text-gray-500">Total Payment</p>
@@ -182,7 +182,7 @@ function Cart() {
           <button
             type="button"
             onClick={handleCheckout}
-            className="bg-aldesRed text-white px-8 py-3 rounded-xl font-bold transition hover:brightness-110"
+            className="rounded-xl bg-aldesRed px-8 py-3 font-bold text-white transition hover:brightness-110"
           >
             Checkout
           </button>

@@ -8,49 +8,46 @@ function Profile() {
   ])
 
   return (
-    <div className="bg-aldesCream min-h-screen p-4 md:p-8 flex flex-col items-center">
-      <div className="max-w-2xl w-full">
-        <section className="bg-white rounded-2xl shadow-lg p-6 mb-6 w-full">
+    <div className="flex min-h-screen flex-col items-center bg-aldesCream p-4 md:p-8">
+      <div className="w-full max-w-2xl space-y-6">
+        <section className="w-full rounded-3xl border border-aldesRed/10 bg-white p-6 shadow-lg">
           <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 rounded-full bg-aldesYellow flex items-center justify-center mb-4 border-2 border-aldesRed">
-              <span className="text-black font-bold text-2xl">JD</span>
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-aldesRed bg-aldesYellow">
+              <span className="text-2xl font-bold text-black">JD</span>
             </div>
-            <h1 className="text-2xl font-bold text-aldesRed mb-4 flex items-center justify-center gap-2">
-              <User className="w-5 h-5" />
+            <h1 className="mb-4 flex items-center justify-center gap-2 text-2xl font-bold text-aldesRed">
+              <User className="h-5 w-5" />
               John Doe
             </h1>
 
             <div className="w-full space-y-3">
               <div className="flex items-center justify-center gap-2 text-aldesRed">
-                <Mail className="w-4 h-4 text-aldesRed" />
+                <Mail className="h-4 w-4" />
                 <span>john.doe@email.com</span>
               </div>
               <div className="flex items-center justify-center gap-2 text-aldesRed">
-                <Phone className="w-4 h-4 text-aldesRed" />
+                <Phone className="h-4 w-4" />
                 <span>+62 812 3456 7890</span>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg p-6 mb-6 w-full">
-          <h2 className="text-xl font-bold text-aldesRed mb-4">Saved Addresses</h2>
+        <section className="w-full rounded-3xl border border-aldesRed/10 bg-white p-6 shadow-lg">
+          <h2 className="mb-4 text-xl font-bold text-aldesRed">Saved Addresses</h2>
           <div className="space-y-3">
             {addresses.map((address) => (
-              <div
-                key={address.id}
-                className="bg-aldesCream p-4 rounded-xl flex items-center justify-between gap-3"
-              >
+              <div key={address.id} className="flex items-center justify-between gap-3 rounded-xl border border-aldesRed/10 bg-aldesCream/50 p-4">
                 <div className="flex items-start gap-2 text-aldesRed">
-                  <MapPin className="w-4 h-4 text-aldesRed mt-0.5" />
+                  <MapPin className="mt-0.5 h-4 w-4" />
                   <span>{address.text}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button type="button" className="text-aldesRed hover:opacity-70 transition-opacity">
-                    <Edit className="w-4 h-4" />
+                  <button type="button" className="text-aldesRed transition-opacity hover:opacity-70">
+                    <Edit className="h-4 w-4" />
                   </button>
-                  <button type="button" className="text-aldesRed hover:opacity-70 transition-opacity">
-                    <Trash2 className="w-4 h-4" />
+                  <button type="button" className="text-aldesRed transition-opacity hover:opacity-70">
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -59,18 +56,18 @@ function Profile() {
 
           <button
             type="button"
-            className="w-full border-2 border-aldesRed text-aldesRed py-2 rounded-xl mt-4 font-semibold flex items-center justify-center gap-2 hover:bg-aldesRed hover:text-white transition-colors"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-aldesRed py-2 font-semibold text-aldesRed transition-colors hover:bg-aldesRed hover:text-white"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             Add New Address
           </button>
         </section>
 
         <button
           type="button"
-          className="w-full border-2 border-aldesRed text-aldesRed hover:bg-aldesRed hover:text-white transition-colors py-3 rounded-xl font-bold flex justify-center items-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-aldesRed py-3 font-bold text-aldesRed transition-colors hover:bg-aldesRed hover:text-white"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="h-5 w-5" />
           Log Out
         </button>
       </div>

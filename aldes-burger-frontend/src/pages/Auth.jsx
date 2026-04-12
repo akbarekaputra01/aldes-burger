@@ -8,71 +8,69 @@ function Auth() {
   }
 
   return (
-    <div className="bg-aldesCream min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full p-8 rounded-2xl shadow-lg bg-white">
-        <h1 className="text-2xl font-bold text-aldesRed text-center">
-          {isLogin ? 'Welcome Back' : 'Create Your Account'}
-        </h1>
-        <p className="text-sm text-gray-600 text-center mt-2 mb-6">
-          {isLogin ? 'Login to continue your burger journey.' : 'Register now to collect rewards and track every order.'}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-aldesCream p-4">
+      <div className="absolute -left-16 top-16 h-48 w-48 rounded-full bg-aldesYellow/30 blur-3xl" />
+      <div className="absolute -right-20 bottom-10 h-56 w-56 rounded-full bg-aldesRed/20 blur-3xl" />
+
+      <div className="relative w-full max-w-md rounded-3xl border border-aldesRed/10 bg-white p-8 shadow-xl">
+        <p className="mb-2 text-center text-xs font-bold uppercase tracking-[0.25em] text-aldesRed/70">Aldes Account</p>
+        <h1 className="text-center text-3xl font-black text-aldesRed">{isLogin ? 'Welcome Back' : 'Create Account'}</h1>
+        <p className="mb-8 mt-2 text-center text-sm text-gray-600">
+          {isLogin ? 'Login untuk lanjut pesan burger favoritmu.' : 'Daftar sekarang untuk collect reward dan cek riwayat order.'}
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fullName">
+              <label className="mb-1 block text-sm font-semibold text-gray-700" htmlFor="fullName">
                 Full Name
               </label>
               <input
                 id="fullName"
                 type="text"
                 placeholder="Enter your full name"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 shadow-sm outline-none transition focus:border-aldesYellow focus:ring-2 focus:ring-aldesYellow/50"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+            <label className="mb-1 block text-sm font-semibold text-gray-700" htmlFor="email">
               Email
             </label>
             <input
               id="email"
               type="email"
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 shadow-sm outline-none transition focus:border-aldesYellow focus:ring-2 focus:ring-aldesYellow/50"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
+            <label className="mb-1 block text-sm font-semibold text-gray-700" htmlFor="password">
               Password
             </label>
             <input
               id="password"
               type="password"
               placeholder="Enter your password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 shadow-sm outline-none transition focus:border-aldesYellow focus:ring-2 focus:ring-aldesYellow/50"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-aldesRed text-white py-3 rounded-lg font-semibold transition hover:opacity-90"
+            className="mt-2 w-full rounded-xl bg-aldesRed py-3 font-bold text-white transition hover:brightness-110"
           >
             {isLogin ? 'Login' : 'Register'}
           </button>
         </form>
 
-        <p className="text-sm text-gray-700 mt-6 text-center">
+        <p className="mt-6 text-center text-sm text-gray-700">
           {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button
-            type="button"
-            className="text-aldesRed font-semibold"
-            onClick={() => setIsLogin((prev) => !prev)}
-          >
+          <button type="button" className="font-semibold text-aldesRed underline-offset-2 hover:underline" onClick={() => setIsLogin((prev) => !prev)}>
             {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </p>

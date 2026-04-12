@@ -61,15 +61,16 @@ function Kitchen() {
 
   return (
     <main className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 p-6 md:grid-cols-12">
-      <section className="rounded-2xl bg-white p-8 shadow-lg md:col-span-7 lg:col-span-8">
+      <section className="rounded-3xl border border-aldesRed/10 bg-white p-8 shadow-lg md:col-span-7 lg:col-span-8">
         <h2 className="text-2xl font-extrabold text-aldesRed">Your Burger Preview</h2>
+        <p className="mt-1 text-sm text-gray-600">Susun burger sesuai selera dan lihat komposisinya langsung.</p>
 
-        <div className="mt-8 flex min-h-[380px] flex-col-reverse items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-aldesCream/40 p-6">
+        <div className="mt-8 flex min-h-[380px] flex-col-reverse items-center justify-center gap-3 rounded-3xl border border-dashed border-aldesRed/20 bg-gradient-to-b from-aldesCream/30 to-white p-6">
           {selectedIngredientObjects.length > 0 ? (
             selectedIngredientObjects.map((ingredient, index) => (
               <div
                 key={`${ingredient.id}-${index}`}
-                className="w-full max-w-md rounded-xl border border-aldesRed/20 bg-white px-4 py-3 text-center font-semibold text-gray-700 shadow-sm"
+                className="w-full max-w-md rounded-xl border border-aldesRed/20 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow-sm"
               >
                 {ingredient.name}
               </div>
@@ -87,9 +88,9 @@ function Kitchen() {
         </p>
       </section>
 
-      <aside className="rounded-2xl bg-white/70 p-4 md:col-span-5 lg:col-span-4">
+      <aside className="rounded-3xl border border-aldesRed/10 bg-white p-4 shadow-lg md:col-span-5 lg:col-span-4">
         <h3 className="text-xl font-extrabold text-aldesRed">Choose Ingredients</h3>
-        <p className="mb-4 mt-1 text-sm text-gray-700">Tap any card to add or remove ingredients instantly.</p>
+        <p className="mb-4 mt-1 text-sm text-gray-700">Tap ingredient card untuk tambah/kurangi isi burger.</p>
 
         <div className="grid grid-cols-2 gap-3">
           {filteredIngredients.map((ingredient) => {
@@ -101,7 +102,7 @@ function Kitchen() {
                 onClick={() => toggleIngredient(ingredient.id)}
                 className={`rounded-xl p-3 text-left transition ${
                   isActive
-                    ? 'border-2 border-aldesRed bg-aldesYellow/20'
+                    ? 'border-2 border-aldesRed bg-aldesYellow/20 shadow-sm'
                     : 'border border-gray-300 bg-white hover:border-aldesYellow'
                 }`}
               >
@@ -113,23 +114,15 @@ function Kitchen() {
           })}
         </div>
 
-        <div className="sticky bottom-0 mt-6 rounded-2xl border border-aldesYellow bg-white p-4 shadow-md">
+        <div className="sticky bottom-0 mt-6 rounded-2xl border border-aldesYellow bg-aldesCream/30 p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-bold text-gray-800">Quantity</p>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={decreaseQty}
-                className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed"
-              >
+              <button type="button" onClick={decreaseQty} className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed">
                 -
               </button>
               <span className="min-w-8 text-center text-lg font-bold text-gray-900">{qty}</span>
-              <button
-                type="button"
-                onClick={increaseQty}
-                className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed"
-              >
+              <button type="button" onClick={increaseQty} className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed">
                 +
               </button>
             </div>
@@ -138,7 +131,7 @@ function Kitchen() {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="w-full rounded-xl bg-aldesRed py-4 text-xl font-bold text-white transition hover:brightness-110"
+            className="w-full rounded-xl bg-aldesRed py-3 text-lg font-bold text-white transition hover:brightness-110"
           >
             Add to Cart - {formatRupiah(totalPrice)}
           </button>
