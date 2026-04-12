@@ -45,8 +45,9 @@ function Transactions() {
     <div className="min-h-screen bg-aldesCream p-4 md:p-8">
       <div className="mx-auto w-full max-w-4xl">
         <h1 className="text-3xl font-extrabold text-aldesRed md:text-4xl">My Transactions</h1>
+        <p className="mt-1 text-sm text-gray-600">Pantau order yang sedang diproses dan riwayat pembelianmu.</p>
 
-        <div className="mt-6 inline-flex rounded-full border border-aldesRed bg-white p-1">
+        <div className="mt-6 inline-flex rounded-full border border-aldesRed bg-white p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setActiveTab('on_progress')}
@@ -69,13 +70,13 @@ function Transactions() {
 
         <div className="mt-6 space-y-4">
           {currentOrders.map((order) => (
-            <article key={order.id} className="rounded-xl bg-white p-5 shadow">
+            <article key={order.id} className="rounded-2xl border border-aldesRed/10 bg-white p-5 shadow-md">
               <header className="flex items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-aldesRed">{order.id}</h2>
                 {activeTab === 'on_progress' ? (
-                  <span className="rounded bg-aldesYellow px-2 py-1 text-xs font-semibold text-black">{order.status}</span>
+                  <span className="rounded-full bg-aldesYellow px-3 py-1 text-xs font-semibold text-black">{order.status}</span>
                 ) : (
-                  <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">{order.status}</span>
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">{order.status}</span>
                 )}
               </header>
 
@@ -93,7 +94,7 @@ function Transactions() {
               </div>
 
               {activeTab === 'on_progress' ? (
-                <footer className="mt-4 flex items-center gap-2 rounded-lg border border-aldesYellow bg-aldesYellow/30 px-3 py-2 text-sm font-medium text-gray-800">
+                <footer className="mt-4 flex items-center gap-2 rounded-xl border border-aldesYellow bg-aldesYellow/20 px-3 py-2 text-sm font-medium text-gray-800">
                   <Clock3 className="h-4 w-4" />
                   <span>Estimated Time: {order.eta}</span>
                 </footer>
@@ -101,7 +102,7 @@ function Transactions() {
                 <footer className="mt-4">
                   <button
                     type="button"
-                    className="rounded-lg border border-aldesRed px-4 py-2 font-semibold text-aldesRed transition-colors hover:bg-aldesRed hover:text-white"
+                    className="rounded-xl border border-aldesRed px-4 py-2 font-semibold text-aldesRed transition-colors hover:bg-aldesRed hover:text-white"
                   >
                     Reorder
                   </button>

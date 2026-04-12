@@ -5,23 +5,26 @@ function PaymentStatus() {
   const navigate = useNavigate()
 
   return (
-    <div className="bg-aldesCream min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white max-w-md w-full rounded-2xl shadow-lg p-8 text-center">
-        <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-aldesRed mb-3">Payment Successful!</h1>
-        <p className="text-gray-600 mb-8">Your burger is currently being prepared by our chefs.</p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-aldesCream p-4">
+      <div className="absolute -left-20 top-10 h-56 w-56 rounded-full bg-aldesYellow/30 blur-3xl" />
+      <div className="absolute -right-16 bottom-8 h-48 w-48 rounded-full bg-aldesRed/20 blur-3xl" />
+
+      <div className="relative w-full max-w-md rounded-3xl border border-aldesRed/10 bg-white p-8 text-center shadow-xl">
+        <CheckCircle className="mx-auto mb-4 h-20 w-20 text-emerald-500" />
+        <h1 className="mb-3 text-3xl font-black text-aldesRed">Payment Successful!</h1>
+        <p className="mb-8 text-gray-600">Pesananmu sudah kami terima dan sedang disiapkan oleh chef kami.</p>
 
         <div className="space-y-3">
           <button
             type="button"
-            className="w-full bg-aldesRed text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
+            className="w-full rounded-xl bg-aldesRed py-3 font-bold text-white transition hover:brightness-110"
             onClick={() => navigate('/transactions')}
           >
             View My Transactions
           </button>
           <button
             type="button"
-            className="w-full border border-aldesRed text-aldesRed py-3 rounded-lg font-semibold hover:bg-aldesRed hover:text-white transition"
+            className="w-full rounded-xl border border-aldesRed py-3 font-semibold text-aldesRed transition hover:bg-aldesRed hover:text-white"
             onClick={() => navigate('/')}
           >
             Back to Home
