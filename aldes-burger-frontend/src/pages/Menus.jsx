@@ -2,7 +2,7 @@ import { Flame } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-function Home() {
+function Menus() {
   const navigate = useNavigate()
   const { addToCart } = useCart()
 
@@ -141,4 +141,4 @@ function Home() {
   )
 }
 
-export default Home
+export default Menus

@@ -1,83 +1,41 @@
-import { useState } from 'react'
+import { LockKeyhole, Mail } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 function Auth() {
-  const [isLogin, setIsLogin] = useState(true)
-
   const handleSubmit = (event) => {
     event.preventDefault()
   }
 
   return (
-    <div className="bg-aldesCream min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full p-8 rounded-2xl shadow-lg bg-white">
-        <h1 className="text-2xl font-bold text-aldesRed text-center">
-          {isLogin ? 'Welcome Back' : 'Create Your Account'}
-        </h1>
-        <p className="text-sm text-gray-600 text-center mt-2 mb-6">
-          {isLogin ? 'Login to continue your burger journey.' : 'Register now to collect rewards and track every order.'}
-        </p>
+    <main className="flex min-h-screen items-center justify-center bg-orange-50 px-4 py-10">
+      <section className="w-full max-w-md rounded-3xl bg-white p-7 shadow-md sm:p-8">
+        <h1 className="text-center text-2xl font-black text-gray-800">Welcome back</h1>
+        <p className="mt-2 text-center text-sm text-gray-500">Login to continue your burger journey.</p>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fullName">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                placeholder="Enter your full name"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
-              />
-            </div>
-          )}
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Mail className="h-4 w-4" />Email</span>
+            <input type="email" placeholder="Enter your email" required className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100" />
+          </label>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
-              required
-            />
-          </div>
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Password</span>
+            <input type="password" placeholder="Enter your password" required className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100" />
+          </label>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-aldesYellow"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-aldesRed text-white py-3 rounded-lg font-semibold transition hover:opacity-90"
-          >
-            {isLogin ? 'Login' : 'Register'}
+          <button type="submit" className="w-full rounded-2xl bg-orange-500 py-3 font-semibold text-white transition hover:bg-orange-600">
+            Login
           </button>
         </form>
 
-        <p className="text-sm text-gray-700 mt-6 text-center">
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button
-            type="button"
-            className="text-aldesRed font-semibold"
-            onClick={() => setIsLogin((prev) => !prev)}
-          >
-            {isLogin ? 'Sign up' : 'Sign in'}
-          </button>
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <Link to="/signup" className="font-semibold text-orange-500 hover:text-orange-600">
+            Sign up
+          </Link>
         </p>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
 
