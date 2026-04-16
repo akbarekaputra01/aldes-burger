@@ -1,9 +1,11 @@
-import { FileText, ShoppingCart, User } from 'lucide-react'
+import { ChefHat, FileText, House, ShoppingCart, User } from 'lucide-react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/useCart'
 
 const navItems = [
-  { to: '/transactions', label: 'Transactions', icon: FileText },
+  { to: '/', label: 'Home', icon: House },
+  { to: '/kitchen', label: 'Kitchen', icon: ChefHat },
+  { to: '/transactions', label: 'Orders', icon: FileText },
   { to: '/cart', label: 'Cart', icon: ShoppingCart },
   { to: '/profile', label: 'Profile', icon: User },
 ]
@@ -13,35 +15,33 @@ function Layout() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-aldesCream text-slate-900">
-      <header className="sticky top-0 z-50 border-b border-aldesRed/20 bg-aldesRed/95 text-aldesYellow shadow-lg backdrop-blur">
+    <div className="min-h-screen pb-24 text-slate-900 md:pb-0">
+      <header className="sticky top-0 z-50 border-b border-aldesRed/10 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <Link to="/" className="group flex items-center gap-2">
-            <span className="rounded-xl bg-aldesYellow px-2 py-1 text-sm font-black tracking-widest text-aldesRed">AB</span>
+          <Link to="/" className="group flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-aldesRed text-lg font-black text-aldesYellow shadow-lg shadow-aldesRed/30">AB</span>
             <div>
-              <p className="text-xl font-extrabold leading-none tracking-wide">Aldes Burger</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-aldesYellow/80">Fresh • Fast • Juicy</p>
+              <p className="text-lg font-black tracking-wide text-aldesRed sm:text-xl">Aldes Burger</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">Bold • Juicy • Fast</p>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-2 sm:gap-3">
-            {navItems.map(({ to, label, icon: Icon }) => {
-              const isActive = location.pathname === to
-
+          <nav className="hidden items-center gap-1 rounded-2xl border border-aldesRed/10 bg-white p-1 md:flex">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.to
+              const NavIcon = item.icon
               return (
                 <Link
-                  key={to}
-                  to={to}
-                  className={`relative rounded-xl p-2.5 transition ${
-                    isActive ? 'bg-aldesYellow text-aldesRed' : 'hover:bg-aldesYellow/20'
+                  key={item.to}
+                  to={item.to}
+                  className={`relative flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                    isActive ? 'bg-aldesRed text-white shadow-lg shadow-aldesRed/25' : 'text-slate-600 hover:bg-aldesYellow/40'
                   }`}
-                  aria-label={label}
                 >
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                  {to === '/cart' && (
-                    <span className="absolute -right-1 -top-1 rounded-xl border-2 border-aldesCream bg-aldesRed px-1.5 text-xs font-bold text-aldesYellow">
-                      {cartCount}
-                    </span>
+                  <NavIcon className="h-4 w-4" />
+                  {item.label}
+                  {item.to === '/cart' && cartCount > 0 && (
+                    <span className="absolute -right-2 -top-2 rounded-full bg-aldesYellow px-2 py-0.5 text-[11px] font-black text-aldesRed">{cartCount}</span>
                   )}
                 </Link>
               )
@@ -52,35 +52,49 @@ function Layout() {
 
       <Outlet />
 
-      <footer className="mt-12 bg-aldesRed p-8 text-aldesYellow">
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 sm:grid-cols-3">
+      <nav className="fixed bottom-3 left-1/2 z-50 flex w-[calc(100%-1.5rem)] -translate-x-1/2 items-center justify-between rounded-2xl border border-aldesRed/15 bg-white/90 p-2 shadow-2xl backdrop-blur md:hidden">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to
+          const NavIcon = item.icon
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-semibold transition ${
+                isActive ? 'bg-aldesRed text-white' : 'text-slate-600'
+              }`}
+            >
+              <NavIcon className="h-4 w-4" />
+              {item.label}
+              {item.to === '/cart' && cartCount > 0 && <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-aldesYellow" />}
+            </Link>
+          )
+        })}
+      </nav>
+
+      <footer className="mt-12 border-t border-aldesRed/10 bg-white/70 px-4 py-10 backdrop-blur sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-7xl gap-8 md:grid-cols-3">
           <div>
-            <h4 className="mb-3 text-lg font-bold">Menu Links</h4>
-            <ul className="space-y-2 text-sm text-aldesYellow/90">
-              <li>Order Now</li>
-              <li>Build Your Burger</li>
-              <li>My Account</li>
+            <h4 className="text-lg font-black text-aldesRed">Aldes Burger</h4>
+            <p className="mt-3 text-sm text-slate-600">Burger artisan dengan palet rasa bold khas Aldes: creamy, smoky, dan juicy.</p>
+          </div>
+          <div>
+            <h5 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Popular</h5>
+            <ul className="mt-3 space-y-2 text-sm font-medium text-slate-700">
+              <li>Double Patty Series</li>
+              <li>Build Your Own Burger</li>
+              <li>Combo & Family Box</li>
             </ul>
           </div>
           <div>
-            <h4 className="mb-3 text-lg font-bold">Information</h4>
-            <ul className="space-y-2 text-sm text-aldesYellow/90">
-              <li>Contact</li>
-              <li>Terms &amp; Conditions</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-3 text-lg font-bold">Social Media</h4>
-            <ul className="space-y-2 text-sm text-aldesYellow/90">
-              <li>Instagram</li>
-              <li>Facebook</li>
-              <li>TikTok</li>
+            <h5 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Support</h5>
+            <ul className="mt-3 space-y-2 text-sm font-medium text-slate-700">
+              <li>FAQ & Contact</li>
+              <li>Refund Policy</li>
+              <li>Terms & Conditions</li>
             </ul>
           </div>
         </div>
-        <p className="mx-auto mt-8 w-full max-w-7xl border-t border-aldesYellow/30 pt-6 text-center text-sm">
-          © 2026 Aldes Burger. All Rights Reserved.
-        </p>
       </footer>
     </div>
   )

@@ -1,15 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-
-export const CartContext = createContext(null)
+import { useMemo, useState } from 'react'
+import { CartContext } from './cartContextObject'
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([])
-  const [cartCount, setCartCount] = useState(0)
 
-  useEffect(() => {
-    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0)
-    setCartCount(totalQty)
-  }, [cart])
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + (item.qty ?? 1), 0), [cart])
 
   const addToCart = (item) => {
     setCart((prev) => {
@@ -32,23 +27,16 @@ export function CartProvider({ children }) {
     )
   }
 
+  const updateQty = (id, qty) => {
+    setCart((prev) => prev.map((item) => (item.id === id ? { ...item, qty: Math.max(1, qty) } : item)))
+  }
+
+  const clearCart = () => setCart([])
+
   const value = useMemo(
-    () => ({
-      cart,
-      cartCount,
-      addToCart,
-      removeFromCart,
-    }),
+    () => ({ cart, cartCount, addToCart, removeFromCart, updateQty, clearCart }),
     [cart, cartCount],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
-}
-
-export function useCart() {
-  const context = useContext(CartContext)
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider')
-  }
-  return context
 }
