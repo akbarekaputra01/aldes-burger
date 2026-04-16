@@ -6,7 +6,7 @@ function Layout() {
   const { cartCount } = useCart()
 
   return (
-    <div className="min-h-screen bg-aldesCream">
+    <div className="flex min-h-screen flex-col bg-aldesCream">
       <header className="sticky top-0 z-50 bg-aldesRed text-white shadow-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="text-xl font-extrabold tracking-wide transition hover:opacity-90">
@@ -29,9 +29,11 @@ function Layout() {
         </div>
       </header>
 
-      <div className="checkerboard-strip h-4" aria-hidden="true" />
+      <div className="checkerboard-strip h-2" aria-hidden="true" />
 
-      <Outlet />
+      <main className="flex-1">
+        <Outlet />
+      </main>
 
       <footer className="mt-12 bg-aldesRed p-8 text-white">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 sm:grid-cols-3">
@@ -61,6 +63,7 @@ function Layout() {
         </div>
         <p className="mx-auto mt-8 w-full max-w-7xl text-center text-sm">© 2026 Aldes Burger. All Rights Reserved.</p>
       </footer>
+
       <div className="checkerboard-strip h-6" aria-hidden="true" />
     </div>
   )

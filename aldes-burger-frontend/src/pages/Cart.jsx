@@ -18,7 +18,7 @@ function Cart() {
   ]
 
   const cart = contextValue?.cart ?? fallbackCart
-  const removeFromCart = contextValue?.removeFromCart ?? (() => {})
+  const removeFromCart = contextValue?.removeFromCart ?? (() => { })
   const updateQty = contextValue?.updateQty
 
   const toNumber = (value) => {

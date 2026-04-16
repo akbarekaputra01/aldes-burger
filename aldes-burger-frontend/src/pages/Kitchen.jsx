@@ -99,11 +99,10 @@ function Kitchen() {
                 key={ingredient.id}
                 type="button"
                 onClick={() => toggleIngredient(ingredient.id)}
-                className={`rounded-xl p-3 text-left transition ${
-                  isActive
+                className={`rounded-xl p-3 text-left transition ${isActive
                     ? 'border-2 border-aldesRed bg-aldesYellow/20'
                     : 'border border-gray-300 bg-white hover:border-aldesYellow'
-                }`}
+                  }`}
               >
                 <p className="font-bold text-gray-900">{ingredient.name}</p>
                 <p className="mt-1 text-xs capitalize text-gray-500">{ingredient.type}</p>
