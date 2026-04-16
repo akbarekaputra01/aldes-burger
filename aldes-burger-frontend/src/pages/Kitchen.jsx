@@ -1,12 +1,9 @@
+import { Minus, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-function Kitchen() {
-  const navigate = useNavigate()
-  const { addToCart } = useCart()
-
-  const allIngredients = [
+const allIngredients = [
     { id: 'bun_top', name: 'Top Bun', price: 0, type: 'bun', availableIn: ['beef', 'chicken', 'custom'] },
     { id: 'beef_patty', name: 'Beef Patty', price: 15000, type: 'protein', availableIn: ['beef', 'custom'] },
     { id: 'chicken_patty', name: 'Crispy Chicken', price: 12000, type: 'protein', availableIn: ['chicken', 'custom'] },
@@ -14,7 +11,12 @@ function Kitchen() {
     { id: 'lettuce', name: 'Lettuce', price: 2000, type: 'veg', availableIn: ['beef', 'chicken', 'custom'] },
     { id: 'tomato', name: 'Tomato', price: 2000, type: 'veg', availableIn: ['beef', 'custom'] },
     { id: 'bun_bottom', name: 'Bottom Bun', price: 0, type: 'bun', availableIn: ['beef', 'chicken', 'custom'] },
-  ]
+
+]
+
+function Kitchen() {
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
 
   const currentMode = 'beef'
   const initialSelected = ['bun_bottom', 'beef_patty', 'cheese', 'lettuce', 'tomato', 'bun_top']
@@ -24,12 +26,12 @@ function Kitchen() {
 
   const filteredIngredients = useMemo(
     () => allIngredients.filter((ingredient) => ingredient.availableIn.includes(currentMode)),
-    [allIngredients, currentMode],
+    [currentMode],
   )
 
   const selectedIngredientObjects = useMemo(
     () => allIngredients.filter((ingredient) => selectedIngredients.includes(ingredient.id)),
-    [allIngredients, selectedIngredients],
+    [selectedIngredients],
   )
 
   const totalPrice = useMemo(() => {
@@ -60,89 +62,78 @@ function Kitchen() {
   }
 
   return (
-    <main className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 p-6 md:grid-cols-12">
-      <section className="rounded-2xl bg-white p-8 shadow-lg md:col-span-7 lg:col-span-8">
-        <h2 className="text-2xl font-extrabold text-aldesRed">Your Burger Preview</h2>
+    <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
+      <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 lg:grid-cols-12">
+        <article className="rounded-3xl bg-white p-6 shadow-md lg:col-span-7 lg:p-8">
+          <p className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-700">Universal Kitchen Modifiers</p>
+          <h1 className="mt-3 text-2xl font-black text-gray-900">Build your premium burger</h1>
+          <p className="mt-1 text-sm text-gray-500">Live visual summary updates as your kitchen modifiers change.</p>
 
-        <div className="mt-8 flex min-h-[380px] flex-col-reverse items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-aldesCream/40 p-6">
-          {selectedIngredientObjects.length > 0 ? (
-            selectedIngredientObjects.map((ingredient, index) => (
-              <div
-                key={`${ingredient.id}-${index}`}
-                className="w-full max-w-md rounded-xl border border-aldesRed/20 bg-white px-4 py-3 text-center font-semibold text-gray-700 shadow-sm"
-              >
-                {ingredient.name}
-              </div>
-            ))
-          ) : (
-            <p className="text-center font-semibold text-aldesRed">No ingredients selected.</p>
-          )}
-        </div>
-
-        <p className="mt-6 text-sm text-gray-700">
-          <span className="font-bold text-aldesRed">Contains:</span>{' '}
-          {selectedIngredientObjects.length > 0
-            ? selectedIngredientObjects.map((ingredient) => ingredient.name).join(', ')
-            : 'No ingredients selected'}
-        </p>
-      </section>
-
-      <aside className="rounded-2xl bg-white/70 p-4 md:col-span-5 lg:col-span-4">
-        <h3 className="text-xl font-extrabold text-aldesRed">Choose Ingredients</h3>
-        <p className="mb-4 mt-1 text-sm text-gray-700">Tap any card to add or remove ingredients instantly.</p>
-
-        <div className="grid grid-cols-2 gap-3">
-          {filteredIngredients.map((ingredient) => {
-            const isActive = selectedIngredients.includes(ingredient.id)
-            return (
-              <button
-                key={ingredient.id}
-                type="button"
-                onClick={() => toggleIngredient(ingredient.id)}
-                className={`rounded-xl p-3 text-left transition ${isActive
-                    ? 'border-2 border-aldesRed bg-aldesYellow/20'
-                    : 'border border-gray-300 bg-white hover:border-aldesYellow'
-                  }`}
-              >
-                <p className="font-bold text-gray-900">{ingredient.name}</p>
-                <p className="mt-1 text-xs capitalize text-gray-500">{ingredient.type}</p>
-                <p className="mt-1 text-sm font-semibold text-aldesRed">{formatRupiah(ingredient.price)}</p>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="sticky bottom-0 mt-6 rounded-2xl border border-aldesYellow bg-white p-4 shadow-md">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="font-bold text-gray-800">Quantity</p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={decreaseQty}
-                className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed"
-              >
-                -
-              </button>
-              <span className="min-w-8 text-center text-lg font-bold text-gray-900">{qty}</span>
-              <button
-                type="button"
-                onClick={increaseQty}
-                className="rounded-xl border border-aldesRed px-3 py-1 font-bold text-aldesRed"
-              >
-                +
-              </button>
+          <div className="mt-6 rounded-3xl border-2 border-dashed border-red-200 bg-amber-50/50 p-5">
+            <div className="space-y-3">
+              {selectedIngredientObjects.length > 0 ? (
+                selectedIngredientObjects.map((ingredient, index) => (
+                  <div key={`${ingredient.id}-${index}`} className="rounded-2xl border border-red-100 bg-white px-4 py-3 text-center font-semibold text-gray-700 shadow-sm">
+                    {ingredient.name}
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-white px-4 py-6 text-center font-semibold text-gray-500">No ingredients selected.</p>
+              )}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="w-full rounded-xl bg-aldesRed py-4 text-xl font-bold text-white transition hover:brightness-110"
-          >
-            Add to Cart - {formatRupiah(totalPrice)}
-          </button>
-        </div>
-      </aside>
+          <div className="mt-5 rounded-2xl bg-red-50 p-4">
+            <p className="text-sm font-semibold text-gray-900">Current stack</p>
+            <p className="mt-1 text-sm text-gray-600">{selectedIngredientObjects.map((ingredient) => ingredient.name).join(' • ') || 'No ingredients selected'}</p>
+          </div>
+        </article>
+
+        <aside className="rounded-3xl bg-white p-6 shadow-md lg:col-span-5 lg:p-7">
+          <h2 className="text-xl font-black text-gray-900">Ingredient controls</h2>
+          <p className="mt-1 text-sm text-gray-500">Use ADD/REMOVE actions for each ingredient.</p>
+
+          <div className="mt-4 max-h-[460px] space-y-3 overflow-y-auto pr-1">
+            {filteredIngredients.map((ingredient) => {
+              const isActive = selectedIngredients.includes(ingredient.id)
+              return (
+                <div key={ingredient.id} className="rounded-2xl border border-red-100 bg-amber-50/30 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-gray-900">{ingredient.name}</p>
+                      <p className="text-xs capitalize text-gray-500">{ingredient.type}</p>
+                      <p className="mt-1 text-sm font-semibold text-red-600">{formatRupiah(ingredient.price)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => !isActive && toggleIngredient(ingredient.id)} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition enabled:hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-45" disabled={isActive}>
+                        ADD
+                      </button>
+                      <button type="button" onClick={() => isActive && toggleIngredient(ingredient.id)} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white transition enabled:hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-45" disabled={!isActive}>
+                        REMOVE
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-red-100 bg-white p-4 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-semibold text-gray-800">Quantity</p>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={decreaseQty} className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-700"><Minus className="h-4 w-4" /></button>
+                <span className="min-w-8 text-center text-lg font-bold text-gray-900">{qty}</span>
+                <button type="button" onClick={increaseQty} className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-700"><Plus className="h-4 w-4" /></button>
+              </div>
+            </div>
+
+            <button type="button" onClick={handleAddToCart} className="w-full rounded-2xl bg-red-600 py-3 text-lg font-bold text-white transition hover:bg-red-700">
+              Add to Cart · {formatRupiah(totalPrice)}
+            </button>
+          </div>
+        </aside>
+      </section>
     </main>
   )
 }

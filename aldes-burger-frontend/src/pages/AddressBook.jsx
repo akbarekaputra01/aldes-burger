@@ -1,71 +1,53 @@
-import { MapPin, Plus, Trash2 } from 'lucide-react'
+import { MapPin, X } from 'lucide-react'
 import { useState } from 'react'
-
-const initialAddresses = [
-  { id: 1, label: 'Home', detail: 'Jl. Sudirman No.123, Jakarta', deleted: false },
-  { id: 2, label: 'Office', detail: 'Wisma Aldes Lt.12, Jakarta', deleted: false },
-]
+import { useNavigate } from 'react-router-dom'
 
 function AddressBook() {
-  const [addresses, setAddresses] = useState(initialAddresses)
-  const [draft, setDraft] = useState({ label: '', detail: '' })
-  const [openForm, setOpenForm] = useState(false)
-
-  const activeAddresses = addresses.filter((item) => !item.deleted)
+  const navigate = useNavigate()
+  const [draft, setDraft] = useState({
+    label: '',
+    receiver: '',
+    phone: '',
+    detail: '',
+    notes: '',
+  })
 
   const saveAddress = (event) => {
     event.preventDefault()
-    if (!draft.label || !draft.detail) return
-    setAddresses((prev) => [...prev, { id: Date.now(), ...draft, deleted: false }])
-    setDraft({ label: '', detail: '' })
-    setOpenForm(false)
-  }
-
-  const softDelete = (id) => {
-    setAddresses((prev) => prev.map((item) => (item.id === id ? { ...item, deleted: true } : item)))
+    navigate('/profile')
   }
 
   return (
-    <main className="min-h-screen bg-orange-50 px-4 py-6">
-      <section className="mx-auto w-full max-w-5xl">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-black text-gray-800">Address Book</h1>
-          <button type="button" onClick={() => setOpenForm((prev) => !prev)} className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600">
-            <Plus className="h-4 w-4" /> Add New Address
-          </button>
+    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-8">
+      <section className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-md sm:p-8">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-600">Address Snapshot</p>
+            <h1 className="mt-1 text-2xl font-black text-gray-900">Add / Edit Delivery Address</h1>
+            <p className="mt-1 text-sm text-gray-500">Keep this focused page for checkout-ready address details.</p>
+          </div>
+          <div className="rounded-2xl bg-yellow-100 p-3 text-red-600"><MapPin className="h-6 w-6" /></div>
         </div>
 
-        {openForm && (
-          <form onSubmit={saveAddress} className="mb-5 rounded-3xl bg-white p-5 shadow-sm">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                value={draft.label}
-                onChange={(event) => setDraft((prev) => ({ ...prev, label: event.target.value }))}
-                placeholder="Label (Home, Office)"
-                className="rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-orange-400"
-              />
-              <input
-                value={draft.detail}
-                onChange={(event) => setDraft((prev) => ({ ...prev, detail: event.target.value }))}
-                placeholder="Full address"
-                className="rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-orange-400"
-              />
-            </div>
-            <button type="submit" className="mt-3 rounded-2xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Save Address</button>
-          </form>
-        )}
+        <form onSubmit={saveAddress} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <input value={draft.label} onChange={(event) => setDraft((prev) => ({ ...prev, label: event.target.value }))} placeholder="Label (Home, Office)" required className="rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+            <input value={draft.receiver} onChange={(event) => setDraft((prev) => ({ ...prev, receiver: event.target.value }))} placeholder="Receiver name" required className="rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+          </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {activeAddresses.map((address) => (
-            <article key={address.id} className="rounded-3xl bg-white p-5 shadow-sm">
-              <p className="inline-flex items-center gap-2 rounded-xl bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-600"><MapPin className="h-3.5 w-3.5" />{address.label}</p>
-              <p className="mt-3 text-sm text-gray-700">{address.detail}</p>
-              <button type="button" onClick={() => softDelete(address.id)} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-red-600 transition hover:text-red-700">
-                <Trash2 className="h-4 w-4" /> Delete
-              </button>
-            </article>
-          ))}
-        </div>
+          <input value={draft.phone} onChange={(event) => setDraft((prev) => ({ ...prev, phone: event.target.value }))} placeholder="Phone number" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+
+          <textarea value={draft.detail} onChange={(event) => setDraft((prev) => ({ ...prev, detail: event.target.value }))} rows={4} placeholder="Full address" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+
+          <textarea value={draft.notes} onChange={(event) => setDraft((prev) => ({ ...prev, notes: event.target.value }))} rows={2} placeholder="Delivery notes (optional)" className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
+            <button type="button" onClick={() => navigate('/profile')} className="inline-flex items-center gap-2 rounded-2xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+              <X className="h-4 w-4" /> Cancel
+            </button>
+            <button type="submit" className="rounded-2xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700">Save Address</button>
+          </div>
+        </form>
       </section>
     </main>
   )

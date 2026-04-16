@@ -12,9 +12,13 @@ function AdminLayout() {
   const { pathname } = useLocation()
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-4">
+    <div className="min-h-screen bg-aldesCream lg:grid lg:grid-cols-[260px_1fr]">
+      <aside className="bg-slate-900 p-4 text-white lg:min-h-screen lg:p-6">
+        <p className="text-xs uppercase tracking-[0.2em] text-red-200">Aldes Burger</p>
+        <h1 className="mt-2 text-2xl font-black">Admin Panel</h1>
+        <div className="checkerboard-strip mt-4 h-3 rounded-full" aria-hidden="true" />
+
+        <nav className="mt-6 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.to
@@ -22,16 +26,22 @@ function AdminLayout() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold transition ${isActive ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${isActive ? 'bg-red-600 text-white' : 'bg-white/10 text-slate-100 hover:bg-white/20'}`}
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
               </Link>
             )
           })}
-        </div>
-      </header>
-      <Outlet />
+        </nav>
+      </aside>
+
+      <section className="min-w-0">
+        <header className="border-b border-red-100 bg-red-600 px-5 py-4 text-white sm:px-8">
+          <h2 className="text-lg font-bold">Kitchen Operations & Business Insights</h2>
+        </header>
+        <Outlet />
+      </section>
     </div>
   )
 }
