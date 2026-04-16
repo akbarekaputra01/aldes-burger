@@ -19,9 +19,10 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-black text-white p-4">
+      <header className="bg-black p-4 text-white">
         <h1 className="text-2xl font-bold">Aldes Staff & Kitchen Dashboard</h1>
       </header>
+      <div className="checkerboard-strip h-4" aria-hidden="true" />
 
       <main className="p-4 md:p-8">
         <div className="bg-white rounded-2xl shadow overflow-hidden">
@@ -67,6 +68,7 @@ function AdminDashboard() {
           ))}
         </div>
       </main>
+      <div className="checkerboard-strip h-6" aria-hidden="true" />
     </div>
   )
 }
