@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AddressSeeder::class,
             MenuSeeder::class,
             IngredientSeeder::class,
+            MenuIngredientSeeder::class,
             PaymentSeeder::class,
             TransactionSeeder::class,
             ReportSeeder::class,
