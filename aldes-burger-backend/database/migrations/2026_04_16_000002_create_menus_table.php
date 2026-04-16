@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('stock')->default(0);
             $table->boolean('is_custom')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

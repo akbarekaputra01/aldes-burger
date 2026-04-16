@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignId('payment_id')->constrained();
             $table->foreignId('address_id')->constrained();
+            $table->text('destination_address')->after('address_id');
             $table->foreignId('user_id')->constrained();
             $table->integer('amount');
             $table->enum('status', ['pending', 'cooking', 'done'])->default('pending');
