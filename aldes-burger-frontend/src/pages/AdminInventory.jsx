@@ -10,13 +10,13 @@ const inventory = [
 
 function AdminInventory() {
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-6">
+    <main className="min-h-screen bg-aldesCream px-4 py-6 sm:px-6">
       <section className="mx-auto max-w-6xl rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="mb-5 flex items-center gap-2 text-2xl font-black text-gray-800"><Package className="h-6 w-6 text-orange-500" />Inventory Management</h1>
-        <div className="overflow-x-auto">
+        <h1 className="mb-5 flex items-center gap-2 text-2xl font-black text-gray-900"><Package className="h-6 w-6 text-red-600" />Inventory Management</h1>
+        <div className="overflow-x-auto rounded-2xl border border-red-100">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-gray-500">
+              <tr className="bg-red-50 text-gray-600">
                 <th className="px-3 py-3">Type</th>
                 <th className="px-3 py-3">Name</th>
                 <th className="px-3 py-3">Stock</th>
@@ -25,14 +25,16 @@ function AdminInventory() {
             </thead>
             <tbody>
               {inventory.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100">
+                <tr key={item.id} className="border-t border-red-50">
                   <td className="px-3 py-3 text-gray-700">{item.type}</td>
-                  <td className="px-3 py-3 font-medium text-gray-800">{item.name}</td>
-                  <td className={`px-3 py-3 font-semibold ${item.stock < 10 ? 'font-bold text-red-600' : 'text-gray-800'}`}>
-                    {item.stock}
+                  <td className="px-3 py-3 font-medium text-gray-900">{item.name}</td>
+                  <td className="px-3 py-3">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.stock < 10 ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {item.stock}
+                    </span>
                   </td>
                   <td className="px-3 py-3">
-                    <button type="button" className="inline-flex items-center gap-1 rounded-xl border border-gray-300 px-3 py-1.5 font-medium text-gray-700 transition hover:bg-gray-100">
+                    <button type="button" className="inline-flex items-center gap-1 rounded-xl bg-red-600 px-3 py-1.5 font-medium text-white transition hover:bg-red-700">
                       <PencilLine className="h-4 w-4" /> Quick Update
                     </button>
                   </td>
