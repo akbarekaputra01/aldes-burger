@@ -54,7 +54,7 @@ function Transactions() {
               activeTab === 'on_progress' ? 'bg-aldesRed text-white' : 'text-gray-500 hover:text-aldesRed'
             }`}
           >
-            On Progress
+            In Progress
           </button>
           <button
             type="button"

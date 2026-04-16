@@ -7,31 +7,33 @@ function Layout() {
 
   return (
     <div className="min-h-screen bg-aldesCream">
-      <header className="sticky top-0 z-50 bg-aldesRed text-aldesYellow shadow-md">
+      <header className="sticky top-0 z-50 bg-aldesRed text-white shadow-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <Link to="/" className="text-xl font-extrabold tracking-wide hover:opacity-90 transition">
+          <Link to="/" className="text-xl font-extrabold tracking-wide transition hover:opacity-90">
             Aldes Burger
           </Link>
           <div className="flex items-center gap-5">
-            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Transactions">
+            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-white/20" aria-label="Transactions">
               <FileText className="h-6 w-6" />
             </Link>
-            <Link to="/cart" className="relative rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Cart">
+            <Link to="/cart" className="relative rounded-xl p-2 transition hover:bg-white/20" aria-label="Cart">
               <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-aldesCream bg-aldesRed px-1.5 text-xs font-bold text-aldesYellow">
+              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-aldesCream bg-white px-1.5 text-xs font-bold text-aldesRed">
                 {cartCount}
               </span>
             </Link>
-            <Link to="/profile" className="rounded-xl p-2 transition hover:bg-aldesYellow/20" aria-label="Profile">
+            <Link to="/profile" className="rounded-xl p-2 transition hover:bg-white/20" aria-label="Profile">
               <User className="h-6 w-6" />
             </Link>
           </div>
         </div>
       </header>
 
+      <div className="checkerboard-strip h-4" aria-hidden="true" />
+
       <Outlet />
 
-      <footer className="mt-12 bg-aldesRed p-8 text-aldesYellow">
+      <footer className="mt-12 bg-aldesRed p-8 text-white">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 sm:grid-cols-3">
           <div>
             <h4 className="mb-3 text-lg font-bold">Menu Links</h4>
@@ -59,6 +61,7 @@ function Layout() {
         </div>
         <p className="mx-auto mt-8 w-full max-w-7xl text-center text-sm">© 2026 Aldes Burger. All Rights Reserved.</p>
       </footer>
+      <div className="checkerboard-strip h-6" aria-hidden="true" />
     </div>
   )
 }

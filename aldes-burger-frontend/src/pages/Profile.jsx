@@ -3,7 +3,7 @@ import { User, Mail, Phone, MapPin, Edit, Trash2, Plus, LogOut } from 'lucide-re
 
 function Profile() {
   const [addresses] = useState([
-    { id: 1, text: 'Home - Jl. Sudirman No. 123, Jakarta' },
+    { id: 1, text: 'Home - 123 Sudirman Street, Jakarta' },
     { id: 2, text: 'Office - Tower A, 15th Floor, Jakarta' },
   ])
 

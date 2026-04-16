@@ -101,7 +101,7 @@ function Cart() {
               Change
             </button>
           </div>
-          <p className="mt-3 text-sm text-gray-600">Jl. Sudirman No. 123, Jakarta</p>
+          <p className="mt-3 text-sm text-gray-600">123 Sudirman Street, Jakarta</p>
         </section>
 
         <section className="mb-6">
