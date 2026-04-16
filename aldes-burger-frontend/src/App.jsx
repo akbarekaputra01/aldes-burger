@@ -10,7 +10,8 @@ import AdminOrders from './pages/AdminOrders'
 import Auth from './pages/Auth'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
-import Home from './pages/Home'
+import LandingPage from './pages/LandingPage'
+import Menus from './pages/Menus'
 import Kitchen from './pages/Kitchen'
 import NotFound from './pages/NotFound'
 import PaymentStatus from './pages/PaymentStatus'
@@ -35,7 +36,8 @@ function App() {
           </Route>
 
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/menus" element={<Menus />} />
             <Route path="/kitchen" element={<Kitchen />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
