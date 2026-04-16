@@ -112,17 +112,6 @@ function LandingPage() {
           <p className="mt-2 text-sm font-semibold text-gray-500">— Rachel, Jakarta</p>
         </article>
       </section>
-
-      <footer className="border-t border-aldesRed/20 bg-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p className="font-semibold text-gray-700">Aldes Burger © 2026</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-aldesRed">Instagram</a>
-            <a href="#" className="hover:text-aldesRed">TikTok</a>
-            <a href="#" className="hover:text-aldesRed">Contact</a>
-          </div>
-        </div>
-      </footer>
     </main>
   )
 }
