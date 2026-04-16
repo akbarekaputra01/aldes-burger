@@ -64,7 +64,7 @@ function Menus() {
   const quickAdd = (item) => addToCart({ id: item.id, name: item.name, price: item.price, qty: 1 })
 
   return (
-    <main className="bg-orange-50 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="bg-aldesCream px-4 py-6 sm:px-6 lg:px-8">
       <section className="mx-auto w-full max-w-7xl">
         <header className="mb-6 rounded-3xl bg-white p-6 shadow-sm">
           <p className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
@@ -79,7 +79,7 @@ function Menus() {
                 key={category}
                 type="button"
                 onClick={() => setActiveFilter(category)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeFilter === category ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeFilter === category ? 'bg-aldesRed text-white' : 'bg-aldesYellow/25 text-aldesRed hover:bg-aldesYellow/40'}`}
               >
                 {category}
               </button>
@@ -92,25 +92,25 @@ function Menus() {
             <article key={item.id} className="overflow-hidden rounded-3xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
               <img src={item.image} alt={item.name} className="h-48 w-full object-cover" />
               <div className="p-5">
-                <p className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">
+                <p className="inline-flex items-center gap-1 rounded-full bg-aldesYellow/25 px-2.5 py-1 text-xs font-semibold text-aldesRed">
                   {item.category === 'Burgers' ? <Sandwich className="h-3.5 w-3.5" /> : <Flame className="h-3.5 w-3.5" />} {item.category}
                 </p>
                 <h2 className="mt-3 text-lg font-bold text-gray-800">{item.name}</h2>
                 <p className="mt-1 text-sm text-gray-600">{item.desc}</p>
-                <p className="mt-3 text-base font-black text-red-500">{formatIDR(item.price)}</p>
+                <p className="mt-3 text-base font-black text-aldesRed">{formatIDR(item.price)}</p>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => navigate('/kitchen')}
-                    className="rounded-2xl bg-orange-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+                    className="rounded-2xl bg-aldesRed px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                   >
                     Customize in Kitchen
                   </button>
                   <button
                     type="button"
                     onClick={() => quickAdd(item)}
-                    className="rounded-2xl border border-orange-300 px-3 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
+                    className="rounded-2xl border border-aldesRed/30 px-3 py-2 text-sm font-semibold text-aldesRed transition hover:bg-aldesYellow/25"
                   >
                     Add +
                   </button>
