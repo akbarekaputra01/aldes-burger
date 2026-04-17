@@ -1,4 +1,4 @@
-import { LockKeyhole, Mail, UtensilsCrossed } from 'lucide-react'
+import { Loader2, LockKeyhole, Mail, UtensilsCrossed } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -8,11 +8,13 @@ function Auth() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
 
+    setIsLoading(true)
     try {
       const { data } = await api.post('/login', form)
       setAuthSession(data)
@@ -26,6 +28,8 @@ function Auth() {
       navigate(user.role === 'admin' ? '/admin' : '/menus')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Unable to login. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -52,7 +56,8 @@ function Auth() {
           </label>
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
-          <button type="submit" className="w-full rounded-2xl bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700">
+          <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Login to Aldes Burger
           </button>
         </form>

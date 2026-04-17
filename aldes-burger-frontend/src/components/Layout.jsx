@@ -1,33 +1,13 @@
-import { FileText, ShoppingCart, User } from 'lucide-react'
-import { Link, Outlet } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
+import { Outlet } from 'react-router-dom'
+import Navbar from './Navbar'
+import { getToken } from '../utils/auth'
 
 function Layout() {
-  const { cartCount } = useCart()
+  const isLoggedIn = Boolean(getToken())
 
   return (
     <div className="flex min-h-screen flex-col bg-aldesCream">
-      <header className="sticky top-0 z-50 bg-aldesRed text-white shadow-md">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <Link to="/" className="text-xl font-extrabold tracking-wide transition hover:opacity-90">
-            Aldes Burger
-          </Link>
-          <div className="flex items-center gap-5">
-            <Link to="/transactions" className="rounded-xl p-2 transition hover:bg-white/20" aria-label="Transactions">
-              <FileText className="h-6 w-6" />
-            </Link>
-            <Link to="/cart" className="relative rounded-xl p-2 transition hover:bg-white/20" aria-label="Cart">
-              <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 rounded-xl border-2 border-aldesCream bg-white px-1.5 text-xs font-bold text-aldesRed">
-                {cartCount}
-              </span>
-            </Link>
-            <Link to="/profile" className="rounded-xl p-2 transition hover:bg-white/20" aria-label="Profile">
-              <User className="h-6 w-6" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar isLoggedIn={isLoggedIn} />
 
       <div className="checkerboard-strip h-2" aria-hidden="true" />
 

@@ -1,7 +1,8 @@
-import { Minus, Plus } from 'lucide-react'
+import { Loader2, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { ListItemSkeleton } from '../components/Skeletons'
 import api from '../lib/api'
 
 function Kitchen() {
@@ -13,6 +14,8 @@ function Kitchen() {
   const [ingredients, setIngredients] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
   const [qty, setQty] = useState(1)
+  const [isFetching, setIsFetching] = useState(true)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
   const menuId = location.state?.menuId
   const selectedMenu = useMemo(() => allMenus.find((menu) => menu.id === menuId) ?? allMenus.find((menu) => menu.is_custom) ?? allMenus[0], [allMenus, menuId])
@@ -21,15 +24,17 @@ function Kitchen() {
 
   useEffect(() => {
     const load = async () => {
+      setIsFetching(true)
       const [menusRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
       setAllMenus(menusRes.data)
       setIngredients(ingredientsRes.data)
+      setIsFetching(false)
     }
 
     load().catch(() => {
       setAllMenus([])
       setIngredients([])
-    })
+    }).finally(() => setIsFetching(false))
   }, [])
 
   useEffect(() => {
@@ -73,6 +78,7 @@ function Kitchen() {
   const handleAddToCart = () => {
     if (!selectedMenu) return
 
+    setIsAddingToCart(true)
     addToCart({
       id: `custom-${selectedMenu.id}-${Date.now()}`,
       menu_id: selectedMenu.id,
@@ -84,6 +90,7 @@ function Kitchen() {
       ingredients: selectedIngredientObjects.map((item) => item.name),
     })
     navigate('/cart')
+    setTimeout(() => setIsAddingToCart(false), 250)
   }
 
   return (
@@ -108,7 +115,7 @@ function Kitchen() {
           <h2 className="text-xl font-black text-gray-900">Ingredient controls</h2>
 
           <div className="mt-4 max-h-[460px] space-y-3 overflow-y-auto pr-1">
-            {ingredients.map((ingredient) => {
+            {isFetching ? Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />) : ingredients.map((ingredient) => {
               const isActive = selectedIds.includes(ingredient.id)
               return (
                 <div key={ingredient.id} className="rounded-2xl border border-red-100 bg-amber-50/30 p-3">
@@ -137,7 +144,8 @@ function Kitchen() {
               </div>
             </div>
 
-            <button type="button" onClick={handleAddToCart} className="w-full rounded-2xl bg-red-600 py-3 text-lg font-bold text-white transition hover:bg-red-700">
+            <button type="button" disabled={isAddingToCart} onClick={handleAddToCart} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed py-3 text-lg font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
+              {isAddingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add to Cart · Rp {totalPrice.toLocaleString('id-ID')}
             </button>
           </div>
