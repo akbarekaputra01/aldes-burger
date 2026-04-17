@@ -1,4 +1,4 @@
-import { Banknote, Building2, CircleDollarSign, CreditCard, MapPin } from 'lucide-react'
+import { Banknote, Building2, CircleDollarSign, CreditCard, Loader2, MapPin } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
@@ -19,6 +19,7 @@ function Checkout() {
   const [addresses, setAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedPaymentId, setSelectedPaymentId] = useState(paymentOptions[0].id)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -43,34 +44,41 @@ function Checkout() {
   }, [checkoutItems])
 
   const placeOrder = async () => {
-    const payload = {
-      address_id: selectedAddressId,
-      payment_method: selectedPaymentId,
-      items: checkoutItems.map((item) => ({
-        menu_id: item.menu_id,
-        quantity: item.qty,
-        modifiers: (item.modifiers ?? []).map((modifier) => ({ ingredient_id: modifier.ingredient_id, action: modifier.action })),
-      })),
-    }
+    if (isLoading) return
+    setIsLoading(true)
 
-    const { data } = await api.post('/checkout', payload)
-    clearCart()
-    navigate(`/transactions/${data.id}`)
+    try {
+      const payload = {
+        address_id: selectedAddressId,
+        payment_method: selectedPaymentId,
+        items: checkoutItems.map((item) => ({
+          menu_id: item.menu_id,
+          quantity: item.qty,
+          modifiers: (item.modifiers ?? []).map((modifier) => ({ ingredient_id: modifier.ingredient_id, action: modifier.action })),
+        })),
+      }
+
+      const { data } = await api.post('/checkout', payload)
+      clearCart()
+      navigate(`/transactions/${data.id}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <main className="min-h-screen bg-orange-50 px-4 py-6">
+    <main className="min-h-screen bg-aldesCream px-4 py-6">
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
           <article className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800"><MapPin className="h-5 w-5 text-orange-500" />Select Address</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800"><MapPin className="h-5 w-5 text-aldesRed" />Select Address</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {addresses.map((address) => (
                 <button
                   key={address.id}
                   type="button"
                   onClick={() => setSelectedAddressId(address.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${selectedAddressId === address.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`rounded-2xl border p-4 text-left transition ${selectedAddressId === address.id ? 'border-aldesRed bg-aldesCream' : 'border-gray-200 hover:border-aldesRed/60'}`}
                 >
                   <p className="font-semibold text-gray-800">Address #{address.id}</p>
                   <p className="mt-1 text-sm text-gray-600">{address.address}</p>
@@ -80,7 +88,7 @@ function Checkout() {
           </article>
 
           <article className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800"><CreditCard className="h-5 w-5 text-orange-500" />Payment Method</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800"><CreditCard className="h-5 w-5 text-aldesRed" />Payment Method</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               {paymentOptions.map((payment) => {
                 const Icon = payment.icon
@@ -89,7 +97,7 @@ function Checkout() {
                     key={payment.id}
                     type="button"
                     onClick={() => setSelectedPaymentId(payment.id)}
-                    className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${selectedPaymentId === payment.id ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-700 hover:border-orange-300'}`}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${selectedPaymentId === payment.id ? 'border-aldesRed bg-aldesCream text-aldesRed' : 'border-gray-200 text-gray-700 hover:border-aldesRed/60'}`}
                   >
                     <Icon className="h-4 w-4" />
                     {payment.label}
@@ -104,7 +112,7 @@ function Checkout() {
           <h2 className="text-xl font-bold text-gray-800">Order Summary</h2>
           <div className="mt-4 space-y-4">
             {checkoutItems.map((item) => (
-              <div key={item.id} className="rounded-2xl bg-orange-50 p-4">
+              <div key={item.id} className="rounded-2xl bg-aldesCream p-4">
                 <p className="font-semibold text-gray-800">{item.qty}x {item.name}</p>
                 <p className="text-sm text-gray-600">Base: {toIDR(item.basePrice ?? item.price)}</p>
               </div>
@@ -117,8 +125,14 @@ function Checkout() {
             <p className="flex justify-between text-base font-bold text-gray-900"><span>Total</span><span>{toIDR(summary.total)}</span></p>
           </div>
 
-          <button type="button" onClick={placeOrder} className="mt-5 w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white transition hover:bg-orange-600">
-            Place Order
+          <button
+            type="button"
+            onClick={placeOrder}
+            disabled={isLoading}
+            className="mt-5 flex w-full items-center justify-center rounded-2xl bg-aldesRed px-4 py-3 font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? 'Completing Order...' : 'Complete Order'}
           </button>
         </aside>
       </div>
