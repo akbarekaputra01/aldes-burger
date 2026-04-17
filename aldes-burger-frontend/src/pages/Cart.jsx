@@ -34,7 +34,7 @@ function Cart() {
       maximumFractionDigits: 0,
     }).format(amount)
 
-  const getItemPrice = (item) => toNumber(item.price ?? item.basePrice ?? item.totalPrice)
+  const getItemPrice = (item) => toNumber(item.unit_price ?? item.price ?? item.basePrice ?? item.total_price ?? item.totalPrice)
 
   const handleIncrease = (item) => {
     if (updateQty) {
@@ -109,7 +109,7 @@ function Cart() {
               <div>
                 <h3 className="text-base font-bold text-gray-900">{item.name}</h3>
                 {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
-                  <p className="mt-1 text-sm text-gray-600">Contains: {item.modifiers.join(', ')}</p>
+                  <p className="mt-1 text-sm text-gray-600">Mods: {item.modifiers.map((modifier) => `${modifier.action} #${modifier.ingredient_id} x${modifier.quantity}`).join(', ')}</p>
                 )}
                 {Array.isArray(item.ingredients) && item.ingredients.length > 0 && (
                   <p className="mt-1 text-sm text-gray-600">Contains: {item.ingredients.join(', ')}</p>
