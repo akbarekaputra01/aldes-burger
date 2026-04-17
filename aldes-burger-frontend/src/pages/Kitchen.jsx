@@ -5,52 +5,80 @@ import { ListItemSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
 import api from '../lib/api'
 
-const bunTop = { uid: 'bun-top', ingredientId: null, name: 'Top Bun', type: 'bun', price: 0 }
-const bunBottom = { uid: 'bun-bottom', ingredientId: null, name: 'Bottom Bun', type: 'bun', price: 0 }
+const makeUid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
-const makeUid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-
-const ingredientStyle = {
-  bun: 'bg-aldesYellow/60 border-aldesYellow text-black',
-  ingredient: 'bg-white border-aldesCream text-gray-800',
-}
+const toIngredientInstances = (menuIngredients = []) => menuIngredients.flatMap((ingredient) => {
+  const quantity = ingredient.pivot?.quantity ?? 1
+  return Array.from({ length: quantity }).map((_, index) => ({
+    instance_id: makeUid(),
+    ingredient_id: ingredient.id,
+    ingredient_name: ingredient.name,
+    ingredient_price: ingredient.price ?? 0,
+    source: 'default',
+    baseline_ref: `${ingredient.id}-${index + 1}`,
+  }))
+})
 
 function Kitchen() {
   const navigate = useNavigate()
   const location = useLocation()
   const { addToCart } = useCart()
 
-  const [allMenus, setAllMenus] = useState([])
+  const [menus, setMenus] = useState([])
   const [ingredients, setIngredients] = useState([])
-  const [burgerStack, setBurgerStack] = useState([bunTop, bunBottom])
-  const [draggingPantryIngredientId, setDraggingPantryIngredientId] = useState(null)
-  const [draggingStackLayerUid, setDraggingStackLayerUid] = useState(null)
-  const [dropIndex, setDropIndex] = useState(null)
+  const [burgerStack, setBurgerStack] = useState([])
+  const [baselineStack, setBaselineStack] = useState([])
   const [qty, setQty] = useState(1)
+  const [showQtyConfirm, setShowQtyConfirm] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [draggingData, setDraggingData] = useState(null)
+  const [dropIndex, setDropIndex] = useState(null)
 
   const menuId = location.state?.menuId
+  const incomingMenu = location.state?.menu
 
-  const selectedMenu = useMemo(
-    () => allMenus.find((menu) => menu.id === menuId) ?? allMenus.find((menu) => menu.is_custom) ?? allMenus[0],
-    [allMenus, menuId],
-  )
+  const selectedMenu = useMemo(() => {
+    if (!menus.length) return null
+    if (incomingMenu?.id) {
+      return menus.find((menu) => menu.id === incomingMenu.id) ?? incomingMenu
+    }
+
+    return menus.find((menu) => menu.id === menuId) ?? menus.find((menu) => menu.is_custom) ?? menus[0]
+  }, [incomingMenu, menuId, menus])
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       setIsFetching(true)
       const [menusRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
-      setAllMenus(menusRes.data)
+      setMenus(menusRes.data)
       setIngredients(ingredientsRes.data)
       setIsFetching(false)
     }
 
-    load().catch(() => {
-      setAllMenus([])
-      setIngredients([])
-    }).finally(() => setIsFetching(false))
+    loadData()
+      .catch(() => {
+        setMenus([])
+        setIngredients([])
+      })
+      .finally(() => setIsFetching(false))
   }, [])
+
+  useEffect(() => {
+    if (!selectedMenu) return
+
+    if (selectedMenu.is_custom) {
+      setBaselineStack([])
+      setBurgerStack([])
+      setQty(1)
+      return
+    }
+
+    const initialStack = toIngredientInstances(selectedMenu.ingredients ?? [])
+    setBaselineStack(initialStack)
+    setBurgerStack(initialStack)
+    setQty(1)
+  }, [selectedMenu])
 
   const allowedIngredientIds = useMemo(() => {
     if (!selectedMenu) return []
@@ -62,284 +90,269 @@ function Kitchen() {
     return (selectedMenu.ingredients ?? []).map((ingredient) => ingredient.id)
   }, [ingredients, selectedMenu])
 
-  const visibleIngredients = useMemo(
+  const pantryIngredients = useMemo(
     () => ingredients.filter((ingredient) => allowedIngredientIds.includes(ingredient.id)),
     [allowedIngredientIds, ingredients],
   )
 
-  const ingredientById = useMemo(() => Object.fromEntries(visibleIngredients.map((item) => [item.id, item])), [visibleIngredients])
-
-  useEffect(() => {
-    if (!selectedMenu) return
-
-    if (selectedMenu.is_custom) {
-      setBurgerStack([{ ...bunTop }, { ...bunBottom }])
-      setQty(1)
-      return
-    }
-
-    const defaultLayers = []
-    ;(selectedMenu.ingredients ?? []).forEach((ingredient) => {
-      const quantity = ingredient.pivot?.quantity ?? 1
-      for (let index = 0; index < quantity; index += 1) {
-        defaultLayers.push({
-          uid: makeUid(),
-          ingredientId: ingredient.id,
-          name: ingredient.name,
-          type: 'ingredient',
-          price: ingredient.price ?? 0,
-        })
-      }
-    })
-
-    setBurgerStack([{ ...bunTop }, ...defaultLayers, { ...bunBottom }])
-    setQty(1)
-  }, [selectedMenu?.id])
-
   const layerCounts = useMemo(() => {
-    const map = {}
+    const counts = {}
     burgerStack.forEach((layer) => {
-      if (!layer.ingredientId) return
-      map[layer.ingredientId] = (map[layer.ingredientId] ?? 0) + 1
+      counts[layer.ingredient_id] = (counts[layer.ingredient_id] ?? 0) + 1
     })
-    return map
+    return counts
   }, [burgerStack])
 
-  const defaultCounts = useMemo(() => {
-    const map = {}
-    ;(selectedMenu?.ingredients ?? []).forEach((ingredient) => {
-      map[ingredient.id] = ingredient.pivot?.quantity ?? 1
+  const baseCounts = useMemo(() => {
+    const counts = {}
+    baselineStack.forEach((layer) => {
+      counts[layer.ingredient_id] = (counts[layer.ingredient_id] ?? 0) + 1
     })
-    return map
-  }, [selectedMenu])
+    return counts
+  }, [baselineStack])
 
   const modifiers = useMemo(() => {
-    const ids = new Set([...Object.keys(defaultCounts), ...Object.keys(layerCounts)].map(Number))
+    const keys = new Set([...Object.keys(baseCounts), ...Object.keys(layerCounts)].map(Number))
 
-    return [...ids].flatMap((id) => {
-      const currentCount = layerCounts[id] ?? 0
-      const baseCount = defaultCounts[id] ?? 0
-      const ingredient = ingredientById[id] ?? (selectedMenu?.ingredients ?? []).find((item) => item.id === id)
-      if (!ingredient || currentCount === baseCount) return []
+    return [...keys].flatMap((ingredientId) => {
+      const baseQty = baseCounts[ingredientId] ?? 0
+      const currentQty = layerCounts[ingredientId] ?? 0
+      if (baseQty === currentQty) return []
 
-      if (currentCount > baseCount) {
-        return [{
-          ingredient_id: id,
-          name: ingredient.name,
-          action: 'add',
-          quantity: currentCount - baseCount,
-          price: (ingredient.price ?? 0) * (currentCount - baseCount),
-        }]
+      if (currentQty > baseQty) {
+        return [{ ingredient_id: ingredientId, action: 'add', quantity: currentQty - baseQty }]
       }
 
-      return [{
-        ingredient_id: id,
-        name: ingredient.name,
-        action: 'remove',
-        quantity: baseCount - currentCount,
-        price: 0,
-      }]
+      return [{ ingredient_id: ingredientId, action: 'remove', quantity: baseQty - currentQty }]
     })
-  }, [defaultCounts, ingredientById, layerCounts, selectedMenu])
+  }, [baseCounts, layerCounts])
 
-  const totalPrice = useMemo(() => {
-    const basePrice = selectedMenu?.price ?? 0
-    const addPrice = modifiers.filter((item) => item.action === 'add').reduce((sum, item) => sum + item.price, 0)
-    return (basePrice + addPrice) * qty
-  }, [modifiers, qty, selectedMenu])
+  const baselineOrder = useMemo(
+    () => baselineStack.filter((layer) => layer.source === 'default').map((layer) => layer.baseline_ref),
+    [baselineStack],
+  )
 
-  const insertAtIndex = (nextLayer, index) => {
+  const currentDefaultOrder = useMemo(
+    () => burgerStack.filter((layer) => layer.source === 'default').map((layer) => layer.baseline_ref),
+    [burgerStack],
+  )
+
+  const orderChanged = useMemo(
+    () => baselineOrder.length === currentDefaultOrder.length && baselineOrder.join('|') !== currentDefaultOrder.join('|'),
+    [baselineOrder, currentDefaultOrder],
+  )
+
+  const stackOrderPayload = useMemo(
+    () => burgerStack.map((layer, index) => ({
+      position: index + 1,
+      ingredient_id: layer.ingredient_id,
+      ingredient_name: layer.ingredient_name,
+    })),
+    [burgerStack],
+  )
+
+  const additionalIngredientTotal = useMemo(
+    () => burgerStack
+      .filter((layer) => layer.source === 'added' || selectedMenu?.is_custom)
+      .reduce((sum, layer) => sum + (layer.ingredient_price ?? 0), 0),
+    [burgerStack, selectedMenu?.is_custom],
+  )
+
+  const unitPrice = useMemo(() => {
+    const basePrice = selectedMenu?.is_custom ? 0 : (selectedMenu?.price ?? 0)
+    return basePrice + additionalIngredientTotal
+  }, [additionalIngredientTotal, selectedMenu])
+
+  const totalPrice = unitPrice * qty
+
+  const addIngredientToStack = (ingredient, atIndex = burgerStack.length) => {
+    const newLayer = {
+      instance_id: makeUid(),
+      ingredient_id: ingredient.id,
+      ingredient_name: ingredient.name,
+      ingredient_price: ingredient.price ?? 0,
+      source: 'added',
+      baseline_ref: null,
+    }
+
     setBurgerStack((prev) => {
-      const safeIndex = Math.max(0, Math.min(index, prev.length))
-      const copy = [...prev]
-      copy.splice(safeIndex, 0, nextLayer)
-      return copy
+      const safeIndex = Math.max(0, Math.min(atIndex, prev.length))
+      const next = [...prev]
+      next.splice(safeIndex, 0, newLayer)
+      return next
     })
   }
 
-  const addIngredientToCenter = (ingredient) => {
-    if (!ingredient) return
-
-    insertAtIndex(
-      {
-        uid: makeUid(),
-        ingredientId: ingredient.id,
-        name: ingredient.name,
-        type: 'ingredient',
-        price: ingredient.price ?? 0,
-      },
-      Math.max(1, burgerStack.length - 1),
-    )
+  const removeLayer = (instanceId) => {
+    setBurgerStack((prev) => prev.filter((layer) => layer.instance_id !== instanceId))
   }
 
-  const adjustIngredientCount = (ingredient, nextCount) => {
-    if (!ingredient || nextCount < 0) return
+  const moveLayer = (sourceInstanceId, targetIndex) => {
+    setBurgerStack((prev) => {
+      const sourceIndex = prev.findIndex((layer) => layer.instance_id === sourceInstanceId)
+      if (sourceIndex < 0) return prev
 
-    const currentCount = layerCounts[ingredient.id] ?? 0
-    if (nextCount === currentCount) return
+      const next = [...prev]
+      const [moved] = next.splice(sourceIndex, 1)
+      const normalizedTarget = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+      const safeIndex = Math.max(0, Math.min(normalizedTarget, next.length))
+      next.splice(safeIndex, 0, moved)
+      return next
+    })
+  }
 
-    if (nextCount > currentCount) {
-      const toAdd = nextCount - currentCount
-      for (let idx = 0; idx < toAdd; idx += 1) {
-        addIngredientToCenter(ingredient)
-      }
+  const handleDropAtIndex = (index) => {
+    if (!draggingData) return
+
+    if (draggingData.type === 'pantry') {
+      addIngredientToStack(draggingData.ingredient, index)
+    }
+
+    if (draggingData.type === 'stack') {
+      moveLayer(draggingData.instance_id, index)
+    }
+
+    setDraggingData(null)
+    setDropIndex(null)
+  }
+
+  const handleQtyIncrease = () => {
+    if (qty === 1) {
+      setShowQtyConfirm(true)
       return
     }
 
-    const toRemove = currentCount - nextCount
-    let removed = 0
-    setBurgerStack((prev) => prev.filter((layer) => {
-      if (removed >= toRemove) return true
-      if (layer.ingredientId !== ingredient.id) return true
-      removed += 1
-      return false
-    }))
+    setQty((prev) => prev + 1)
   }
 
-  const handleDropOnStack = (index) => {
-    if (draggingPantryIngredientId) {
-      const ingredient = visibleIngredients.find((item) => String(item.id) === draggingPantryIngredientId)
-      if (ingredient) {
-        insertAtIndex({ uid: makeUid(), ingredientId: ingredient.id, name: ingredient.name, type: 'ingredient', price: ingredient.price ?? 0 }, index)
-      }
+  const handleQtyConfirm = (confirmed) => {
+    setShowQtyConfirm(false)
+    if (confirmed) {
+      setQty(2)
     }
-
-    if (draggingStackLayerUid) {
-      setBurgerStack((prev) => {
-        const sourceIndex = prev.findIndex((layer) => layer.uid === draggingStackLayerUid)
-        if (sourceIndex < 0) return prev
-        const copy = [...prev]
-        const [moved] = copy.splice(sourceIndex, 1)
-        const targetIndex = sourceIndex < index ? index - 1 : index
-        copy.splice(targetIndex, 0, moved)
-        return copy
-      })
-    }
-
-    setDraggingPantryIngredientId(null)
-    setDraggingStackLayerUid(null)
-    setDropIndex(null)
   }
 
   const handleAddToCart = () => {
     if (!selectedMenu) return
 
-    setIsLoading(true)
-
-    addToCart({
-      id: `custom-${selectedMenu.id}-${Date.now()}`,
+    const payload = {
       menu_id: selectedMenu.id,
       name: selectedMenu.name,
-      basePrice: selectedMenu.price,
-      price: totalPrice / qty,
       qty,
+      base_price: selectedMenu.is_custom ? 0 : (selectedMenu.price ?? 0),
+      unit_price: unitPrice,
+      total_price: totalPrice,
       modifiers,
-      ingredients: burgerStack.map((layer) => layer.name),
-    })
+      stack_order: stackOrderPayload,
+      ingredients: burgerStack.map((layer) => layer.ingredient_name),
+      reorder_only: orderChanged && modifiers.length === 0,
+      is_customized: selectedMenu.is_custom || modifiers.length > 0 || orderChanged,
+    }
 
+    setIsAddingToCart(true)
+    addToCart(payload)
     navigate('/cart')
-    setTimeout(() => setIsLoading(false), 250)
+    setTimeout(() => setIsAddingToCart(false), 200)
   }
+
+  const canAddToCart = selectedMenu?.is_custom ? burgerStack.length > 0 : true
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
       <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 lg:grid-cols-12">
         <article className="rounded-3xl bg-white p-6 shadow-md lg:col-span-7 lg:p-8">
           <p className="inline-flex rounded-full bg-aldesYellow px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black">Gamified Kitchen</p>
-          <h1 className="mt-3 text-2xl font-black text-gray-900">{selectedMenu?.name ?? 'Build your burger'}</h1>
-          <p className="mt-2 text-sm text-gray-600">Drag and drop ingredients, or use the +/- buttons for quick adjustments.</p>
+          <h1 className="mt-3 text-2xl font-black text-aldesRed">{selectedMenu?.name ?? 'Build your burger'}</h1>
+          <p className="mt-2 text-sm text-aldesRed/80">Drag ingredients from pantry and arrange your exact stack order.</p>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <div className="rounded-3xl border border-aldesCream bg-aldesCream/40 p-5">
-              <h2 className="mb-3 text-lg font-black text-aldesRed">Burger Visual</h2>
-              <div
-                className="space-y-2 rounded-2xl border border-dashed border-aldesCream bg-white p-3"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleDropOnStack(burgerStack.length)}
-              >
-                {burgerStack.map((layer, index) => (
-                  <div key={layer.uid}>
-                    <div
-                      className={`h-2 rounded-full transition ${dropIndex === index ? 'bg-aldesYellow' : 'bg-transparent'}`}
-                      onDragOver={(event) => {
-                        event.preventDefault()
-                        setDropIndex(index)
-                      }}
-                      onDrop={() => handleDropOnStack(index)}
-                    />
+              <h2 className="mb-3 text-lg font-black text-aldesRed">Burger Stack</h2>
+              <div className="space-y-2 rounded-2xl border border-dashed border-aldesCream bg-white p-3">
+                <div
+                  className={`h-2 rounded-full ${dropIndex === 0 ? 'bg-aldesYellow' : 'bg-transparent'}`}
+                  onDragOver={(event) => {
+                    event.preventDefault()
+                    setDropIndex(0)
+                  }}
+                  onDrop={() => handleDropAtIndex(0)}
+                />
 
-                    <div
-                      draggable
-                      onDragStart={() => setDraggingStackLayerUid(layer.uid)}
-                      onDragEnd={() => {
-                        setDraggingStackLayerUid(null)
-                        setDropIndex(null)
-                      }}
-                      className={`flex cursor-grab items-center justify-between rounded-2xl border px-3 py-2 ${ingredientStyle[layer.type]}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="h-4 w-4 text-aldesRed" />
-                        <p className="font-semibold">{layer.name}</p>
-                      </div>
-                      {layer.ingredientId ? (
+                {burgerStack.length === 0 ? (
+                  <div
+                    className="rounded-2xl border border-aldesCream bg-aldesCream p-3"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => handleDropAtIndex(0)}
+                  >
+                    <p className="text-sm font-semibold text-aldesRed/70">Drop ingredients here to start building.</p>
+                  </div>
+                ) : (
+                  burgerStack.map((layer, index) => (
+                    <div key={layer.instance_id}>
+                      <div
+                        draggable
+                        onDragStart={() => setDraggingData({ type: 'stack', instance_id: layer.instance_id })}
+                        onDragEnd={() => {
+                          setDraggingData(null)
+                          setDropIndex(null)
+                        }}
+                        className="flex cursor-pointer items-center justify-between rounded-2xl border border-aldesCream bg-white px-3 py-2 text-aldesRed"
+                      >
+                        <div className="flex items-center gap-2">
+                          <GripVertical className="h-4 w-4" />
+                          <p className="font-semibold">{layer.ingredient_name}</p>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => setBurgerStack((prev) => prev.filter((item) => item.uid !== layer.uid))}
-                          className="cursor-pointer rounded-xl border border-aldesRed/25 bg-white/80 p-1.5 text-aldesRed transition hover:bg-aldesCream"
+                          onClick={() => removeLayer(layer.instance_id)}
+                          className="cursor-pointer rounded-xl border border-aldesRed/40 bg-aldesCream p-1.5 text-aldesRed"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      ) : null}
+                      </div>
+
+                      <div
+                        className={`h-2 rounded-full ${dropIndex === index + 1 ? 'bg-aldesYellow' : 'bg-transparent'}`}
+                        onDragOver={(event) => {
+                          event.preventDefault()
+                          setDropIndex(index + 1)
+                        }}
+                        onDrop={() => handleDropAtIndex(index + 1)}
+                      />
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
             <aside className="rounded-3xl bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-black text-aldesRed">Ingredients & Qty</h2>
+              <h2 className="text-xl font-black text-aldesRed">Pantry</h2>
               <div className="mt-4 grid max-h-[420px] grid-cols-1 gap-3 overflow-y-auto pr-1">
                 {isFetching
                   ? Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
-                  : visibleIngredients.map((ingredient) => (
+                  : pantryIngredients.map((ingredient) => (
                     <div
                       key={ingredient.id}
                       draggable
-                      onDragStart={() => setDraggingPantryIngredientId(String(ingredient.id))}
-                      onDragEnd={() => setDraggingPantryIngredientId(null)}
-                      className="cursor-grab rounded-3xl border border-aldesCream bg-white p-4 text-left transition hover:border-aldesYellow hover:bg-aldesCream/30"
+                      onDragStart={() => setDraggingData({ type: 'pantry', ingredient })}
+                      onDragEnd={() => setDraggingData(null)}
+                      className="cursor-pointer rounded-3xl border border-aldesCream bg-white p-4 transition hover:border-aldesYellow hover:bg-aldesCream/50"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-bold text-gray-900">{ingredient.name}</p>
-                          <p className="mt-1 text-sm font-semibold text-aldesRed">Rp {ingredient.price.toLocaleString('id-ID')}</p>
+                          <p className="font-bold text-aldesRed">{ingredient.name}</p>
+                          <p className="mt-1 text-sm font-semibold text-aldesRed">Rp {(ingredient.price ?? 0).toLocaleString('id-ID')}</p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => addIngredientToCenter(ingredient)}
-                          className="cursor-pointer rounded-xl bg-aldesRed px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110"
+                          onClick={() => addIngredientToStack(ingredient)}
+                          className="cursor-pointer rounded-xl bg-aldesRed px-3 py-1.5 text-xs font-bold text-white"
                         >
                           Add
                         </button>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => adjustIngredientCount(ingredient, Math.max(0, (layerCounts[ingredient.id] ?? 0) - 1))}
-                          className="cursor-pointer rounded-lg border border-aldesCream bg-aldesCream/40 p-1.5 text-aldesRed"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="min-w-8 text-center text-sm font-black text-aldesRed">x{layerCounts[ingredient.id] ?? 0}</span>
-                        <button
-                          type="button"
-                          onClick={() => adjustIngredientCount(ingredient, (layerCounts[ingredient.id] ?? 0) + 1)}
-                          className="cursor-pointer rounded-lg border border-aldesCream bg-aldesCream/40 p-1.5 text-aldesRed"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <p className="mt-3 text-right text-sm font-semibold text-aldesRed/70">In stack: x{layerCounts[ingredient.id] ?? 0}</p>
                     </div>
                   ))}
               </div>
@@ -351,28 +364,54 @@ function Kitchen() {
           <h2 className="text-xl font-black text-aldesRed">Order Config</h2>
 
           <div className="mt-4 space-y-2 rounded-2xl bg-aldesCream p-4 text-sm">
-            {modifiers.length === 0 ? <p className="font-medium text-gray-700">No modifier changes yet.</p> : modifiers.map((modifier) => (
-              <p key={`${modifier.action}-${modifier.ingredient_id}`} className="text-gray-800">{modifier.action.toUpperCase()} {modifier.name} x{modifier.quantity}</p>
-            ))}
+            {modifiers.length === 0 ? (
+              <p className="font-medium text-aldesRed/80">No add/remove modifiers yet.</p>
+            ) : (
+              modifiers.map((modifier) => (
+                <p key={`${modifier.action}-${modifier.ingredient_id}`} className="text-aldesRed">
+                  {modifier.action.toUpperCase()} ingredient #{modifier.ingredient_id} x{modifier.quantity}
+                </p>
+              ))
+            )}
+            {orderChanged ? <p className="font-semibold text-aldesRed">REORDER: stack layer order changed.</p> : null}
           </div>
 
           <div className="mt-6 rounded-2xl border border-aldesCream bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <p className="font-semibold text-gray-800">Burger Quantity</p>
+              <p className="font-semibold text-aldesRed">Burger Quantity</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setQty((prev) => Math.max(1, prev - 1))} className="cursor-pointer rounded-xl border border-aldesCream bg-aldesCream/40 p-2 text-aldesRed"><Minus className="h-4 w-4" /></button>
-                <span className="min-w-8 text-center text-lg font-bold text-gray-900">{qty}</span>
-                <button type="button" onClick={() => setQty((prev) => prev + 1)} className="cursor-pointer rounded-xl border border-aldesCream bg-aldesCream/40 p-2 text-aldesRed"><Plus className="h-4 w-4" /></button>
+                <span className="min-w-8 text-center text-lg font-bold text-aldesRed">{qty}</span>
+                <button type="button" onClick={handleQtyIncrease} className="cursor-pointer rounded-xl border border-aldesCream bg-aldesCream/40 p-2 text-aldesRed"><Plus className="h-4 w-4" /></button>
               </div>
             </div>
 
-            <button type="button" disabled={isLoading} onClick={handleAddToCart} className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed py-3 text-lg font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <button type="button" disabled={isAddingToCart || !canAddToCart} onClick={handleAddToCart} className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed py-3 text-lg font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
+              {isAddingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add to Cart · Rp {totalPrice.toLocaleString('id-ID')}
             </button>
           </div>
         </aside>
       </section>
+
+      {showQtyConfirm ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-aldesRed/30 px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
+            <h3 className="text-lg font-black text-aldesRed">Duplicate this exact burger?</h3>
+            <p className="mt-2 text-sm text-aldesRed/80">
+              Are you sure you want to create the exact same version for the next burger?
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button type="button" onClick={() => handleQtyConfirm(true)} className="cursor-pointer flex-1 rounded-2xl bg-aldesRed px-4 py-2.5 font-semibold text-white">
+                Yes
+              </button>
+              <button type="button" onClick={() => handleQtyConfirm(false)} className="cursor-pointer flex-1 rounded-2xl border border-aldesCream bg-aldesCream px-4 py-2.5 font-semibold text-aldesRed">
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

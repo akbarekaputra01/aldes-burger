@@ -2,6 +2,7 @@ import { ChevronRight, Flame } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
+import { useCart } from '../context/CartContext'
 import api from '../lib/api'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -41,6 +42,8 @@ const bannerSlides = [
 
 function Menus() {
   const navigate = useNavigate()
+  const { addToCart } = useCart()
+
   const [menus, setMenus] = useState([])
   const [isFetching, setIsFetching] = useState(true)
   const [activeBannerIndex, setActiveBannerIndex] = useState(0)
@@ -78,12 +81,33 @@ function Menus() {
     [menusBySection],
   )
 
-  const goToKitchen = (item) => {
-    navigate('/kitchen', {
-      state: {
-        menuId: item.id,
-        menu: item,
-      },
+  const handleMenuAdd = (item) => {
+    const sectionKey = resolveSectionKey(item)
+
+    if (sectionKey === 'burgers') {
+      navigate('/kitchen', {
+        state: {
+          menuId: item.id,
+          menu: item,
+          category: sectionKey,
+        },
+      })
+      return
+    }
+
+    addToCart({
+      id: `menu-${item.id}`,
+      menu_id: item.id,
+      name: item.name,
+      qty: 1,
+      base_price: item.price ?? 0,
+      unit_price: item.price ?? 0,
+      total_price: item.price ?? 0,
+      modifiers: [],
+      stack_order: [],
+      ingredients: [],
+      category: sectionKey,
+      is_customized: false,
     })
   }
 
@@ -154,7 +178,7 @@ function Menus() {
                 <article
                   key={item.id}
                   className={`overflow-hidden rounded-3xl bg-white shadow-sm ${
-                    item.is_custom ? 'border-2 border-aldesYellow' : 'border border-transparent'
+                    item.is_custom ? 'border-2 border-aldesYellow' : 'border border-aldesCream'
                   }`}
                 >
                   <div className="h-40 bg-aldesCream" />
@@ -162,19 +186,21 @@ function Menus() {
                     <div className={`mb-3 inline-flex items-center gap-1 rounded-2xl px-2 py-1 text-xs font-bold ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-aldesCream text-aldesRed'}`}>
                       {item.is_custom ? <><Flame className="h-3.5 w-3.5" /> Kitchen Route</> : 'Signature Menu'}
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
-                    <p className="mt-2 text-sm text-gray-600">{item.description}</p>
+                    <h3 className="text-lg font-bold text-aldesRed">{item.name}</h3>
+                    <p className="mt-2 text-sm text-aldesRed/80">{item.description}</p>
                     <p className="mt-3 text-base font-semibold text-aldesRed">{currencyFormatter.format(item.price ?? 0)}</p>
                     <button
                       type="button"
-                      onClick={() => goToKitchen(item)}
+                      onClick={() => handleMenuAdd(item)}
                       className={`cursor-pointer mt-4 flex w-full items-center justify-center gap-1 rounded-2xl px-4 py-2 font-semibold transition ${
-                        item.is_custom
-                          ? 'bg-aldesYellow text-black hover:brightness-95'
-                          : 'bg-aldesRed text-white hover:brightness-110'
+                        section.key === 'burgers'
+                          ? item.is_custom
+                            ? 'bg-aldesYellow text-black hover:brightness-95'
+                            : 'bg-aldesRed text-white hover:brightness-110'
+                          : 'bg-aldesYellow text-black hover:brightness-95'
                       }`}
                     >
-                      {item.is_custom ? 'Customize' : 'Add'}
+                      {section.key === 'burgers' ? (item.is_custom ? 'Customize' : 'Add') : 'Add'}
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
