@@ -1,5 +1,5 @@
-import { Flame } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { ChevronRight, Flame } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
 import api from '../lib/api'
@@ -33,10 +33,17 @@ const resolveSectionKey = (menu) => {
   return 'burgers'
 }
 
+const bannerSlides = [
+  { title: '25% OFF FOR NEW CUSTOMERS!', subtitle: 'Use code: ALDES25' },
+  { title: 'BUY 2 GET 1 SIDES', subtitle: 'Only this weekend at Aldes Burger.' },
+  { title: 'FREE DELIVERY', subtitle: 'For total checkout above Rp 150.000.' },
+]
+
 function Menus() {
   const navigate = useNavigate()
   const [menus, setMenus] = useState([])
   const [isFetching, setIsFetching] = useState(true)
+  const bannerRef = useRef(null)
 
   useEffect(() => {
     const loadMenus = async () => {
@@ -65,6 +72,11 @@ function Menus() {
     return grouped
   }, [menus])
 
+  const visibleSections = useMemo(
+    () => sectionDefinitions.filter((section) => menusBySection[section.key]?.length > 0),
+    [menusBySection],
+  )
+
   const goToKitchen = (item) => {
     navigate('/kitchen', {
       state: {
@@ -74,21 +86,49 @@ function Menus() {
     })
   }
 
+  const scrollBanner = (index) => {
+    if (!bannerRef.current) return
+    const viewportWidth = bannerRef.current.clientWidth
+    bannerRef.current.scrollTo({ left: viewportWidth * index, behavior: 'smooth' })
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 bg-aldesCream px-4 py-6 sm:px-6 lg:px-8">
-      <section className="relative overflow-hidden rounded-3xl bg-aldesRed p-8 text-white shadow-sm">
-        <p className="text-2xl font-black sm:text-3xl">25% OFF FOR NEW CUSTOMERS!</p>
-        <p className="mt-2 text-sm sm:text-base">Use code: ALDES25</p>
+      <section className="space-y-3">
+        <div ref={bannerRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
+          {bannerSlides.map((slide) => (
+            <article key={slide.title} className="min-w-full snap-center rounded-3xl bg-aldesRed p-8 text-white shadow-sm">
+              <p className="text-2xl font-black sm:text-3xl">{slide.title}</p>
+              <p className="mt-2 text-sm sm:text-base">{slide.subtitle}</p>
+            </article>
+          ))}
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          {bannerSlides.map((slide, index) => (
+            <button
+              key={slide.title}
+              type="button"
+              onClick={() => scrollBanner(index)}
+              className="h-2.5 w-8 rounded-full bg-aldesYellow/70 transition hover:bg-aldesYellow cursor-pointer"
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
       </section>
 
-      {sectionDefinitions.map((section) => (
-        <section key={section.key}>
-          <h2 className="mb-4 text-2xl font-extrabold text-aldesRed">{section.label}</h2>
-          {isFetching ? (
+      {isFetching ? (
+        sectionDefinitions.map((section) => (
+          <section key={section.key}>
+            <h2 className="mb-4 text-2xl font-extrabold text-aldesRed">{section.label}</h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               {Array.from({ length: 3 }).map((_, index) => <MenuCardSkeleton key={`${section.key}-skeleton-${index}`} />)}
             </div>
-          ) : menusBySection[section.key].length > 0 ? (
+          </section>
+        ))
+      ) : (
+        visibleSections.map((section) => (
+          <section key={section.key}>
+            <h2 className="mb-4 text-2xl font-extrabold text-aldesRed">{section.label}</h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               {menusBySection[section.key].map((item) => (
                 <article
@@ -108,25 +148,22 @@ function Menus() {
                     <button
                       type="button"
                       onClick={() => goToKitchen(item)}
-                      className={`mt-4 w-full rounded-2xl px-4 py-2 font-semibold transition ${
+                      className={`cursor-pointer mt-4 flex w-full items-center justify-center gap-1 rounded-2xl px-4 py-2 font-semibold transition ${
                         item.is_custom
                           ? 'bg-aldesYellow text-black hover:brightness-95'
                           : 'bg-aldesRed text-white hover:brightness-110'
                       }`}
                     >
                       {item.is_custom ? 'Customize' : 'Add'}
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 </article>
               ))}
             </div>
-          ) : (
-            <div className="rounded-3xl bg-white p-6 text-sm text-gray-500 shadow-sm">
-              No items available in {section.label.toLowerCase()}.
-            </div>
-          )}
-        </section>
-      ))}
+          </section>
+        ))
+      )}
     </main>
   )
 }

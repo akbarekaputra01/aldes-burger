@@ -1,4 +1,4 @@
-import { Banknote, Building2, CircleDollarSign, CreditCard, Loader2, MapPin } from 'lucide-react'
+import { Banknote, Building2, CheckCircle2, CircleDollarSign, CreditCard, Loader2, MapPin } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
@@ -20,6 +20,7 @@ function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedPaymentId, setSelectedPaymentId] = useState(paymentOptions[0].id)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [orderSuccess, setOrderSuccess] = useState(null)
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -30,6 +31,16 @@ function Checkout() {
 
     loadAddresses().catch(() => setAddresses([]))
   }, [])
+
+  useEffect(() => {
+    if (!orderSuccess?.id) return undefined
+
+    const timer = setTimeout(() => {
+      navigate('/transactions')
+    }, 1800)
+
+    return () => clearTimeout(timer)
+  }, [navigate, orderSuccess])
 
   const checkoutItems = cart
 
@@ -44,6 +55,8 @@ function Checkout() {
   }, [checkoutItems])
 
   const placeOrder = async () => {
+    if (!selectedAddressId || checkoutItems.length === 0) return
+
     setIsPlacingOrder(true)
     const payload = {
       address_id: selectedAddressId,
@@ -58,7 +71,7 @@ function Checkout() {
     try {
       const { data } = await api.post('/checkout', payload)
       clearCart()
-      navigate(`/transactions/${data.id}`)
+      setOrderSuccess({ id: data.id })
     } finally {
       setIsPlacingOrder(false)
     }
@@ -66,6 +79,25 @@ function Checkout() {
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-6">
+      {orderSuccess ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-aldesYellow/40 text-aldesRed">
+              <CheckCircle2 className="h-7 w-7" />
+            </div>
+            <h2 className="mt-4 text-2xl font-black text-aldesRed">Order Placed Successfully!</h2>
+            <p className="mt-2 text-sm text-gray-600">Your order is being processed. Redirecting you to Transactions...</p>
+            <button
+              type="button"
+              onClick={() => navigate('/transactions')}
+              className="mt-5 rounded-2xl bg-aldesRed px-5 py-2.5 font-semibold text-white transition hover:brightness-110 cursor-pointer"
+            >
+              Go Now
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
           <article className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
@@ -76,7 +108,7 @@ function Checkout() {
                   key={address.id}
                   type="button"
                   onClick={() => setSelectedAddressId(address.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${selectedAddressId === address.id ? 'border-aldesRed bg-aldesCream' : 'border-gray-200 hover:border-aldesYellow'}`}
+                  className={`cursor-pointer rounded-2xl border p-4 text-left transition ${selectedAddressId === address.id ? 'border-aldesRed bg-aldesCream' : 'border-gray-200 hover:border-aldesYellow'}`}
                 >
                   <p className="font-semibold text-gray-800">Address #{address.id}</p>
                   <p className="mt-1 text-sm text-gray-600">{address.address}</p>
@@ -95,7 +127,7 @@ function Checkout() {
                     key={payment.id}
                     type="button"
                     onClick={() => setSelectedPaymentId(payment.id)}
-                    className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${selectedPaymentId === payment.id ? 'border-aldesRed bg-aldesCream text-aldesRed' : 'border-gray-200 text-gray-700 hover:border-aldesYellow'}`}
+                    className={`cursor-pointer flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${selectedPaymentId === payment.id ? 'border-aldesRed bg-aldesCream text-aldesRed' : 'border-gray-200 text-gray-700 hover:border-aldesYellow'}`}
                   >
                     <Icon className="h-4 w-4" />
                     {payment.label}
@@ -123,7 +155,12 @@ function Checkout() {
             <p className="flex justify-between text-base font-bold text-gray-900"><span>Total</span><span>{toIDR(summary.total)}</span></p>
           </div>
 
-          <button type="button" disabled={isPlacingOrder} onClick={placeOrder} className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed px-4 py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
+          <button
+            type="button"
+            disabled={isPlacingOrder || !selectedAddressId || checkoutItems.length === 0}
+            onClick={placeOrder}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed px-4 py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+          >
             {isPlacingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Place Order
           </button>
