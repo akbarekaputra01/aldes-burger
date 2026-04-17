@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { User, Mail, Phone, MapPin, Edit, Trash2, Plus, LogOut } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
 
 function Profile() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [user, setUser] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [error, setError] = useState('')
@@ -38,7 +39,13 @@ function Profile() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [location.state?.refreshAddressesAt])
+
+  const formatAddress = (rawAddress = '') => {
+    const [mainAddress = '', detail = '', coords = ''] = rawAddress.split('||')
+    const details = [mainAddress, detail].filter(Boolean).join(' • ')
+    return coords ? `${details} (${coords})` : details || rawAddress
+  }
 
   const handleDeleteAddress = async (addressId) => {
     try {
@@ -99,7 +106,7 @@ function Profile() {
               >
                 <div className="flex items-start gap-2 text-aldesRed">
                   <MapPin className="w-4 h-4 text-aldesRed mt-0.5" />
-                  <span>{address.address}</span>
+                  <span>{formatAddress(address.address)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button

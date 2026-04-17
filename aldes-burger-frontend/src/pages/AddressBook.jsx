@@ -80,16 +80,22 @@ function AddressBook() {
         await api.post('/addresses', { address })
       }
 
-      navigate('/profile')
+      navigate('/profile', {
+        state: {
+          refreshAddressesAt: Date.now(),
+        },
+      })
     } catch {
       setError('Unable to save address. Please try again.')
     }
   }
 
-  const handleMapClick = (event) => {
+  const handleMapPick = (event) => {
     const bounds = event.currentTarget.getBoundingClientRect()
-    const xPercent = (event.clientX - bounds.left) / bounds.width
-    const yPercent = (event.clientY - bounds.top) / bounds.height
+    const pointerX = event.clientX ?? event.nativeEvent?.clientX ?? 0
+    const pointerY = event.clientY ?? event.nativeEvent?.clientY ?? 0
+    const xPercent = Math.min(1, Math.max(0, (pointerX - bounds.left) / bounds.width))
+    const yPercent = Math.min(1, Math.max(0, (pointerY - bounds.top) / bounds.height))
 
     const lng = MAP_BOUNDS.west + (MAP_BOUNDS.east - MAP_BOUNDS.west) * xPercent
     const lat = MAP_BOUNDS.north - (MAP_BOUNDS.north - MAP_BOUNDS.south) * yPercent
@@ -130,7 +136,8 @@ function AddressBook() {
 
           <button
             type="button"
-            onClick={handleMapClick}
+            onClick={handleMapPick}
+            onPointerDown={handleMapPick}
             className="relative block h-72 w-full cursor-pointer overflow-hidden rounded-3xl border border-aldesRed/20 bg-aldesCream"
             title="Click anywhere to pin your location"
           >
