@@ -25,12 +25,14 @@ export function CartProvider({ children }) {
   }
 
   const removeFromCart = (id) => {
-    setCart((prev) =>
-      prev
-        .map((item) => (item.id === id ? { ...item, qty: item.qty - 1 } : item))
-        .filter((item) => item.qty > 0),
-    )
+    setCart((prev) => prev.filter((item) => item.id !== id))
   }
+
+  const updateQty = (id, qty) => {
+    setCart((prev) => prev.map((item) => (item.id === id ? { ...item, qty: Math.max(1, qty) } : item)))
+  }
+
+  const clearCart = () => setCart([])
 
   const value = useMemo(
     () => ({
@@ -38,6 +40,8 @@ export function CartProvider({ children }) {
       cartCount,
       addToCart,
       removeFromCart,
+      updateQty,
+      clearCart,
     }),
     [cart, cartCount],
   )

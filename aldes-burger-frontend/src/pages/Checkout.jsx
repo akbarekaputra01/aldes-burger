@@ -1,11 +1,8 @@
 import { Banknote, Building2, CircleDollarSign, CreditCard, MapPin } from 'lucide-react'
-import { useMemo, useState } from 'react'
-
-const addressOptions = [
-  { id: 'home', label: 'Home', detail: 'Jl. Sudirman No. 123, Jakarta' },
-  { id: 'office', label: 'Office', detail: 'Wisma Aldes, Lt. 12, Kuningan, Jakarta' },
-  { id: 'parents', label: 'Parents', detail: 'Jl. Merdeka No. 8, Bandung' },
-]
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
+import api from '../lib/api'
 
 const paymentOptions = [
   { id: 'cash', label: 'Cash', icon: Banknote },
@@ -13,46 +10,53 @@ const paymentOptions = [
   { id: 'bank_transfer', label: 'Bank Transfer', icon: Building2 },
 ]
 
-const checkoutItems = [
-  {
-    id: 'itm-1',
-    name: 'Double Beef Burger',
-    qty: 1,
-    basePrice: 55000,
-    modifiers: [
-      { type: 'ADD', name: 'Extra Cheese', price: 5000 },
-      { type: 'REMOVE', name: 'Tomato', price: 0 },
-    ],
-  },
-  {
-    id: 'itm-2',
-    name: 'Crispy Chicken Burger',
-    qty: 2,
-    basePrice: 45000,
-    modifiers: [{ type: 'REMOVE', name: 'Onion', price: 0 }],
-  },
-]
-
 const toIDR = (price) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
 
 function Checkout() {
-  const [selectedAddressId, setSelectedAddressId] = useState(addressOptions[0].id)
+  const navigate = useNavigate()
+  const { cart, clearCart } = useCart()
+  const [addresses, setAddresses] = useState([])
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedPaymentId, setSelectedPaymentId] = useState(paymentOptions[0].id)
 
+  useEffect(() => {
+    const loadAddresses = async () => {
+      const { data } = await api.get('/addresses')
+      setAddresses(data)
+      setSelectedAddressId(data[0]?.id ?? null)
+    }
+
+    loadAddresses().catch(() => setAddresses([]))
+  }, [])
+
+  const checkoutItems = cart
+
   const summary = useMemo(() => {
-    const base = checkoutItems.reduce((total, item) => total + item.basePrice * item.qty, 0)
+    const base = checkoutItems.reduce((total, item) => total + (item.basePrice ?? item.price) * item.qty, 0)
     const modifierAdditions = checkoutItems.reduce(
-      (total, item) => total + item.modifiers.filter((mod) => mod.type === 'ADD').reduce((sum, mod) => sum + mod.price, 0) * item.qty,
+      (total, item) => total + (item.modifiers ?? []).filter((mod) => mod.action === 'add').reduce((sum, mod) => sum + (mod.price ?? 0), 0) * item.qty,
       0,
     )
 
-    return {
-      base,
-      modifierAdditions,
-      total: base + modifierAdditions,
+    return { base, modifierAdditions, total: base + modifierAdditions }
+  }, [checkoutItems])
+
+  const placeOrder = async () => {
+    const payload = {
+      address_id: selectedAddressId,
+      payment_method: selectedPaymentId,
+      items: checkoutItems.map((item) => ({
+        menu_id: item.menu_id,
+        quantity: item.qty,
+        modifiers: (item.modifiers ?? []).map((modifier) => ({ ingredient_id: modifier.ingredient_id, action: modifier.action })),
+      })),
     }
-  }, [])
+
+    const { data } = await api.post('/checkout', payload)
+    clearCart()
+    navigate(`/transactions/${data.id}`)
+  }
 
   return (
     <main className="min-h-screen bg-orange-50 px-4 py-6">
@@ -61,15 +65,15 @@ function Checkout() {
           <article className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-800"><MapPin className="h-5 w-5 text-orange-500" />Select Address</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              {addressOptions.map((address) => (
+              {addresses.map((address) => (
                 <button
                   key={address.id}
                   type="button"
                   onClick={() => setSelectedAddressId(address.id)}
                   className={`rounded-2xl border p-4 text-left transition ${selectedAddressId === address.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
                 >
-                  <p className="font-semibold text-gray-800">{address.label}</p>
-                  <p className="mt-1 text-sm text-gray-600">{address.detail}</p>
+                  <p className="font-semibold text-gray-800">Address #{address.id}</p>
+                  <p className="mt-1 text-sm text-gray-600">{address.address}</p>
                 </button>
               ))}
             </div>
@@ -101,20 +105,8 @@ function Checkout() {
           <div className="mt-4 space-y-4">
             {checkoutItems.map((item) => (
               <div key={item.id} className="rounded-2xl bg-orange-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-800">{item.qty}x {item.name}</p>
-                    <p className="text-sm text-gray-600">Base: {toIDR(item.basePrice)}</p>
-                  </div>
-                </div>
-                <ul className="mt-2 space-y-1 text-sm text-gray-600">
-                  {item.modifiers.map((mod) => (
-                    <li key={`${item.id}-${mod.name}`} className="flex items-center justify-between">
-                      <span>{mod.type === 'ADD' ? `Extra ${mod.name.replace('Extra ', '')}` : `No ${mod.name}`}</span>
-                      <span>{mod.price > 0 ? `+ ${toIDR(mod.price)}` : '-'}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="font-semibold text-gray-800">{item.qty}x {item.name}</p>
+                <p className="text-sm text-gray-600">Base: {toIDR(item.basePrice ?? item.price)}</p>
               </div>
             ))}
           </div>
@@ -125,7 +117,7 @@ function Checkout() {
             <p className="flex justify-between text-base font-bold text-gray-900"><span>Total</span><span>{toIDR(summary.total)}</span></p>
           </div>
 
-          <button type="button" className="mt-5 w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white transition hover:bg-orange-600">
+          <button type="button" onClick={placeOrder} className="mt-5 w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white transition hover:bg-orange-600">
             Place Order
           </button>
         </aside>

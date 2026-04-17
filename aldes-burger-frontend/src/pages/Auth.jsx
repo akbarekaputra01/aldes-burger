@@ -1,9 +1,32 @@
 import { LockKeyhole, Mail, UtensilsCrossed } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import api from '../lib/api'
+import { setAuthSession } from '../utils/auth'
 
 function Auth() {
-  const handleSubmit = (event) => {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setError('')
+
+    try {
+      const { data } = await api.post('/login', form)
+      setAuthSession(data)
+
+      const userResponse = await api.get('/user', {
+        headers: { Authorization: `Bearer ${data.token}` },
+      })
+      const user = userResponse.data
+      setAuthSession({ user })
+
+      navigate(user.role === 'admin' ? '/admin' : '/menus')
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Unable to login. Please try again.')
+    }
   }
 
   return (
@@ -20,13 +43,14 @@ function Auth() {
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Mail className="h-4 w-4" />Email</span>
-            <input type="email" placeholder="Enter your email" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 text-gray-800 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+            <input type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} placeholder="Enter your email" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 text-gray-800 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Password</span>
-            <input type="password" placeholder="Enter your password" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 text-gray-800 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
+            <input type="password" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} placeholder="Enter your password" required className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 text-gray-800 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" />
           </label>
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button type="submit" className="w-full rounded-2xl bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700">
             Login to Aldes Burger

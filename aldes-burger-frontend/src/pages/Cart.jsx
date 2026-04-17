@@ -60,7 +60,7 @@ function Cart() {
   }
 
   const handleCheckout = () => {
-    alert('Redirecting to Payment Gateway...')
+    navigate('/checkout')
   }
 
   const isCartEmpty = !Array.isArray(cart) || cart.length === 0
