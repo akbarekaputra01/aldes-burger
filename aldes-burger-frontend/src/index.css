@@ -136,3 +136,11 @@ body {
   background-position: 0 0, 0 14px, 14px -14px, -14px 0;
   background-color: #d52518;
 }
+
+:where(button, a, [role='button'], summary, input[type='checkbox'], input[type='radio'], label[for], select) {
+  cursor: pointer;
+}
+
+:where(button:disabled, [aria-disabled='true']) {
+  cursor: not-allowed;
+}

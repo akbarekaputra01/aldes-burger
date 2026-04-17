@@ -12,26 +12,22 @@ class MenuSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('menus')->insert([
+        $menus = [
             [
-                'name' => 'Beef Burger Deluxe',
-                'description' => 'Premium beef patty, cheese, and our house special sauce.',
+                'name' => 'Beef Burger - Double Patty',
+                'description' => 'Double beef patty burger.',
                 'price' => 55000,
                 'category_id' => 1,
-                'stock' => 50,
+                'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'name' => 'Spicy Crispy Chicken',
-                'description' => 'Spicy crispy chicken, fresh lettuce, and creamy mayo.',
+                'name' => 'Spicy Crispy Chicken Burger',
+                'description' => 'Spicy crispy chicken burger.',
                 'price' => 45000,
                 'category_id' => 1,
-                'stock' => 30,
+                'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Make Your Own Burger',
@@ -40,9 +36,69 @@ class MenuSeeder extends Seeder
                 'category_id' => 1,
                 'stock' => 999,
                 'is_custom' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+            [
+                'name' => 'French Fries',
+                'description' => 'Crispy potato fries.',
+                'price' => 25000,
+                'category_id' => 2,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+            [
+                'name' => 'Nuggets',
+                'description' => 'Crispy chicken nuggets.',
+                'price' => 30000,
+                'category_id' => 2,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+            [
+                'name' => 'Onion Rings',
+                'description' => 'Crunchy onion rings.',
+                'price' => 28000,
+                'category_id' => 2,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+            [
+                'name' => 'Soft Drink',
+                'description' => 'Refreshing soft drink.',
+                'price' => 15000,
+                'category_id' => 3,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+            [
+                'name' => 'Tea',
+                'description' => 'Freshly brewed tea.',
+                'price' => 12000,
+                'category_id' => 3,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+            [
+                'name' => 'Water',
+                'description' => 'Mineral water.',
+                'price' => 10000,
+                'category_id' => 3,
+                'stock' => 100,
+                'is_custom' => false,
+            ],
+        ];
+
+        foreach ($menus as $menu) {
+            DB::table('menus')->updateOrInsert(
+                [
+                    'name' => $menu['name'],
+                    'category_id' => $menu['category_id'],
+                ],
+                [
+                    ...$menu,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ],
+            );
+        }
     }
 }
