@@ -15,7 +15,7 @@ class MenuSeeder extends Seeder
         DB::table('menus')->insert([
             [
                 'name' => 'Beef Burger Deluxe',
-                'description' => 'Daging Sapi Pilihan, Keju, Saus Spesial',
+                'description' => 'Premium beef patty, cheese, and our house special sauce.',
                 'price' => 55000,
                 'category_id' => 1,
                 'stock' => 50,
@@ -25,7 +25,7 @@ class MenuSeeder extends Seeder
             ],
             [
                 'name' => 'Spicy Crispy Chicken',
-                'description' => 'Ayam Krispi Pedas, Selada, Mayo',
+                'description' => 'Spicy crispy chicken, fresh lettuce, and creamy mayo.',
                 'price' => 45000,
                 'category_id' => 1,
                 'stock' => 30,
@@ -35,7 +35,7 @@ class MenuSeeder extends Seeder
             ],
             [
                 'name' => 'Make Your Own Burger',
-                'description' => 'Rakit burgermu sendiri dari nol!',
+                'description' => 'Build your own burger exactly the way you want it.',
                 'price' => 0,
                 'category_id' => 1,
                 'stock' => 999,

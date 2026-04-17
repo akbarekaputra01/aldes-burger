@@ -1,11 +1,10 @@
-import { useContext } from 'react'
 import { MapPin, Minus, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { CartContext } from '../context/CartContext'
+import { useCart } from '../context/CartContext'
 
 function Cart() {
   const navigate = useNavigate()
-  const contextValue = CartContext ? useContext(CartContext) : null
+  const contextValue = useCart()
 
   const fallbackCart = [
     {

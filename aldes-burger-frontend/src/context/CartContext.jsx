@@ -1,15 +1,29 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-export const CartContext = createContext(null)
+const CartContext = createContext(null)
+const CART_STORAGE_KEY = 'aldes_cart'
+
+const loadStoredCart = () => {
+  const rawCart = localStorage.getItem(CART_STORAGE_KEY)
+  if (!rawCart) return []
+
+  try {
+    const parsed = JSON.parse(rawCart)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState([])
-  const [cartCount, setCartCount] = useState(0)
+  const [cart, setCart] = useState(loadStoredCart)
 
   useEffect(() => {
-    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0)
-    setCartCount(totalQty)
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
   }, [cart])
+
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart])
 
   const addToCart = (item) => {
     setCart((prev) => {

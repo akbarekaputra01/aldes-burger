@@ -1,5 +1,5 @@
 import { Flame } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import api from '../lib/api'
@@ -9,10 +9,22 @@ function Menus() {
   const { addToCart } = useCart()
   const [menus, setMenus] = useState([])
 
+  const orderMenus = (menuList) => [...menuList].sort((a, b) => {
+    const getRank = (item) => {
+      if (item.is_custom) return 1
+      if (item.name?.toLowerCase().includes('beef')) return 0
+      return 2
+    }
+
+    const rankDiff = getRank(a) - getRank(b)
+    if (rankDiff !== 0) return rankDiff
+    return a.name.localeCompare(b.name)
+  })
+
   useEffect(() => {
     const loadMenus = async () => {
       const { data } = await api.get('/menus')
-      setMenus(data)
+      setMenus(orderMenus(data))
     }
 
     loadMenus().catch(() => setMenus([]))
@@ -22,13 +34,13 @@ function Menus() {
     addToCart({ id: `menu-${item.id}`, menu_id: item.id, name: item.name, basePrice: item.price, price: item.price, qty: 1, modifiers: [] })
   }
 
-  const burgerMenu = menus.length > 0
+  const burgerMenu = useMemo(() => (menus.length > 0
     ? menus
     : [
       { id: 1, name: 'Beef Burger - Double Patty', description: 'Premium beef, cheddar cheese, and house special sauce.', price: 55000, is_custom: false },
-      { id: 2, name: 'Spicy Crispy Chicken Burger', description: 'Crispy spicy chicken, lettuce, and creamy mayo.', price: 45000, is_custom: false },
       { id: 3, name: 'Make Your Own Burger', description: 'Build your burger from scratch exactly how you like it.', price: 0, is_custom: true },
-    ]
+      { id: 2, name: 'Spicy Crispy Chicken Burger', description: 'Crispy spicy chicken, lettuce, and creamy mayo.', price: 45000, is_custom: false },
+    ]), [menus])
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-6 sm:px-6 lg:px-8">
@@ -49,14 +61,12 @@ function Menus() {
             >
               <div className="h-40 bg-gray-200" />
               <div className="p-4">
-                {item.is_custom && (
-                  <div className="mb-3 inline-flex items-center gap-1 rounded-xl bg-aldesYellow px-2 py-1 text-xs font-bold text-black">
-                    <Flame className="h-3.5 w-3.5" /> Hot Feature
-                  </div>
-                )}
+                <div className={`mb-3 inline-flex items-center gap-1 rounded-xl px-2 py-1 text-xs font-bold ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-red-50 text-aldesRed'}`}>
+                  {item.is_custom ? <><Flame className="h-3.5 w-3.5" /> Hot Feature</> : 'Signature Menu'}
+                </div>
                 <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
                 <p className="mt-2 text-sm text-gray-600">{item.description}</p>
-                {!item.is_custom && <p className="mt-3 text-base font-semibold text-aldesRed">Rp {item.price?.toLocaleString('id-ID')}</p>}
+                {!item.is_custom && <p className="mt-3 text-base font-semibold text-aldesRed">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(item.price ?? 0)}</p>}
                 <button
                   type="button"
                   onClick={item.is_custom ? () => navigate('/kitchen', { state: { menuId: item.id } }) : () => addSimpleItem(item)}

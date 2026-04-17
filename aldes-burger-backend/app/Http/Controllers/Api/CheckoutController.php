@@ -101,4 +101,44 @@ class CheckoutController extends Controller
 
         return response()->json($transaction, 201);
     }
+
+    public function storeAddress(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'address' => ['required', 'string', 'max:255'],
+        ]);
+
+        $address = Address::query()->create([
+            'user_id' => $request->user()->id,
+            'address' => $payload['address'],
+        ]);
+
+        return response()->json($address, 201);
+    }
+
+    public function updateAddress(Request $request, Address $address): JsonResponse
+    {
+        if ($address->user_id !== $request->user()->id) {
+            abort(404);
+        }
+
+        $payload = $request->validate([
+            'address' => ['required', 'string', 'max:255'],
+        ]);
+
+        $address->update($payload);
+
+        return response()->json($address->fresh());
+    }
+
+    public function destroyAddress(Request $request, Address $address): JsonResponse
+    {
+        if ($address->user_id !== $request->user()->id) {
+            abort(404);
+        }
+
+        $address->delete();
+
+        return response()->json(['message' => 'Address deleted.']);
+    }
 }
