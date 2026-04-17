@@ -1,4 +1,4 @@
-import { LockKeyhole, Mail, Phone, Sandwich, UserRound } from 'lucide-react'
+import { Loader2, LockKeyhole, Mail, Phone, Sandwich, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -8,17 +8,21 @@ function SignUp() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password_confirmation: '' })
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
 
+    setIsLoading(true)
     try {
       const { data } = await api.post('/register', form)
       setAuthSession(data)
       navigate(data.user?.role === 'admin' ? '/admin' : '/menus')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Unable to register. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -60,7 +64,8 @@ function SignUp() {
           </label>
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
-          <button type="submit" className="mt-2 w-full rounded-2xl bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700">
+          <button type="submit" disabled={isLoading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed px-4 py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Create Account
           </button>
         </form>
