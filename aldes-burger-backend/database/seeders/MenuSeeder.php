@@ -12,9 +12,7 @@ class MenuSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('menus')->truncate();
-
-        DB::table('menus')->insert([
+        $menus = [
             [
                 'name' => 'Beef Burger - Double Patty',
                 'description' => 'Double beef patty burger.',
@@ -22,8 +20,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 1,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Spicy Crispy Chicken Burger',
@@ -32,8 +28,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 1,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Make Your Own Burger',
@@ -42,8 +36,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 1,
                 'stock' => 999,
                 'is_custom' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'French Fries',
@@ -52,8 +44,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Nuggets',
@@ -62,8 +52,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Onion Rings',
@@ -72,8 +60,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Soft Drink',
@@ -82,8 +68,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Tea',
@@ -92,8 +76,6 @@ class MenuSeeder extends Seeder
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Water',
@@ -102,9 +84,21 @@ class MenuSeeder extends Seeder
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($menus as $menu) {
+            DB::table('menus')->updateOrInsert(
+                [
+                    'name' => $menu['name'],
+                    'category_id' => $menu['category_id'],
+                ],
+                [
+                    ...$menu,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ],
+            );
+        }
     }
 }
