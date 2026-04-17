@@ -43,6 +43,7 @@ function Menus() {
   const navigate = useNavigate()
   const [menus, setMenus] = useState([])
   const [isFetching, setIsFetching] = useState(true)
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0)
   const bannerRef = useRef(null)
 
   useEffect(() => {
@@ -92,26 +93,45 @@ function Menus() {
     bannerRef.current.scrollTo({ left: viewportWidth * index, behavior: 'smooth' })
   }
 
+  useEffect(() => {
+    const node = bannerRef.current
+    if (!node) return undefined
+
+    const handleScroll = () => {
+      const viewportWidth = node.clientWidth || 1
+      const nextIndex = Math.round(node.scrollLeft / viewportWidth)
+      setActiveBannerIndex(Math.max(0, Math.min(nextIndex, bannerSlides.length - 1)))
+    }
+
+    node.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+
+    return () => node.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 bg-aldesCream px-4 py-6 sm:px-6 lg:px-8">
       <section className="space-y-3">
-        <div ref={bannerRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
-          {bannerSlides.map((slide) => (
-            <article key={slide.title} className="min-w-full snap-center rounded-3xl bg-aldesRed p-8 text-white shadow-sm">
-              <p className="text-2xl font-black sm:text-3xl">{slide.title}</p>
-              <p className="mt-2 text-sm sm:text-base">{slide.subtitle}</p>
-            </article>
-          ))}
-        </div>
         <div className="flex items-center justify-center gap-2">
           {bannerSlides.map((slide, index) => (
             <button
               key={slide.title}
               type="button"
               onClick={() => scrollBanner(index)}
-              className="h-2.5 w-8 rounded-full bg-aldesYellow/70 transition hover:bg-aldesYellow cursor-pointer"
+              className={`h-2.5 w-2.5 cursor-pointer rounded-full transition ${
+                index === activeBannerIndex ? 'scale-110 bg-aldesRed' : 'bg-aldesRed/30 hover:bg-aldesRed/60'
+              }`}
               aria-label={`Go to slide ${index + 1}`}
+              aria-current={index === activeBannerIndex}
             />
+          ))}
+        </div>
+        <div ref={bannerRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
+          {bannerSlides.map((slide) => (
+            <article key={slide.title} className="min-w-full snap-center rounded-3xl bg-aldesRed p-8 text-white shadow-sm">
+              <p className="text-2xl font-black sm:text-3xl">{slide.title}</p>
+              <p className="mt-2 text-sm sm:text-base">{slide.subtitle}</p>
+            </article>
           ))}
         </div>
       </section>

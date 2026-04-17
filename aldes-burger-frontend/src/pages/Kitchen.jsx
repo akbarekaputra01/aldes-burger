@@ -55,15 +55,12 @@ function Kitchen() {
   const allowedIngredientIds = useMemo(() => {
     if (!selectedMenu) return []
 
-    const relatedMenus = allMenus.filter((menu) => menu.category_id === selectedMenu.category_id)
-    const ids = new Set(relatedMenus.flatMap((menu) => (menu.ingredients ?? []).map((ingredient) => ingredient.id)))
-
-    if (ids.size === 0) {
+    if (selectedMenu.is_custom) {
       return ingredients.map((ingredient) => ingredient.id)
     }
 
-    return [...ids]
-  }, [allMenus, ingredients, selectedMenu])
+    return (selectedMenu.ingredients ?? []).map((ingredient) => ingredient.id)
+  }, [ingredients, selectedMenu])
 
   const visibleIngredients = useMemo(
     () => ingredients.filter((ingredient) => allowedIngredientIds.includes(ingredient.id)),
@@ -74,6 +71,12 @@ function Kitchen() {
 
   useEffect(() => {
     if (!selectedMenu) return
+
+    if (selectedMenu.is_custom) {
+      setBurgerStack([{ ...bunTop }, { ...bunBottom }])
+      setQty(1)
+      return
+    }
 
     const defaultLayers = []
     ;(selectedMenu.ingredients ?? []).forEach((ingredient) => {
@@ -154,6 +157,45 @@ function Kitchen() {
     })
   }
 
+  const addIngredientToCenter = (ingredient) => {
+    if (!ingredient) return
+
+    insertAtIndex(
+      {
+        uid: makeUid(),
+        ingredientId: ingredient.id,
+        name: ingredient.name,
+        type: 'ingredient',
+        price: ingredient.price ?? 0,
+      },
+      Math.max(1, burgerStack.length - 1),
+    )
+  }
+
+  const adjustIngredientCount = (ingredient, nextCount) => {
+    if (!ingredient || nextCount < 0) return
+
+    const currentCount = layerCounts[ingredient.id] ?? 0
+    if (nextCount === currentCount) return
+
+    if (nextCount > currentCount) {
+      const toAdd = nextCount - currentCount
+      for (let idx = 0; idx < toAdd; idx += 1) {
+        addIngredientToCenter(ingredient)
+      }
+      return
+    }
+
+    const toRemove = currentCount - nextCount
+    let removed = 0
+    setBurgerStack((prev) => prev.filter((layer) => {
+      if (removed >= toRemove) return true
+      if (layer.ingredientId !== ingredient.id) return true
+      removed += 1
+      return false
+    }))
+  }
+
   const handleDropOnStack = (index) => {
     if (draggingPantryIngredientId) {
       const ingredient = visibleIngredients.find((item) => String(item.id) === draggingPantryIngredientId)
@@ -205,80 +247,104 @@ function Kitchen() {
         <article className="rounded-3xl bg-white p-6 shadow-md lg:col-span-7 lg:p-8">
           <p className="inline-flex rounded-full bg-aldesYellow px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black">Gamified Kitchen</p>
           <h1 className="mt-3 text-2xl font-black text-gray-900">{selectedMenu?.name ?? 'Build your burger'}</h1>
-          <p className="mt-2 text-sm text-gray-600">Drag ingredients from pantry and drop anywhere in your stack.</p>
+          <p className="mt-2 text-sm text-gray-600">Drag and drop ingredients, or use the +/- buttons for quick adjustments.</p>
 
-          <div className="mt-6 rounded-3xl border border-aldesCream bg-aldesCream/40 p-5">
-            <h2 className="mb-3 text-lg font-black text-aldesRed">Burger Stack</h2>
-            <div
-              className="space-y-2 rounded-2xl border border-dashed border-aldesCream bg-white p-3"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => handleDropOnStack(burgerStack.length)}
-            >
-              {burgerStack.map((layer, index) => (
-                <div key={layer.uid}>
-                  <div
-                    className={`h-2 rounded-full transition ${dropIndex === index ? 'bg-aldesYellow' : 'bg-transparent'}`}
-                    onDragOver={(event) => {
-                      event.preventDefault()
-                      setDropIndex(index)
-                    }}
-                    onDrop={() => handleDropOnStack(index)}
-                  />
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-3xl border border-aldesCream bg-aldesCream/40 p-5">
+              <h2 className="mb-3 text-lg font-black text-aldesRed">Burger Visual</h2>
+              <div
+                className="space-y-2 rounded-2xl border border-dashed border-aldesCream bg-white p-3"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleDropOnStack(burgerStack.length)}
+              >
+                {burgerStack.map((layer, index) => (
+                  <div key={layer.uid}>
+                    <div
+                      className={`h-2 rounded-full transition ${dropIndex === index ? 'bg-aldesYellow' : 'bg-transparent'}`}
+                      onDragOver={(event) => {
+                        event.preventDefault()
+                        setDropIndex(index)
+                      }}
+                      onDrop={() => handleDropOnStack(index)}
+                    />
 
-                  <div
-                    draggable
-                    onDragStart={() => setDraggingStackLayerUid(layer.uid)}
-                    onDragEnd={() => {
-                      setDraggingStackLayerUid(null)
-                      setDropIndex(null)
-                    }}
-                    className={`flex cursor-grab items-center justify-between rounded-2xl border px-3 py-2 ${ingredientStyle[layer.type]}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-aldesRed" />
-                      <p className="font-semibold">{layer.name}</p>
-                    </div>
-                    {layer.ingredientId ? (
-                      <button
-                        type="button"
-                        onClick={() => setBurgerStack((prev) => prev.filter((item) => item.uid !== layer.uid))}
-                        className="cursor-pointer rounded-xl border border-aldesRed/25 bg-white/80 p-1.5 text-aldesRed transition hover:bg-aldesCream"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <aside className="mt-5 rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-black text-aldesRed">Pantry</h2>
-            <div className="mt-4 grid max-h-[360px] grid-cols-1 gap-3 overflow-y-auto pr-1">
-              {isFetching
-                ? Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
-                : visibleIngredients.map((ingredient) => (
-                  <div
-                    key={ingredient.id}
-                    draggable
-                    onDragStart={() => setDraggingPantryIngredientId(String(ingredient.id))}
-                    onDragEnd={() => setDraggingPantryIngredientId(null)}
-                    className="cursor-grab rounded-3xl border border-aldesCream bg-white p-4 text-left transition hover:border-aldesYellow hover:bg-aldesCream/30"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-gray-900">{ingredient.name}</p>
-                        <p className="mt-1 text-sm font-semibold text-aldesRed">Rp {ingredient.price.toLocaleString('id-ID')}</p>
+                    <div
+                      draggable
+                      onDragStart={() => setDraggingStackLayerUid(layer.uid)}
+                      onDragEnd={() => {
+                        setDraggingStackLayerUid(null)
+                        setDropIndex(null)
+                      }}
+                      className={`flex cursor-grab items-center justify-between rounded-2xl border px-3 py-2 ${ingredientStyle[layer.type]}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="h-4 w-4 text-aldesRed" />
+                        <p className="font-semibold">{layer.name}</p>
                       </div>
-                      <span className="rounded-2xl bg-aldesYellow/40 px-2.5 py-1 text-xs font-black text-aldesRed">
-                        x{layerCounts[ingredient.id] ?? 0}
-                      </span>
+                      {layer.ingredientId ? (
+                        <button
+                          type="button"
+                          onClick={() => setBurgerStack((prev) => prev.filter((item) => item.uid !== layer.uid))}
+                          className="cursor-pointer rounded-xl border border-aldesRed/25 bg-white/80 p-1.5 text-aldesRed transition hover:bg-aldesCream"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ))}
+              </div>
             </div>
-          </aside>
+
+            <aside className="rounded-3xl bg-white p-5 shadow-sm">
+              <h2 className="text-xl font-black text-aldesRed">Ingredients & Qty</h2>
+              <div className="mt-4 grid max-h-[420px] grid-cols-1 gap-3 overflow-y-auto pr-1">
+                {isFetching
+                  ? Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
+                  : visibleIngredients.map((ingredient) => (
+                    <div
+                      key={ingredient.id}
+                      draggable
+                      onDragStart={() => setDraggingPantryIngredientId(String(ingredient.id))}
+                      onDragEnd={() => setDraggingPantryIngredientId(null)}
+                      className="cursor-grab rounded-3xl border border-aldesCream bg-white p-4 text-left transition hover:border-aldesYellow hover:bg-aldesCream/30"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-gray-900">{ingredient.name}</p>
+                          <p className="mt-1 text-sm font-semibold text-aldesRed">Rp {ingredient.price.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addIngredientToCenter(ingredient)}
+                          className="cursor-pointer rounded-xl bg-aldesRed px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => adjustIngredientCount(ingredient, Math.max(0, (layerCounts[ingredient.id] ?? 0) - 1))}
+                          className="cursor-pointer rounded-lg border border-aldesCream bg-aldesCream/40 p-1.5 text-aldesRed"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="min-w-8 text-center text-sm font-black text-aldesRed">x{layerCounts[ingredient.id] ?? 0}</span>
+                        <button
+                          type="button"
+                          onClick={() => adjustIngredientCount(ingredient, (layerCounts[ingredient.id] ?? 0) + 1)}
+                          className="cursor-pointer rounded-lg border border-aldesCream bg-aldesCream/40 p-1.5 text-aldesRed"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </aside>
+          </div>
         </article>
 
         <aside className="rounded-3xl bg-white p-6 shadow-md lg:col-span-5 lg:p-7">
