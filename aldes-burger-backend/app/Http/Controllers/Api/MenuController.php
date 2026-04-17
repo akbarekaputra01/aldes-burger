@@ -12,6 +12,7 @@ class MenuController extends Controller
     {
         $menus = Menu::query()
             ->with(['ingredients' => fn ($query) => $query->select('ingredients.id', 'name', 'price', 'stock')])
+            ->orderByRaw("CASE WHEN is_custom = 1 THEN 1 WHEN LOWER(name) LIKE '%beef%' THEN 0 ELSE 2 END")
             ->orderBy('name')
             ->get();
 

@@ -19,6 +19,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/addresses', [CheckoutController::class, 'addresses']);
+    Route::post('/addresses', [CheckoutController::class, 'storeAddress']);
+    Route::put('/addresses/{address}', [CheckoutController::class, 'updateAddress']);
+    Route::delete('/addresses/{address}', [CheckoutController::class, 'destroyAddress']);
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
     Route::get('/transactions', [TransactionController::class, 'index']);
