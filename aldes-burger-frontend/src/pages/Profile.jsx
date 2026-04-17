@@ -80,7 +80,7 @@ function Profile() {
               </div>
               <div className="flex items-center justify-center gap-2 text-aldesRed">
                 <Phone className="w-4 h-4 text-aldesRed" />
-                <span>{user?.phone ?? 'No phone number'}</span>
+                <span>{user?.phone?.trim() ? user.phone : 'Phone number not set'}</span>
               </div>
             </div>
           </div>
@@ -105,14 +105,14 @@ function Profile() {
                   <button
                     type="button"
                     onClick={() => navigate(`/address-book?addressId=${address.id}`)}
-                    className="text-aldesRed hover:opacity-70 transition-opacity"
+                    className="cursor-pointer text-aldesRed hover:opacity-70 transition-opacity"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDeleteAddress(address.id)}
-                    className="text-aldesRed hover:opacity-70 transition-opacity"
+                    className="cursor-pointer text-aldesRed hover:opacity-70 transition-opacity"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -124,7 +124,7 @@ function Profile() {
           <button
             type="button"
             onClick={() => navigate('/address-book')}
-            className="w-full border-2 border-aldesRed text-aldesRed py-2 rounded-xl mt-4 font-semibold flex items-center justify-center gap-2 hover:bg-aldesRed hover:text-white transition-colors"
+            className="cursor-pointer w-full border-2 border-aldesRed text-aldesRed py-2 rounded-xl mt-4 font-semibold flex items-center justify-center gap-2 hover:bg-aldesRed hover:text-white transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add New Address
@@ -136,7 +136,7 @@ function Profile() {
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full border-2 border-aldesRed text-aldesRed hover:bg-aldesRed hover:text-white transition-colors py-3 rounded-xl font-bold flex justify-center items-center gap-2"
+          className="cursor-pointer w-full border-2 border-aldesRed text-aldesRed hover:bg-aldesRed hover:text-white transition-colors py-3 rounded-xl font-bold flex justify-center items-center gap-2"
         >
           <LogOut className="w-5 h-5" />
           Log Out

@@ -1,5 +1,6 @@
 import { ChefHat, Flame, Sliders, Star, Truck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { getToken } from '../utils/auth'
 
 const steps = [
   {
@@ -23,11 +24,13 @@ const steps = [
 ]
 
 function LandingPage() {
+  const isAuthenticated = Boolean(getToken())
+
   return (
     <main className="bg-aldesCream text-gray-800">
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-8 sm:px-6 lg:grid-cols-2 lg:px-8 lg:pt-14">
         <div className="flex flex-col justify-center">
-          <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+          <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-aldesYellow/25 px-3 py-1 text-sm font-semibold text-aldesRed">
             <Flame className="h-4 w-4" /> Freshly grilled daily
           </p>
           <h1 className="text-4xl font-black leading-tight sm:text-5xl">Your Burger, Your Rules.</h1>
@@ -37,15 +40,15 @@ function LandingPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/menus"
-              className="rounded-3xl bg-aldesRed px-6 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:brightness-110"
+              className="cursor-pointer rounded-3xl bg-aldesRed px-6 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:brightness-110"
             >
               Start Customizing
             </Link>
             <Link
-              to="/transactions"
-              className="rounded-3xl border border-aldesRed/30 bg-white px-6 py-3 font-semibold text-aldesRed transition hover:bg-aldesYellow/20"
+              to={isAuthenticated ? '/transactions' : '/login'}
+              className="cursor-pointer rounded-3xl border border-aldesRed/30 bg-white px-6 py-3 font-semibold text-aldesRed transition hover:bg-aldesYellow/20"
             >
-              Track Orders
+              {isAuthenticated ? 'Track Orders' : 'Login to Track'}
             </Link>
           </div>
         </div>
@@ -103,7 +106,7 @@ function LandingPage() {
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <article className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-center gap-1 text-amber-500">
+          <div className="flex items-center gap-1 text-aldesYellow">
             {[1, 2, 3, 4, 5].map((star) => <Star key={star} className="h-4 w-4 fill-current" />)}
           </div>
           <p className="mt-3 text-lg font-medium text-gray-700">
