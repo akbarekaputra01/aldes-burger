@@ -25,23 +25,6 @@ class Transaction extends Model
         'status',
     ];
 
-    protected static function booted(): void
-    {
-        static::creating(function (Transaction $transaction): void {
-            if (! empty($transaction->destination_address)) {
-                return;
-            }
-
-            if (empty($transaction->address_id)) {
-                return;
-            }
-
-            $transaction->destination_address = Address::query()
-                ->whereKey($transaction->address_id)
-                ->value('address');
-        });
-    }
-
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);

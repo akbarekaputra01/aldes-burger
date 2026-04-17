@@ -1,9 +1,25 @@
 import { LockKeyhole, Mail, Phone, Sandwich, UserRound } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import api from '../lib/api'
+import { setAuthSession } from '../utils/auth'
 
 function SignUp() {
-  const handleSubmit = (event) => {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password_confirmation: '' })
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setError('')
+
+    try {
+      const { data } = await api.post('/register', form)
+      setAuthSession(data)
+      navigate(data.user?.role === 'admin' ? '/admin' : '/menus')
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Unable to register. Please try again.')
+    }
   }
 
   return (
@@ -20,28 +36,29 @@ function SignUp() {
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><UserRound className="h-4 w-4" />Name</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" type="text" placeholder="John Doe" required />
+            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} type="text" placeholder="John Doe" required />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Mail className="h-4 w-4" />Email</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" type="email" placeholder="john@email.com" required />
+            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} type="email" placeholder="john@email.com" required />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Phone className="h-4 w-4" />Phone</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" type="tel" placeholder="+62 8xx xxxx xxxx" required />
+            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))} type="tel" placeholder="+62 8xx xxxx xxxx" required />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Password</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" type="password" required />
+            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} type="password" required />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Confirm Password</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" type="password" required />
+            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.password_confirmation} onChange={(event) => setForm((prev) => ({ ...prev, password_confirmation: event.target.value }))} type="password" required />
           </label>
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button type="submit" className="mt-2 w-full rounded-2xl bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700">
             Create Account
