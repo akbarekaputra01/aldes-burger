@@ -49,7 +49,7 @@ const normalizeCartItem = (inputItem) => {
   const unitPrice = Number(inputItem.unit_price ?? inputItem.price ?? basePrice)
   const modifiers = normalizeModifierList(inputItem.modifiers)
   const stackOrder = Array.isArray(inputItem.stack_order) ? inputItem.stack_order : []
-  const isCustomized = Boolean(inputItem.is_customized ?? modifiers.length > 0 || stackOrder.length > 0)
+  const isCustomized = Boolean(inputItem.is_customized ?? (modifiers.length > 0 || stackOrder.length > 0))
 
   const normalized = {
     id: inputItem.id ?? null,

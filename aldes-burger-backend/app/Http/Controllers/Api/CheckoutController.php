@@ -49,16 +49,26 @@ class CheckoutController extends Controller
                 $menu = Menu::query()->findOrFail($item['menu_id']);
 
                 $addModifierPrice = 0;
-                $modifierLabels = [];
+                $snapshotModifiers = null;
+                $added = [];
+                $removed = [];
 
                 foreach ($item['modifiers'] ?? [] as $modifier) {
                     $ingredient = Ingredient::query()->findOrFail($modifier['ingredient_id']);
 
                     if ($modifier['action'] === 'add') {
                         $addModifierPrice += $ingredient->price;
+                        $added[] = $ingredient->name;
+                    } else {
+                        $removed[] = $ingredient->name;
                     }
+                }
 
-                    $modifierLabels[] = sprintf('%s %s', strtoupper($modifier['action']), $ingredient->name);
+                if ($added !== [] || $removed !== []) {
+                    $snapshotModifiers = array_filter([
+                        'add'    => $added ?: null,
+                        'remove' => $removed ?: null,
+                    ]);
                 }
 
                 $snapshotPrice = $menu->price + $addModifierPrice;
@@ -67,15 +77,19 @@ class CheckoutController extends Controller
                 $totalAmount += $snapshotPrice * $quantity;
 
                 $snapshotName = $menu->name;
-                if ($modifierLabels !== []) {
-                    $snapshotName .= ' ['.implode(', ', $modifierLabels).']';
+                if ($added !== [] || $removed !== []) {
+                    $parts = [];
+                    foreach ($added as $name) $parts[] = 'ADD ' . $name;
+                    foreach ($removed as $name) $parts[] = 'REMOVE ' . $name;
+                    $snapshotName .= ' [' . implode(', ', $parts) . ']';
                 }
 
                 $details[] = [
-                    'menu_id' => $menu->id,
-                    'quantity' => $quantity,
-                    'snapshot_name' => $snapshotName,
-                    'snapshot_price' => $snapshotPrice,
+                    'menu_id'            => $menu->id,
+                    'quantity'           => $quantity,
+                    'snapshot_name'      => $snapshotName,
+                    'snapshot_price'     => $snapshotPrice,
+                    'snapshot_modifiers' => $snapshotModifiers ? json_encode($snapshotModifiers) : null,
                 ];
             }
 

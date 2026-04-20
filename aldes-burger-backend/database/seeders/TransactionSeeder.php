@@ -43,22 +43,27 @@ class TransactionSeeder extends Seeder
 
         DB::table('transaction_details')->insert([
             [
-                'transaction_id' => $transactionId1,
-                'menu_id' => 1,
-                'quantity' => 1,
-                'snapshot_name' => 'Beef Burger Deluxe',
-                'snapshot_price' => 55000,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'transaction_id'     => $transactionId1,
+                'menu_id'            => 1,
+                'quantity'           => 1,
+                'snapshot_name'      => 'Beef Burger Deluxe',
+                'snapshot_price'     => 55000,
+                'snapshot_modifiers' => null,
+                'created_at'         => now(),
+                'updated_at'         => now(),
             ],
             [
-                'transaction_id' => $transactionId2,
-                'menu_id' => 3,
-                'quantity' => 1,
-                'snapshot_name' => 'Custom Burger (Beef Patty, Cheddar Cheese)',
-                'snapshot_price' => 20000,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'transaction_id'     => $transactionId2,
+                'menu_id'            => 3,
+                'quantity'           => 1,
+                'snapshot_name'      => 'Custom Burger [ADD Cheddar Cheese, REMOVE Tomato]',
+                'snapshot_price'     => 20000,
+                'snapshot_modifiers' => json_encode([
+                    'add'    => ['Cheddar Cheese'],
+                    'remove' => ['Tomato'],
+                ]),
+                'created_at'         => now(),
+                'updated_at'         => now(),
             ],
         ]);
     }

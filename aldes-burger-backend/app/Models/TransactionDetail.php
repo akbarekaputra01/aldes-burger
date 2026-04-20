@@ -16,6 +16,11 @@ class TransactionDetail extends Model
         'quantity',
         'snapshot_name',
         'snapshot_price',
+        'snapshot_modifiers',
+    ];
+
+    protected $casts = [
+        'snapshot_modifiers' => 'array',
     ];
 
     public function transaction(): BelongsTo
