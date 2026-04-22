@@ -11,7 +11,7 @@ import Auth from './pages/Auth'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import LandingPage from './pages/LandingPage'
-import Menus from './pages/Menus'
+import Menu from './pages/Menu'
 import Kitchen from './pages/Kitchen'
 import NotFound from './pages/NotFound'
 import PaymentStatus from './pages/PaymentStatus'
@@ -31,13 +31,13 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
-            <Route path="menus" element={<AdminMenuManagement />} />
+            <Route path="menu" element={<AdminMenuManagement />} />
             <Route path="inventory" element={<AdminInventory />} />
           </Route>
 
           <Route element={<Layout />}>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/menus" element={<Menus />} />
+            <Route path="/menu" element={<Menu />} />
             <Route path="/kitchen" element={<Kitchen />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />

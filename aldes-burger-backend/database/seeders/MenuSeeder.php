@@ -12,7 +12,7 @@ class MenuSeeder extends Seeder
      */
     public function run(): void
     {
-        $menus = [
+        $menu = [
             [
                 'name' => 'Beef Burger - Double Patty',
                 'description' => 'Double beef patty burger.',
@@ -87,8 +87,8 @@ class MenuSeeder extends Seeder
             ],
         ];
 
-        foreach ($menus as $menu) {
-            DB::table('menus')->updateOrInsert(
+        foreach ($menu as $menu) {
+            DB::table('menu')->updateOrInsert(
                 [
                     'name' => $menu['name'],
                     'category_id' => $menu['category_id'],

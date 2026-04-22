@@ -8,7 +8,7 @@ function Navbar({ isLoggedIn }) {
   return (
     <header className="sticky top-0 z-50 bg-aldesRed text-white shadow-sm">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link to={isLoggedIn ? '/menus' : '/'} className="text-xl font-extrabold tracking-wide transition hover:opacity-90">
+        <Link to={isLoggedIn ? '/menu' : '/'} className="text-xl font-extrabold tracking-wide transition hover:opacity-90">
           Aldes Burger
         </Link>
 

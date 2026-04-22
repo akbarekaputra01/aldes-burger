@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 const navItems = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard },
   { to: '/admin/orders', label: 'Orders', icon: ChefHat },
-  { to: '/admin/menus', label: 'Menus', icon: UtensilsCrossed },
+  { to: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
   { to: '/admin/inventory', label: 'Inventory', icon: Package },
 ]
 

@@ -24,7 +24,7 @@ function Kitchen() {
   const location = useLocation()
   const { addToCart } = useCart()
 
-  const [menus, setMenus] = useState([])
+  const [menu, setMenu] = useState([])
   const [ingredients, setIngredients] = useState([])
   const [burgerStack, setBurgerStack] = useState([])
   const [baselineStack, setBaselineStack] = useState([])
@@ -39,26 +39,26 @@ function Kitchen() {
   const incomingMenu = location.state?.menu
 
   const selectedMenu = useMemo(() => {
-    if (!menus.length) return null
+    if (!menu.length) return null
     if (incomingMenu?.id) {
-      return menus.find((menu) => menu.id === incomingMenu.id) ?? incomingMenu
+      return menu.find((menu) => menu.id === incomingMenu.id) ?? incomingMenu
     }
 
-    return menus.find((menu) => menu.id === menuId) ?? menus.find((menu) => menu.is_custom) ?? menus[0]
-  }, [incomingMenu, menuId, menus])
+    return menu.find((menu) => menu.id === menuId) ?? menu.find((menu) => menu.is_custom) ?? menu[0]
+  }, [incomingMenu, menuId, menu])
 
   useEffect(() => {
     const loadData = async () => {
       setIsFetching(true)
-      const [menusRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
-      setMenus(menusRes.data)
+      const [menuRes, ingredientsRes] = await Promise.all([api.get('/menu'), api.get('/ingredients')])
+      setMenu(menuRes.data)
       setIngredients(ingredientsRes.data)
       setIsFetching(false)
     }
 
     loadData()
       .catch(() => {
-        setMenus([])
+        setMenu([])
         setIngredients([])
       })
       .finally(() => setIsFetching(false))

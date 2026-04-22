@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react'
 import api from '../lib/api'
 
 function AdminMenuManagement() {
-  const [menus, setMenus] = useState([])
+  const [menu, setMenu] = useState([])
 
-  const loadMenus = () => api.get('/admin/menus').then(({ data }) => setMenus(data)).catch(() => setMenus([]))
+  const loadMenu = () => api.get('/admin/menu').then(({ data }) => setMenu(data)).catch(() => setMenu([]))
 
   useEffect(() => {
-    loadMenus()
+    loadMenu()
   }, [])
 
   const quickEditPrice = async (menu) => {
     const nextPrice = Number(prompt(`Set new price for ${menu.name}`, menu.price))
     if (Number.isNaN(nextPrice)) return
-    await api.put(`/admin/menus/${menu.id}`, { price: nextPrice })
-    loadMenus()
+    await api.put(`/admin/menu/${menu.id}`, { price: nextPrice })
+    loadMenu()
   }
 
   return (
@@ -23,7 +23,7 @@ function AdminMenuManagement() {
       <section className="mx-auto max-w-6xl">
         <h1 className="mb-6 flex items-center gap-2 text-2xl font-black text-gray-900"><CookingPot className="h-6 w-6 text-red-600" />Admin Menu Management</h1>
         <div className="space-y-4">
-          {menus.map((menu) => (
+          {menu.map((menu) => (
             <article key={menu.id} className="rounded-3xl bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>

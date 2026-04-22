@@ -25,7 +25,7 @@ function Auth() {
       const user = userResponse.data
       setAuthSession({ user })
 
-      navigate(user.role === 'admin' ? '/admin' : '/menus')
+      navigate(user.role === 'admin' ? '/admin' : '/menu')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Unable to login. Please try again.')
     } finally {

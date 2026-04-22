@@ -40,45 +40,45 @@ const bannerSlides = [
   { title: 'FREE DELIVERY', subtitle: 'For total checkout above Rp 150.000.' },
 ]
 
-function Menus() {
+function Menu() {
   const navigate = useNavigate()
   const { addToCart } = useCart()
 
-  const [menus, setMenus] = useState([])
+  const [menu, setMenu] = useState([])
   const [isFetching, setIsFetching] = useState(true)
   const [activeBannerIndex, setActiveBannerIndex] = useState(0)
   const bannerRef = useRef(null)
 
   useEffect(() => {
-    const loadMenus = async () => {
+    const loadMenu = async () => {
       setIsFetching(true)
-      const { data } = await api.get('/menus')
-      setMenus(data)
+      const { data } = await api.get('/menu')
+      setMenu(data)
       setIsFetching(false)
     }
 
-    loadMenus()
-      .catch(() => setMenus([]))
+    loadMenu()
+      .catch(() => setMenu([]))
       .finally(() => setIsFetching(false))
   }, [])
 
-  const menusBySection = useMemo(() => {
+  const menuBySection = useMemo(() => {
     const grouped = {
       burgers: [],
       sides: [],
       drinks: [],
     }
 
-    menus.forEach((menu) => {
+    menu.forEach((menu) => {
       grouped[resolveSectionKey(menu)].push(menu)
     })
 
     return grouped
-  }, [menus])
+  }, [menu])
 
   const visibleSections = useMemo(
-    () => sectionDefinitions.filter((section) => menusBySection[section.key]?.length > 0),
-    [menusBySection],
+    () => sectionDefinitions.filter((section) => menuBySection[section.key]?.length > 0),
+    [menuBySection],
   )
 
   const handleMenuAdd = (item) => {
@@ -174,7 +174,7 @@ function Menus() {
           <section key={section.key}>
             <h2 className="mb-4 text-2xl font-extrabold text-aldesRed">{section.label}</h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-              {menusBySection[section.key].map((item) => (
+              {menuBySection[section.key].map((item) => (
                 <article
                   key={item.id}
                   className={`overflow-hidden rounded-3xl bg-white shadow-sm ${
@@ -214,4 +214,4 @@ function Menus() {
   )
 }
 
-export default Menus
+export default Menu

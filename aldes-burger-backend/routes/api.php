@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/menus', [MenuController::class, 'index']);
+Route::get('/menu', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -31,10 +31,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/orders', [AdminController::class, 'orders']);
         Route::patch('/orders/{transaction}/status', [AdminController::class, 'updateOrderStatus']);
 
-        Route::get('/menus', [AdminController::class, 'menus']);
-        Route::post('/menus', [AdminController::class, 'storeMenu']);
-        Route::put('/menus/{menu}', [AdminController::class, 'updateMenu']);
-        Route::delete('/menus/{menu}', [AdminController::class, 'destroyMenu']);
+        Route::get('/menu', [AdminController::class, 'menu']);
+        Route::post('/menu', [AdminController::class, 'storeMenu']);
+        Route::put('/menu/{menu}', [AdminController::class, 'updateMenu']);
+        Route::delete('/menu/{menu}', [AdminController::class, 'destroyMenu']);
 
         Route::get('/inventory', [AdminController::class, 'inventory']);
         Route::patch('/inventory/{ingredient}', [AdminController::class, 'updateInventory']);
