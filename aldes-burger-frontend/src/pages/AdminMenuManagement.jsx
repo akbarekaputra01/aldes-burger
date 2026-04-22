@@ -5,7 +5,7 @@ import api from '../lib/api'
 function AdminMenuManagement() {
   const [menu, setMenu] = useState([])
 
-  const loadMenu = () => api.get('/admin/menu').then(({ data }) => setMenu(data)).catch(() => setMenu([]))
+  const loadMenu = () => api.get('/admin/menus').then(({ data }) => setMenu(data)).catch(() => setMenu([]))
 
   useEffect(() => {
     loadMenu()
@@ -14,7 +14,7 @@ function AdminMenuManagement() {
   const quickEditPrice = async (menu) => {
     const nextPrice = Number(prompt(`Set new price for ${menu.name}`, menu.price))
     if (Number.isNaN(nextPrice)) return
-    await api.put(`/admin/menu/${menu.id}`, { price: nextPrice })
+    await api.put(`/admin/menus/${menu.id}`, { price: nextPrice })
     loadMenu()
   }
 

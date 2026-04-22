@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('menu', function (Blueprint $table) {
+        Schema::table('menus', function (Blueprint $table) {
             $table->foreignId('category_id')->change()->constrained('categories')->cascadeOnDelete();
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('menu', function (Blueprint $table) {
+        Schema::table('menus', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
         });
     }

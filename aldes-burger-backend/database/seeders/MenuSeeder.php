@@ -88,7 +88,7 @@ class MenuSeeder extends Seeder
         ];
 
         foreach ($menu as $menu) {
-            DB::table('menu')->updateOrInsert(
+            DB::table('menus')->updateOrInsert(
                 [
                     'name' => $menu['name'],
                     'category_id' => $menu['category_id'],

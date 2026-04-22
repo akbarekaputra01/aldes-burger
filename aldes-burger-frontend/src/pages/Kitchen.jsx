@@ -50,7 +50,7 @@ function Kitchen() {
   useEffect(() => {
     const loadData = async () => {
       setIsFetching(true)
-      const [menuRes, ingredientsRes] = await Promise.all([api.get('/menu'), api.get('/ingredients')])
+      const [menuRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
       setMenu(menuRes.data)
       setIngredients(ingredientsRes.data)
       setIsFetching(false)

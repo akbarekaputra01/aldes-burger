@@ -52,7 +52,7 @@ function Menu() {
   useEffect(() => {
     const loadMenu = async () => {
       setIsFetching(true)
-      const { data } = await api.get('/menu')
+      const { data } = await api.get('/menus')
       setMenu(data)
       setIsFetching(false)
     }
