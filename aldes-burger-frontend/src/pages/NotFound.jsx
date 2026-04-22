@@ -12,8 +12,8 @@ function NotFound() {
         <h1 className="mt-3 text-3xl font-black text-gray-900">Looks like someone ate this page.</h1>
         <p className="mt-3 text-gray-500">No worries—our best burgers are still fresh on the menu.</p>
 
-        <Link to="/menus" className="mx-auto mt-7 inline-flex items-center gap-2 rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700">
-          <ArrowLeft className="h-4 w-4" /> Back to Menus
+        <Link to="/menu" className="mx-auto mt-7 inline-flex items-center gap-2 rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700">
+          <ArrowLeft className="h-4 w-4" /> Back to Menu
         </Link>
       </section>
     </main>

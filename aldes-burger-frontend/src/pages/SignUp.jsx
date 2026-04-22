@@ -18,7 +18,7 @@ function SignUp() {
     try {
       const { data } = await api.post('/register', form)
       setAuthSession(data)
-      navigate(data.user?.role === 'admin' ? '/admin' : '/menus')
+      navigate(data.user?.role === 'admin' ? '/admin' : '/menu')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Unable to register. Please try again.')
     } finally {

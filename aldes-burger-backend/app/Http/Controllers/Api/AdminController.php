@@ -38,7 +38,7 @@ class AdminController extends Controller
         return response()->json($transaction->fresh(['details', 'user']));
     }
 
-    public function menus(Request $request): JsonResponse
+    public function menu(Request $request): JsonResponse
     {
         $this->ensureAdmin($request);
 

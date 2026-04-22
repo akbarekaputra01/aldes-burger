@@ -72,7 +72,7 @@ function Cart() {
           <p className="mt-2 text-gray-600">Looks like you have not added any items yet.</p>
           <button
             type="button"
-            onClick={() => navigate('/menus')}
+            onClick={() => navigate('/menu')}
             className="mt-6 rounded-xl bg-aldesRed px-6 py-3 font-semibold text-white transition hover:brightness-110"
           >
             Browse Menu

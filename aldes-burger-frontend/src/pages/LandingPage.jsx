@@ -39,7 +39,7 @@ function LandingPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              to="/menus"
+              to="/menu"
               className="cursor-pointer rounded-3xl bg-aldesRed px-6 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:brightness-110"
             >
               Start Customizing

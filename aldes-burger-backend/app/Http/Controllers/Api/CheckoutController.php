@@ -29,7 +29,7 @@ class CheckoutController extends Controller
             'address_id' => ['required', 'integer', 'exists:addresses,id'],
             'payment_method' => ['required', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.menu_id' => ['required', 'integer', 'exists:menus,id'],
+            'items.*.menu_id' => ['required', 'integer', 'exists:menu,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.modifiers' => ['nullable', 'array'],
             'items.*.modifiers.*.ingredient_id' => ['required', 'integer', 'exists:ingredients,id'],

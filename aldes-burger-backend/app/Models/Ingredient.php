@@ -17,7 +17,7 @@ class Ingredient extends Model
         'stock',
     ];
 
-    public function menus(): BelongsToMany
+    public function menu(): BelongsToMany
     {
         return $this->belongsToMany(Menu::class, 'menu_ingredients')
             ->withPivot('quantity')
