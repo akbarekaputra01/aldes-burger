@@ -1,40 +1,76 @@
-import { CheckCircle2, CircleX, LoaderCircle } from 'lucide-react'
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
+import { CircleX } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+
+// --- IMPORT ASSETS ---
+// Pastikan path ini benar sesuai struktur foldermu
+import imgBurgerCooking from '../assets/burger_cooking.gif'
 
 function PaymentStatus() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
+  // Default ke 'success' jika tidak ada param status
   const status = useMemo(() => searchParams.get('status') ?? 'success', [searchParams])
   const isSuccess = status !== 'failed'
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10">
-      <section className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-md">
-        <div className={`mx-auto mb-5 inline-flex h-24 w-24 items-center justify-center rounded-full ${isSuccess ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-          {isSuccess ? <CheckCircle2 className="h-14 w-14 animate-pulse" /> : <CircleX className="h-14 w-14" />}
-        </div>
+      <section className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-md animate-in fade-in zoom-in duration-300">
+        
+        {isSuccess ? (
+          /* Bagian Sukses - GIF Kotak Utuh */
+          <div className="mx-auto mb-6 flex w-full max-w-sm items-center justify-center overflow-hidden rounded-2xl bg-gray-50 border-2 border-gray-100 p-2">
+            <img 
+              src={imgBurgerCooking} 
+              alt="Burger is cooking" 
+              // object-contain memastikan seluruh GIF kelihatan tanpa terpotong
+              className="h-full w-full object-contain" 
+            />
+          </div>
+        ) : (
+          /* Bagian Gagal */
+          <div className="mx-auto mb-5 inline-flex h-24 w-24 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <CircleX className="h-14 w-14" />
+          </div>
+        )}
 
-        <h1 className="text-3xl font-black text-gray-900">{isSuccess ? 'Payment Successful!' : 'Payment Failed'}</h1>
-        <p className="mt-2 text-gray-500">
+        <h1 className="text-3xl font-black text-gray-900">
+          {isSuccess ? 'Payment Successful!' : 'Payment Failed'}
+        </h1>
+        
+        <p className="mt-2 text-gray-500 text-sm sm:text-base px-2">
           {isSuccess
             ? 'Your burger is now in our kitchen queue. Track your order in real time.'
             : 'Your transaction could not be completed. Please retry the payment method.'}
         </p>
 
-        <div className="mt-7 space-y-3">
-          <button type="button" className="w-full rounded-2xl bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700" onClick={() => navigate('/transactions')}>
+        <div className="mt-8 space-y-3">
+          <button 
+            type="button" 
+            className="w-full rounded-2xl bg-red-600 py-3.5 font-bold text-white transition hover:bg-red-700 active:scale-95 shadow-lg shadow-red-100" 
+            onClick={() => navigate('/transactions')}
+          >
             {isSuccess ? 'Track Order' : 'Back to Transactions'}
           </button>
+          
           {!isSuccess && (
-            <button type="button" className="w-full rounded-2xl border border-yellow-300 bg-yellow-100 py-3 font-semibold text-yellow-800 transition hover:bg-yellow-200" onClick={() => navigate('/checkout')}>
+            <button 
+              type="button" 
+              className="w-full rounded-2xl border-2 border-yellow-300 bg-yellow-50 py-3 font-bold text-yellow-800 transition hover:bg-yellow-100 active:scale-95" 
+              onClick={() => navigate('/checkout')}
+            >
               Try Payment Again
             </button>
           )}
+          
           {isSuccess && (
-            <button type="button" className="mx-auto inline-flex items-center gap-2 text-sm font-medium text-gray-500" onClick={() => navigate('/')}>
-              <LoaderCircle className="h-4 w-4 animate-spin" /> Preparing your meal update...
+            <button 
+              type="button" 
+              className="w-full rounded-2xl border-2 border-gray-100 bg-white py-3 font-bold text-gray-600 transition hover:bg-gray-50 active:scale-95" 
+              onClick={() => navigate('/menu')}
+            >
+              Back to Home
             </button>
           )}
         </div>
