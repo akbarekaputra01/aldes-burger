@@ -1,4 +1,4 @@
-import { GripVertical, Loader2, Minus, Plus, Trash2 } from 'lucide-react'
+import { GripVertical, Loader2, Minus, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ListItemSkeleton } from '../components/Skeletons'
@@ -14,6 +14,7 @@ import imgLettuce from '../assets/lettuce.png'
 import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
+import imgKitchenBg from '../assets/kitchen.png'
 
 const makeUid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
@@ -35,26 +36,33 @@ const getIngredientImage = (name) => {
   return null
 }
 
-// PENYESUAIAN KETEBALAN MIXED
-const getIngredientThickness = (name) => {
-  if (!name) return 15
+// 🌟 HELPER BARU: Mengecek apakah bahan adalah Bottom Bun
+const isBottomBunItem = (name) => {
+  if (!name) return false
   const n = name.toLowerCase()
-  if (n.includes('bottom') || n.includes('bawah')) return 25 
-  if (n.includes('top') || n.includes('atas') || n.includes('bun')) return 30 
-  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 25 
-  if (n.includes('tomato') || n.includes('tomat')) return 6 
-  if (n.includes('lettuce') || n.includes('selada')) return 6 
-  if (n.includes('cheese') || n.includes('keju')) return 2 
-  if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 3
-  return 15 
+  return n.includes('bottom') || n.includes('bawah')
 }
 
-// 🌟 HELPER: Mengembalikan angka murni untuk mengubah koordinat Bottom 
+// PENYESUAIAN KETEBALAN MIXED
+const getIngredientThickness = (name) => {
+  if (!name) return 10
+  const n = name.toLowerCase()
+  if (n.includes('bottom') || n.includes('bawah')) return 16 
+  if (n.includes('top') || n.includes('atas') || n.includes('bun')) return 22 
+  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 16 
+  if (n.includes('tomato') || n.includes('tomat')) return 4 
+  if (n.includes('lettuce') || n.includes('selada')) return 4 
+  if (n.includes('cheese') || n.includes('keju')) return 2 
+  if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 2
+  return 10 
+}
+
+// HELPER: Mengembalikan angka murni untuk mengubah koordinat Bottom
 const getVisualOffset = (name) => {
   if (!name) return 0
   const n = name.toLowerCase()
   if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) {
-    return 25 // Geser 25px ke atas
+    return 16 
   }
   return 0
 }
@@ -90,7 +98,7 @@ function Kitchen() {
   const [isDragOverBox, setIsDragOverBox] = useState(false)
   const [dragOverItemId, setDragOverItemId] = useState(null)
 
-  const [activeLayerId, setActiveLayerId] = useState(null)
+  const [hoveredLayerId, setHoveredLayerId] = useState(null)
 
   const menuId = location.state?.menuId
   const incomingMenu = location.state?.menu
@@ -207,6 +215,8 @@ function Kitchen() {
     if (!draggingData) return;
 
     if (draggingData.type === 'pantry') {
+      if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) return;
+
       setBurgerStack(prev => {
         const targetIdx = prev.findIndex(l => l.instance_id === targetInstanceId);
         const newLayer = {
@@ -234,6 +244,10 @@ function Kitchen() {
     if (!draggingData) return
     
     if (draggingData.type === 'pantry') {
+      if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) {
+        setDraggingData(null);
+        return;
+      }
       addIngredientToStack(draggingData.ingredient, burgerStack.length, false)
     } else if (draggingData.type === 'stack') {
       setBurgerStack((prev) => {
@@ -286,22 +300,19 @@ function Kitchen() {
     navigate('/cart')
   }
 
-  let currentBottomOffset = 25; 
+  let currentBottomOffset = 40; 
   const stackWithPositions = burgerStack.map((layer) => {
     const pos = currentBottomOffset;
     currentBottomOffset += getIngredientThickness(layer.ingredient_name);
     return { ...layer, bottomPos: pos };
   });
 
-  const isBottomBunValid = burgerStack.length > 0 && getIngredientImage(burgerStack[0]?.ingredient_name) === imgBottomBurger;
+  const isBottomBunValid = burgerStack.length > 0 && isBottomBunItem(burgerStack[0]?.ingredient_name);
   const isTopBunValid = burgerStack.length > 1 && getIngredientImage(burgerStack[burgerStack.length - 1]?.ingredient_name) === imgTopBurger;
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main 
-      className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6"
-      onClick={() => setActiveLayerId(null)}
-    >
+    <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
       <style>
         {`
           @keyframes dropBounce {
@@ -312,6 +323,13 @@ function Kitchen() {
           }
           .animate-drop-bounce {
             animation: dropBounce 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
           }
         `}
       </style>
@@ -325,90 +343,156 @@ function Kitchen() {
           <p className="mt-2 text-sm text-aldesRed/80">Tarik bahan dari Pantry, dan seret dari daftar Order Summary untuk mengatur posisi!</p>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            
+            {/* --- VISUAL STACK CONTAINER --- */}
             <div className="flex flex-col h-[550px]">
               <h2 className="mb-3 text-lg font-black text-aldesRed text-center">Visual Stack</h2>
+              
               <div 
-                className={`flex-1 rounded-3xl border-4 relative overflow-hidden transition-all duration-300 flex justify-center items-end pb-4 
-                  ${isDragOverBox ? 'border-aldesYellow bg-aldesYellow/10' : 'border-dashed border-aldesCream bg-aldesCream/20'}`}
+                className={`flex-1 rounded-3xl border-4 relative overflow-hidden transition-all duration-300 flex justify-center items-end pb-4 bg-cover bg-center
+                  ${isDragOverBox ? 'border-aldesYellow shadow-[inset_0_0_50px_rgba(234,179,8,0.3)]' : 'border-aldesCream/80 shadow-inner'}`}
+                style={{ backgroundImage: `url(${imgKitchenBg})` }}
                 onDragOver={(e) => { e.preventDefault(); setIsDragOverBox(true) }}
                 onDragLeave={() => setIsDragOverBox(false)}
                 onDrop={handleDropOnKitchen}
+                onClick={() => setHoveredLayerId(null)}
               >
-                {/* 🌟 TOMBOL CLEAR ALL (Hapus Semua Tumpukan) */}
+                
+                {/* OVERLAY KACA KETIKA KOSONG */}
+                <div className={`absolute inset-0 transition-all duration-500 pointer-events-none
+                  ${burgerStack.length === 0 
+                    ? (isDragOverBox ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-[3px]') 
+                    : 'bg-transparent backdrop-blur-none'}
+                `} />
+
+                {/* --- MINI THUMBNAIL LIST --- */}
+                <div className="absolute left-1 top-4 bottom-4 w-20 z-[150] flex flex-col items-center gap-3 overflow-y-auto scrollbar-hide py-3 pointer-events-none">
+                   {[...burgerStack].reverse().map(layer => {
+                      const isHovered = hoveredLayerId === layer.instance_id;
+                      const isDragTarget = dragOverItemId === layer.instance_id;
+
+                      return (
+                        <div
+                           key={layer.instance_id}
+                           draggable
+                           onDragStart={(e) => {
+                             e.stopPropagation();
+                             setDraggingData({ type: 'stack', instance_id: layer.instance_id });
+                             const imgEl = e.currentTarget.querySelector('img');
+                             if (imgEl) e.dataTransfer.setDragImage(imgEl, 24, 24);
+                           }}
+                           onDragEnd={() => { setDraggingData(null); setDragOverItemId(null); }}
+                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverItemId(layer.instance_id); }}
+                           onDrop={(e) => handleDropOnItem(e, layer.instance_id)}
+                           onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
+                           onMouseLeave={() => setHoveredLayerId(null)}
+                           title={layer.ingredient_name}
+                           className={`group pointer-events-auto w-14 h-14 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border-2 cursor-grab active:cursor-grabbing flex items-center justify-center flex-shrink-0 transition-all relative
+                             ${isHovered ? 'border-aldesRed scale-105 shadow-aldesRed/20 z-10' : 'border-aldesCream/80 hover:border-aldesYellow'}
+                             ${isDragTarget ? 'border-aldesYellow bg-aldesYellow/30 scale-105' : ''}`}
+                        >
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id));
+                               setHoveredLayerId(null);
+                             }} 
+                             className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-sm hover:bg-red-600 transition-all z-20 cursor-pointer"
+                           >
+                             <X size={12} strokeWidth={3} />
+                           </button>
+
+                           {getIngredientImage(layer.ingredient_name) ? (
+                              <img src={getIngredientImage(layer.ingredient_name)} className="w-9 h-9 object-contain pointer-events-none drop-shadow-sm" alt="" />
+                           ) : (
+                              <span className="text-[10px] font-bold text-aldesRed uppercase">Img</span>
+                           )}
+                        </div>
+                      )
+                   })}
+                </div>
+
+                {/* TOMBOL CLEAR ALL */}
                 {burgerStack.length > 0 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setBurgerStack([]); // Kosongkan seluruh burger
-                      setActiveLayerId(null);
-                      setQty(1); // Reset quantity ke 1
+                      setBurgerStack([]); 
+                      setHoveredLayerId(null);
+                      setQty(1); 
                     }}
-                    className="absolute top-4 right-4 z-[200] bg-white text-red-500 rounded-xl px-4 py-2 shadow-md border border-red-100 flex items-center gap-2 text-xs font-bold hover:bg-red-50 hover:scale-105 active:scale-95 transition-all"
+                    className="absolute top-4 right-4 z-[200] bg-white/90 backdrop-blur-md text-red-500 rounded-xl px-4 py-2 shadow-md border border-red-100 flex items-center gap-2 text-xs font-bold hover:bg-red-50 hover:scale-105 active:scale-95 transition-all"
                     title="Kosongkan Dapur"
                   >
                     <Trash2 className="h-4 w-4" /> CLEAR ALL
                   </button>
                 )}
 
-                <div className="absolute bottom-4 w-[70%] h-6 bg-amber-900/10 rounded-[100%] blur-[4px] mb-2" />
+                <div className="absolute bottom-[65px] w-[50%] h-8 bg-black/15 rounded-[100%] blur-[6px] pl-12 z-0" />
                 
+                {/* BIG VISUAL BURGER STACK */}
                 {burgerStack.length === 0 ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40 pointer-events-none">
-                    <img src={imgBottomBurger} alt="placeholder" className="w-56 grayscale blur-[2px]" />
-                    <p className="mt-4 font-black text-aldesRed">Tarik Bottom Bun Kesini!</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
+                    <img src={imgBottomBurger} alt="placeholder" className="w-40 grayscale opacity-40 drop-shadow-xl animate-pulse" />
+                    <div className="mt-6 bg-aldesRed text-white px-6 py-2.5 rounded-full shadow-lg flex flex-col items-center animate-bounce">
+                      <span className="font-black text-lg">Pondasi Kosong!</span>
+                      <span className="text-xs font-medium opacity-90">Tarik Bottom Bun ke sini terlebih dahulu</span>
+                    </div>
                   </div>
                 ) : (
                   stackWithPositions.map((layer, index) => {
                     const n = layer.ingredient_name.toLowerCase();
-                    let imgWidthClass = 'w-[240px]'; 
+                    
+                    let imgWidthClass = 'w-[180px]'; 
                     if (n.includes('bun') || n.includes('bottom') || n.includes('top')) {
-                      imgWidthClass = 'w-[280px]'; 
+                      imgWidthClass = 'w-[200px]'; 
                     } else if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) {
-                      imgWidthClass = 'w-[250px]'; 
+                      imgWidthClass = 'w-[190px]'; 
                     } else if (n.includes('cheese') || n.includes('keju')) {
-                      imgWidthClass = 'w-[250px]'; 
+                      imgWidthClass = 'w-[180px]'; 
                     } else {
-                      imgWidthClass = 'w-[250px]'; 
+                      imgWidthClass = 'w-[180px]'; 
                     }
 
-                    const isActive = activeLayerId === layer.instance_id;
+                    const isHovered = hoveredLayerId === layer.instance_id;
+                    const isDragTarget = dragOverItemId === layer.instance_id;
 
                     return (
                       <div 
                         key={layer.instance_id}
-                        className="absolute left-1/2 -translate-x-1/2 flex justify-center items-center w-full pointer-events-none"
+                        className="absolute left-1/2 -translate-x-1/2 pl-12 flex justify-center items-center w-full pointer-events-none"
                         style={{ 
                           bottom: `${layer.bottomPos + getVisualOffset(layer.ingredient_name)}px`, 
-                          zIndex: isActive ? 100 : index + 10 
+                          // 🌟 zIndex hanya bergantung pada urutan tumpukan (index), tidak diubah oleh isHovered
+                          zIndex: index + 10 
                         }}
-                        onMouseLeave={() => setActiveLayerId(null)}
                       >
                         <div className={`${layer.animate_drop ? 'animate-drop-bounce' : ''} flex justify-center items-center w-full relative`}>
                             
                             <div 
-                              className="absolute z-20 w-[150px] h-[60px] pointer-events-auto cursor-pointer" 
-                              onMouseEnter={() => setActiveLayerId(layer.instance_id)}
-                              onClick={(e) => {
-                                e.stopPropagation(); 
-                                setActiveLayerId(layer.instance_id);
-                              }}
+                              className="absolute z-20 w-[120px] h-[25px] pointer-events-auto cursor-pointer" 
+                              onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
+                              onMouseLeave={() => setHoveredLayerId(null)}
                             />
 
                             {getIngredientImage(layer.ingredient_name) ? (
                               <img 
                                 src={getIngredientImage(layer.ingredient_name)} 
                                 alt={layer.ingredient_name} 
-                                className={`object-contain drop-shadow-[0_12px_10px_rgba(0,0,0,0.25)] relative z-10 transition-transform duration-300 ${imgWidthClass} ${isActive ? 'scale-105' : ''}`}
+                                className={`object-contain relative z-10 transition-all duration-300 ${imgWidthClass} 
+                                  ${!isHovered && !isDragTarget ? 'drop-shadow-[0_12px_10px_rgba(0,0,0,0.25)]' : ''}
+                                  ${isHovered && !isDragTarget ? 'scale-[1.03] drop-shadow-[0_15px_15px_rgba(239,68,68,0.4)] brightness-105' : ''}
+                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-[0_20px_20px_rgba(234,179,8,0.8)] brightness-110 opacity-90' : ''}`}
                               />
                             ) : (
                               <div 
-                                className={`${imgWidthClass} h-12 bg-aldesYellow rounded-full border-4 border-aldesRed flex items-center justify-center text-base font-black text-aldesRed shadow-md relative z-10 transition-transform duration-300 ${isActive ? 'scale-105' : ''}`}
+                                className={`${imgWidthClass} h-12 bg-aldesYellow rounded-full border-4 border-aldesRed flex items-center justify-center text-base font-black text-aldesRed shadow-md relative z-10 transition-all duration-300 
+                                  ${isHovered ? 'scale-[1.03] drop-shadow-lg brightness-105' : ''}
+                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-lg brightness-110 opacity-90 border-dashed' : ''}`}
                               >
                                 {layer.ingredient_name}
                               </div>
                             )}
-
-                            {/* 🌟 TOMBOL HAPUS INDIVIDU DI VISUAL STACK TELAH DIHAPUS */}
                         </div>
                       </div>
                     )
@@ -424,40 +508,55 @@ function Kitchen() {
                 {isFetching ? (
                   Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
                 ) : (
-                  pantryIngredients.map((ingredient) => (
-                    <div
-                      key={ingredient.id}
-                      draggable
-                      onDragStart={(e) => {
-                        setDraggingData({ type: 'pantry', ingredient })
-                        const imgElement = e.currentTarget.querySelector('img')
-                        if (imgElement) {
-                          e.dataTransfer.setDragImage(imgElement, imgElement.clientWidth / 2, imgElement.clientHeight / 2)
-                        }
-                      }}
-                      onDragEnd={() => setDraggingData(null)}
-                      className="group flex cursor-grab items-center gap-4 rounded-2xl border-2 border-aldesCream/50 bg-white p-3 transition-all hover:border-aldesYellow hover:bg-aldesYellow/5 hover:shadow-md hover:-translate-y-0.5 active:cursor-grabbing"
-                    >
-                      <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-xl bg-aldesCream/30 transition-transform group-hover:scale-110 group-hover:-rotate-3">
-                        {getIngredientImage(ingredient.name) ? (
-                          <img src={getIngredientImage(ingredient.name)} alt="" className="h-12 w-12 object-contain drop-shadow-sm pointer-events-none" />
-                        ) : (
-                          <span className="text-[10px] text-aldesRed/40 font-bold uppercase">Img</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 pointer-events-none">
-                        <p className="truncate font-bold text-aldesRed text-sm">{ingredient.name}</p>
-                        <p className="text-xs font-bold text-gray-500 mt-0.5">Rp {ingredient.price.toLocaleString('id-ID')}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => addIngredientToStack(ingredient, burgerStack.length, true)}
-                        className="rounded-xl bg-aldesRed p-2.5 text-white shadow-sm hover:brightness-110 active:scale-95 transition-all flex-shrink-0"
+                  pantryIngredients.map((ingredient) => {
+                    const isFoundationMissing = burgerStack.length === 0;
+                    const isBottomBun = isBottomBunItem(ingredient.name);
+                    const isDisabled = isFoundationMissing && !isBottomBun;
+
+                    return (
+                      <div
+                        key={ingredient.id}
+                        draggable={!isDisabled}
+                        onDragStart={(e) => {
+                          if (isDisabled) return;
+                          setDraggingData({ type: 'pantry', ingredient })
+                          const imgElement = e.currentTarget.querySelector('img')
+                          if (imgElement) {
+                            e.dataTransfer.setDragImage(imgElement, imgElement.clientWidth / 2, imgElement.clientHeight / 2)
+                          }
+                        }}
+                        onDragEnd={() => setDraggingData(null)}
+                        className={`group flex items-center gap-4 rounded-2xl border-2 p-3 transition-all 
+                          ${isDisabled 
+                            ? 'border-gray-100 bg-gray-50 opacity-40 grayscale cursor-not-allowed' 
+                            : 'border-aldesCream/50 bg-white hover:border-aldesYellow hover:bg-aldesYellow/5 hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing'}`}
                       >
-                        <Plus className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))
+                        <div className={`h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-xl transition-transform 
+                          ${isDisabled ? 'bg-gray-200' : 'bg-aldesCream/30 group-hover:scale-110 group-hover:-rotate-3'}`}>
+                          {getIngredientImage(ingredient.name) ? (
+                            <img src={getIngredientImage(ingredient.name)} alt="" className="h-12 w-12 object-contain drop-shadow-sm pointer-events-none" />
+                          ) : (
+                            <span className="text-[10px] text-aldesRed/40 font-bold uppercase">Img</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 pointer-events-none">
+                          <p className={`truncate font-bold text-sm ${isDisabled ? 'text-gray-500' : 'text-aldesRed'}`}>{ingredient.name}</p>
+                          <p className="text-xs font-bold text-gray-500 mt-0.5">Rp {ingredient.price.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => addIngredientToStack(ingredient, burgerStack.length, true)}
+                          className={`rounded-xl p-2.5 shadow-sm transition-all flex-shrink-0
+                            ${isDisabled 
+                              ? 'bg-gray-300 text-gray-100' 
+                              : 'bg-aldesRed text-white hover:brightness-110 active:scale-95'}`}
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </aside>
@@ -476,37 +575,39 @@ function Kitchen() {
                   {burgerStack.length === 0 ? (
                     <p className="text-sm text-gray-500 italic text-center mt-4 pb-4">Burger masih kosong</p>
                   ) : (
-                    [...burgerStack].reverse().map((layer) => (
-                      <div 
-                        key={layer.instance_id} 
-                        draggable
-                        onDragStart={(e) => { 
-                          e.stopPropagation(); 
-                          setDraggingData({ type: 'stack', instance_id: layer.instance_id })
-                        }}
-                        onDragEnd={() => { setDraggingData(null); setDragOverItemId(null); }}
-                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverItemId(layer.instance_id); }}
-                        onDrop={(e) => handleDropOnItem(e, layer.instance_id)}
-                        className={`flex items-center justify-between text-sm bg-white p-2 rounded-xl border transition-all cursor-grab active:cursor-grabbing
-                          ${dragOverItemId === layer.instance_id ? 'border-aldesYellow border-2 shadow-md bg-aldesYellow/10 scale-[1.02]' : 'border-aldesCream/50 shadow-sm'}`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
-                          <GripVertical className="h-4 w-4 text-gray-300 flex-shrink-0 pointer-events-none" />
-                          {getIngredientImage(layer.ingredient_name) ? (
-                            <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-7 w-7 object-contain drop-shadow-sm pointer-events-none flex-shrink-0" />
-                          ) : (
-                            <div className="h-7 w-7 bg-aldesCream rounded-full flex-shrink-0 pointer-events-none" />
-                          )}
-                          <span className="font-bold text-gray-700 truncate pointer-events-none flex-1">{layer.ingredient_name}</span>
+                    [...burgerStack].reverse().map((layer) => {
+                      const isHovered = hoveredLayerId === layer.instance_id;
+                      
+                      return (
+                        <div 
+                          key={layer.instance_id} 
+                          
+                          onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
+                          onMouseLeave={() => setHoveredLayerId(null)}
+
+                          className={`flex items-center justify-between text-sm p-2 rounded-xl border transition-all
+                            ${isHovered ? 'border-aldesRed bg-red-50/50 shadow-md scale-[1.01] z-10 relative' : 'bg-white border-aldesCream/50 shadow-sm'}`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ml-1 transition-colors ${isHovered ? 'bg-aldesRed' : 'bg-gray-300'}`} />
+                            {getIngredientImage(layer.ingredient_name) ? (
+                              <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-7 w-7 object-contain drop-shadow-sm pointer-events-none flex-shrink-0" />
+                            ) : (
+                              <div className="h-7 w-7 bg-aldesCream rounded-full flex-shrink-0 pointer-events-none" />
+                            )}
+                            <span className={`font-bold truncate pointer-events-none flex-1 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-700'}`}>
+                              {layer.ingredient_name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-xs font-semibold text-gray-400 pointer-events-none">+{layer.ingredient_price.toLocaleString('id-ID')}</span>
+                            <button onClick={() => setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id))} className="text-red-400 hover:text-white hover:bg-red-500 transition-colors p-1.5 rounded-lg ml-1">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs font-semibold text-gray-400 pointer-events-none">+{layer.ingredient_price.toLocaleString('id-ID')}</span>
-                          <button onClick={() => setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id))} className="text-red-400 hover:text-white hover:bg-red-500 transition-colors p-1.5 rounded-lg ml-1">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
              </div>
