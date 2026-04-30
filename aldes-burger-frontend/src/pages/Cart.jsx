@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Minus, Plus, Trash2, X, Ticket} from 'lucide-react'
+import { MapPin, Minus, Plus, Trash2, X, Ticket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
@@ -104,22 +104,6 @@ function Cart() {
     setIsAddressModalOpen(false)
   }
   
-  const [promoCode, setPromoCode] = React.useState('')
-  const [activeVoucher, setActiveVoucher] = React.useState(null)
-
-  const applyVoucher = (e) => {
-    if (e) e.preventDefault();
-    
-    const code = promoCode.toUpperCase()
-    if (code === 'ALDESFREE') {
-      setActiveVoucher({ code: 'ALDESFREE', discount: 10000 })
-      setPromoCode('')
-    } else {
-      alert("Voucher code is invalid!")
-    }
-  }
-
-  const removeVoucher = () => setActiveVoucher(null)
   const cart = contextValue?.cart ?? []
   const removeFromCart = contextValue?.removeFromCart ?? (() => { })
   const updateQty = contextValue?.updateQty
@@ -186,11 +170,9 @@ function Cart() {
   }
 
   const subtotal = cart.reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
-  const deliveryFee = 15000
+  const deliveryFee = 10000
   const platformFee = 3000
-  const voucherDiscount = activeVoucher ? activeVoucher.discount : 0
-  const grandTotal = subtotal + deliveryFee + platformFee - voucherDiscount
-
+  const grandTotal = subtotal + deliveryFee + platformFee
   return (
     <main className="bg-aldesCream min-h-screen pb-40 px-4 py-6">
       <div className="mx-auto w-full max-w-4xl">
@@ -359,50 +341,6 @@ function Cart() {
           </button>
         </section>
 
-        {/* Voucher Section */}
-        <section className="bg-white rounded-xl shadow p-4 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Ticket className="h-5 w-5 text-aldesRed" />
-            <h2 className="font-bold text-gray-900">Use Voucher</h2>
-          </div>
-          
-          {activeVoucher ? (
-            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-green-500 text-white p-2 rounded-lg">
-                  <Ticket className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-green-700">Free Delivery Applied!</p>
-                  <p className="text-xs text-green-600 tracking-wide">Code: {activeVoucher.code}</p>
-                </div>
-              </div>
-              <button 
-                onClick={removeVoucher} 
-                className="text-xs font-bold text-red-500 uppercase hover:underline"
-              >
-                Remove
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={applyVoucher} className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Enter Code (ALDESFREE)" 
-                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-aldesRed transition-all"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-              />
-              <button 
-                type="submit" // Pastikan type-nya submit
-                className="bg-aldesRed text-white px-6 py-3 rounded-xl text-[13px] font-bold hover:brightness-110 transition-all"
-              >
-                Apply
-              </button>
-            </form>
-          )}
-        </section>
-
         {/* Summary Section */}
         <section className="bg-white rounded-xl shadow p-4 mb-6">
           <h2 className="mb-4 text-lg font-bold text-gray-900">Payment Summary</h2>
@@ -413,12 +351,7 @@ function Cart() {
             </div>
             <div className="flex justify-between">
               <span>Delivery Fee</span>
-              <div className="flex flex-col items-end">
-                <span className={`font-semibold ${activeVoucher ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                  {formatCurrency(deliveryFee)}
-                </span>
-                {activeVoucher && <span className="text-green-600 font-bold">Free</span>}
-              </div>
+              <span className="font-semibold text-gray-900">{formatCurrency(deliveryFee)}</span>
             </div>
             <div className="flex justify-between">
               <span>Platform Fee</span>
