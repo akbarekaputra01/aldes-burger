@@ -1,84 +1,105 @@
-import { Loader2, LockKeyhole, Mail, Phone, Sandwich, UserRound } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import api from '../lib/api'
-import { setAuthSession } from '../utils/auth'
+import { AtSign, Eye, EyeOff, Loader2, Sparkles, ArrowRight, User, Mail } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import MascotBurger from '../assets/mascot-burger.png'; 
 
 function SignUp() {
-  const navigate = useNavigate()
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password_confirmation: '' })
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setError('')
-
-    setIsLoading(true)
-    try {
-      const { data } = await api.post('/register', form)
-      setAuthSession(data)
-      navigate(data.user?.role === 'admin' ? '/admin' : '/menu')
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Unable to register. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10">
-      <section className="w-full max-w-md rounded-3xl bg-white p-7 shadow-md sm:p-8">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-100 text-red-600">
-            <Sandwich className="h-7 w-7" />
+    <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#F3E8CC] overflow-x-hidden font-sans">
+      {/* SISI KIRI: BRANDING (EST. 2026 FIXED - IDENTIK DENGAN LOGIN) */}
+      <section className="w-full md:w-[40%] bg-[#D52518] relative flex flex-col justify-center items-center p-8 md:p-12 overflow-hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
+        <div className="relative z-10 text-center">
+          <div className="bg-white border-[6px] border-black p-4 rounded-[3rem] inline-block mb-6 shadow-[15px_15px_0_0_#000] rotate-3 animate-bounce-slow">
+            <img src={MascotBurger} alt="Mascot" className="w-32 h-32 md:w-56 md:h-56 object-contain" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Create your burger account</h1>
-          <p className="mt-2 text-sm text-gray-500">Join Aldes Burger and start building your signature meal.</p>
+          <h1 className="text-5xl lg:text-7xl font-black text-[#FFC926] uppercase italic tracking-tighter leading-none mb-4 drop-shadow-[6px_6px_0_#000]">ALDES<br/>BURGER</h1>
+          {/* DISAMAKAN: text-sm, tracking-[0.3em], px-6 py-2 */}
+          <p className="text-[#F3E8CC] font-black text-sm uppercase tracking-[0.3em] bg-black px-6 py-2 rounded-full inline-block">EST. 2026</p>
         </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><UserRound className="h-4 w-4" />Name</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} type="text" placeholder="John Doe" required />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Mail className="h-4 w-4" />Email</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} type="email" placeholder="john@email.com" required />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><Phone className="h-4 w-4" />Phone</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))} type="tel" placeholder="+62 8xx xxxx xxxx" required />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Password</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} type="password" required />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"><LockKeyhole className="h-4 w-4" />Confirm Password</span>
-            <input className="w-full rounded-2xl border border-red-100 bg-amber-50/40 px-4 py-3 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100" value={form.password_confirmation} onChange={(event) => setForm((prev) => ({ ...prev, password_confirmation: event.target.value }))} type="password" required />
-          </label>
-          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-
-          <button type="submit" disabled={isLoading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-aldesRed px-4 py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Create Account
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-red-600 hover:text-red-700">
-            Login
-          </Link>
-        </p>
+        <div className="hidden md:block absolute top-0 -right-1 h-full w-24">
+          <svg viewBox="0 0 100 800" className="h-full w-full fill-[#F3E8CC]" preserveAspectRatio="none">
+            <path d="M100 0 C20 200 150 500 0 800 L100 800 Z" />
+          </svg>
+        </div>
       </section>
+
+      {/* SISI KANAN: FORM */}
+      <section className="flex-1 flex items-center justify-center p-4 md:p-10 perspective-1000">
+        <div className="animate-flip-in w-full max-w-[600px] bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 shadow-[12px_12px_0_0_#000] md:shadow-[18px_18px_0_0_#000] relative">
+          <div className="absolute -top-6 -right-4 md:-top-10 md:-right-8 bg-[#D52518] border-[4px] border-black px-5 py-2.5 md:px-7 md:py-3.5 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 hover:-rotate-2 transition-transform cursor-default z-30">
+            <span className="font-black text-[#FFC926] text-lg md:text-2xl uppercase italic tracking-tighter">SIGN UP</span>
+          </div>
+          <div className="mb-8 flex justify-between items-start">
+            <div className="text-left">
+              <h2 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none">JOIN THE CREW!</h2>
+              <p className="text-gray-400 font-bold text-[10px] md:text-xs uppercase mt-2">PLAY IT, BUILD IT, BITE IT! ✨</p>
+            </div>
+            <div className="mt-8 md:mt-10 mr-2">
+               <Sparkles className="text-[#FFC926] fill-[#FFC926] animate-pulse shrink-0" size={32} />
+            </div>
+          </div>
+          <form className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-black text-[#D52518] uppercase ml-2">Name</label>
+                <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0_0_#000]">
+                  <User size={18} className="mr-2 text-black" />
+                  <input className="bg-transparent w-full outline-none font-bold text-sm" placeholder="Your Name" />
+                </div>
+              </div>
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-black text-[#D52518] uppercase ml-2">Username</label>
+                <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0_0_#000]">
+                  <AtSign size={18} className="mr-2 text-black" />
+                  <input className="bg-transparent w-full outline-none font-bold text-sm" placeholder="@your_username" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1 text-left">
+              <label className="text-[10px] font-black text-[#D52518] uppercase ml-2">Email</label>
+              <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0_0_#000]">
+                <Mail size={18} className="mr-2 text-black" />
+                <input className="bg-transparent w-full outline-none font-bold text-sm" placeholder="name@gmail.com" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-black text-[#D52518] uppercase ml-2">Password</label>
+                <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0_0_#000]">
+                  <input type="password" size={18} className="bg-transparent w-full outline-none font-bold text-sm" placeholder="••••" />
+                </div>
+              </div>
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-black text-[#D52518] uppercase ml-2">Confirm</label>
+                <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0_0_#000]">
+                  <input type="password" size={18} className="bg-transparent w-full outline-none font-bold text-sm" placeholder="••••" />
+                </div>
+              </div>
+            </div>
+            <button type="submit" disabled={isLoading} className="w-full bg-[#D52518] text-[#FFC926] py-4 rounded-2xl border-[5px] border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] hover:translate-y-1 hover:shadow-[0_3px_0_0_#000] transition-all mt-4 flex justify-center items-center gap-3">
+              LET'S COOK! <ArrowRight strokeWidth={4} size={24}/>
+            </button>
+          </form>
+          <p className="mt-8 text-center font-black text-[10px] text-gray-400 uppercase tracking-widest leading-none">
+            Already have an account? <Link to="/login" className="text-[#D52518] underline decoration-[#FFC926] decoration-[3px] underline-offset-4 hover:text-black transition-colors">LOG IN</Link>
+          </p>
+        </div>
+      </section>
+
+      <style>{`
+        .perspective-1000 { perspective: 1000px; }
+        @keyframes flip-in { 0% { transform: rotateY(-90deg); opacity: 0; } 100% { transform: rotateY(0deg); opacity: 1; } }
+        .animate-flip-in { animation: flip-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0) rotate(3deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
+        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+      `}</style>
     </main>
-  )
+  );
 }
 
-export default SignUp
+export default SignUp;
