@@ -67,9 +67,10 @@ export async function getPostalCodes(districtId, context = {}) {
     const data = await requestJson(`${KODEPOS_BASE}?q=${encodeURIComponent(q)}`)
     const rows = Array.isArray(data?.data) ? data.data : []
     for (const row of rows) {
-      if (!row?.postalcode) continue
-      const key = String(row.postalcode)
-      if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban, district: row.subdistrict, city: row.city, province: row.province })
+      const postal = row?.postalcode ?? row?.code
+      if (!postal) continue
+      const key = String(postal)
+      if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban ?? row.village, district: row.subdistrict ?? row.district, city: row.city ?? row.regency, province: row.province })
     }
     if (unique.size > 0) break
   }
