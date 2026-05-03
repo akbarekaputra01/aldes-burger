@@ -72,7 +72,6 @@ export async function getPostalCodes(districtId, context = {}) {
       const key = String(postal)
       if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban ?? row.village, district: row.subdistrict ?? row.district, city: row.city ?? row.regency, province: row.province })
     }
-    if (unique.size > 0) break
   }
 
   return [...unique.values()]

@@ -16,22 +16,40 @@ export async function searchAddressSuggestions(query, region = {}) {
   const q = query?.trim()
   if (!q || q.length < 3) return []
 
-  const params = new URLSearchParams({
-    q,
-    format: 'jsonv2',
-    addressdetails: '1',
-    countrycodes: 'id',
-    limit: '8',
-  })
   const regionBias = buildRegionQuery(region)
-  if (regionBias) params.set('q', `${q}, ${regionBias}`)
+  const queryCandidates = [
+    regionBias ? `${q}, ${regionBias}` : '',
+    q,
+    [q, region?.city, region?.province].filter(Boolean).join(', '),
+  ].filter(Boolean)
 
-  const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
-    headers: { Accept: 'application/json' },
-  })
-  if (!response.ok) throw new Error('Address provider error')
+  let data = []
+  let lastError
+  for (const candidate of [...new Set(queryCandidates)]) {
+    const params = new URLSearchParams({
+      q: candidate,
+      format: 'jsonv2',
+      addressdetails: '1',
+      countrycodes: 'id',
+      limit: '8',
+    })
 
-  const data = await response.json()
+    try {
+      const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) throw new Error('Address provider error')
+      data = await response.json()
+      if (Array.isArray(data) && data.length > 0) break
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (!Array.isArray(data) || data.length === 0) {
+    if (lastError) throw lastError
+    return []
+  }
   const unique = new Map()
   for (const item of data) {
     const suggestion = toSuggestion(item)
