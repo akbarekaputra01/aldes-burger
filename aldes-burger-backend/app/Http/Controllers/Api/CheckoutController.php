@@ -118,13 +118,20 @@ class CheckoutController extends Controller
 
     public function storeAddress(Request $request): JsonResponse
     {
-        $payload = $request->validate([
-            'address' => ['required', 'string', 'max:255'],
-        ]);
+        $payload = $this->validateAddressPayload($request);
+
+        $user = $request->user();
+        $isFirstAddress = !$user->addresses()->exists();
+        $shouldBeDefault = ($payload['is_default'] ?? false) || $isFirstAddress;
+
+        if ($shouldBeDefault) {
+            $user->addresses()->update(['is_default' => false]);
+        }
 
         $address = Address::query()->create([
-            'user_id' => $request->user()->id,
-            'address' => $payload['address'],
+            ...$payload,
+            'user_id' => $user->id,
+            'is_default' => $shouldBeDefault,
         ]);
 
         return response()->json($address, 201);
@@ -136,9 +143,11 @@ class CheckoutController extends Controller
             abort(404);
         }
 
-        $payload = $request->validate([
-            'address' => ['required', 'string', 'max:255'],
-        ]);
+        $payload = $this->validateAddressPayload($request, true);
+
+        if (($payload['is_default'] ?? false) === true) {
+            $request->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
+        }
 
         $address->update($payload);
 
@@ -154,5 +163,39 @@ class CheckoutController extends Controller
         $address->delete();
 
         return response()->json(['message' => 'Address deleted.']);
+    }
+
+    private function validateAddressPayload(Request $request, bool $isUpdate = false): array
+    {
+        $payload = $request->validate([
+            'recipient_name' => ['required', 'string', 'max:100'],
+            'phone_number' => ['required', 'string', 'max:30'],
+            'label' => ['nullable', 'string', 'in:Home,Work,Other'],
+            'province' => ['required', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:100'],
+            'district' => ['required', 'string', 'max:100'],
+            'postal_code' => ['required', 'string', 'max:20'],
+            'street_address' => ['required', 'string'],
+            'detail_address' => ['nullable', 'string'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'pin_source' => ['required', 'string', 'in:default,suggestion,current_location,manual_map,manual_adjusted'],
+            'pin_confirmed' => ['required', 'boolean'],
+            'is_default' => ['nullable', 'boolean'],
+        ]);
+
+        if ($payload['pin_source'] === 'default' || !$payload['pin_confirmed']) {
+            abort(response()->json([
+                'message' => 'Choose a location from the suggestions or set a map pin so the courier can find your address.',
+            ], 422));
+        }
+
+        $payload['address'] = Address::composeLegacyAddress($payload);
+
+        if (!$isUpdate && !isset($payload['is_default'])) {
+            $payload['is_default'] = false;
+        }
+
+        return $payload;
     }
 }

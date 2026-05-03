@@ -51,10 +51,11 @@ function Profile() {
     }
   }, [location.state?.refreshAddressesAt])
 
-  const formatAddress = (rawAddress = '') => {
-    const [mainAddress = '', detail = '', coords = ''] = rawAddress.split('||')
-    const details = [mainAddress, detail].filter(Boolean).join(' • ')
-    return coords ? `${details} (${coords})` : details || rawAddress
+  const formatAddress = (address) => {
+    if (address?.street_address) {
+      return [address.street_address, address.detail_address, address.district, address.city, address.province, address.postal_code].filter(Boolean).join(', ')
+    }
+    return address?.address || '-'
   }
 
   const handleDeleteAddress = async (addressId) => {
@@ -169,9 +170,13 @@ function Profile() {
                   className="bg-white border-2 border-aldesCream p-4 rounded-2xl flex items-start sm:items-center justify-between gap-4 transition-all hover:border-aldesRed/30 hover:shadow-md group"
                 >
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-bold text-gray-800 leading-snug">
-                      {formatAddress(address.address)}
-                    </span>
+                    <span className="text-sm font-bold text-gray-800 leading-snug">{address.recipient_name || 'Recipient'}</span>
+                    <span className="text-xs text-gray-500">{address.phone_number || '-'}</span>
+                    <span className="text-sm text-gray-700">{formatAddress(address)}</span>
+                    <div className="flex gap-2 mt-1">
+                      {address.label && <span className="text-[11px] bg-aldesCream px-2 py-1 rounded-full">{address.label}</span>}
+                      {address.is_default && <span className="text-[11px] bg-aldesRed text-white px-2 py-1 rounded-full">Default</span>}
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -183,6 +188,11 @@ function Profile() {
                     >
                       <Edit className="w-4 h-4" />
                     </button>
+                    {!address.is_default && (
+                      <button type="button" onClick={async () => { await api.put(`/addresses/${address.id}`, { ...address, is_default: true }); setAddresses((prev)=>prev.map((it)=>({ ...it, is_default: it.id===address.id }))) }} className="p-2.5 text-gray-400 hover:text-aldesRed hover:bg-aldesCream rounded-xl transition-colors" title="Set Default">
+                        <MapPin className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => handleDeleteAddress(address.id)}
