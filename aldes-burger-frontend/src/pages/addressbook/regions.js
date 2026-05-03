@@ -15,6 +15,26 @@ const toRegionOption = (item) => ({
 
 const sanitizeRegionOptions = (rows) => rows.filter((row) => row.id && row.name)
 
+
+const stripAdministrativePrefix = (value = '') => String(value)
+  .replace(/^KABUPATEN\s+/i, '')
+  .replace(/^KOTA\s+/i, '')
+  .replace(/^PROVINSI\s+/i, '')
+  .trim()
+
+const buildPostalQueries = (context = {}) => {
+  const district = stripAdministrativePrefix(context.district)
+  const city = stripAdministrativePrefix(context.city)
+  const province = stripAdministrativePrefix(context.province)
+  const candidates = [
+    [district, city, province].filter(Boolean).join(' '),
+    [district, city].filter(Boolean).join(' '),
+    district,
+  ].filter(Boolean)
+
+  return [...new Set(candidates)]
+}
+
 const requestJson = async (url) => {
   const response = await fetch(url, { headers: { Accept: 'application/json' } })
   if (!response.ok) throw new Error(`Region provider error (${response.status})`)
@@ -40,14 +60,19 @@ export async function getDistricts(cityId) {
 
 export async function getPostalCodes(districtId, context = {}) {
   if (!districtId || !context.district) return []
-  const q = [context.district, context.city, context.province].filter(Boolean).join(' ')
-  const data = await requestJson(`${KODEPOS_BASE}?q=${encodeURIComponent(q)}`)
-  const rows = Array.isArray(data?.data) ? data.data : []
+  const queries = buildPostalQueries(context)
   const unique = new Map()
-  for (const row of rows) {
-    if (!row?.postalcode) continue
-    const key = String(row.postalcode)
-    if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban, district: row.subdistrict, city: row.city, province: row.province })
+
+  for (const q of queries) {
+    const data = await requestJson(`${KODEPOS_BASE}?q=${encodeURIComponent(q)}`)
+    const rows = Array.isArray(data?.data) ? data.data : []
+    for (const row of rows) {
+      if (!row?.postalcode) continue
+      const key = String(row.postalcode)
+      if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban, district: row.subdistrict, city: row.city, province: row.province })
+    }
+    if (unique.size > 0) break
   }
+
   return [...unique.values()]
 }
