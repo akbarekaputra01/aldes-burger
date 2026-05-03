@@ -76,6 +76,7 @@ function AddressBook() {
     return () => clearTimeout(t)
   }, [form.street_address, form.province, form.city, form.district, form.postal_code])
 
+
   useEffect(() => { if (!hasStreetAddress) return; let mounted = true; loadLeaflet().then((L) => { if (!mounted || mapRef.current || !mapElRef.current) return; mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); mapRef.current.on('click', (event) => { setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) }) }).catch(() => setError('Unable to load map.')); return () => { mounted = false; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null } } }, [hasStreetAddress, form.latitude, form.longitude])
 
   useEffect(() => { if (!mapRef.current || !markerRef.current || form.latitude === null || form.longitude === null) return; markerRef.current.setLatLng([form.latitude, form.longitude]); mapRef.current.panTo([form.latitude, form.longitude]) }, [form.latitude, form.longitude])
