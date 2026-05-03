@@ -1,43 +1,41 @@
-// Temporary minimal Indonesian region data for Address Book flow.
-// TODO(addressbook): Replace this local dataset with backend/API sourced region master data.
-const REGION_TREE = [
-  {
-    province: 'JAWA BARAT',
-    cities: [
-      {
-        city: 'KOTA BEKASI',
-        districts: [
-          { district: 'BEKASI UTARA', postalCodes: ['17121', '17124'] },
-          { district: 'BEKASI SELATAN', postalCodes: ['17141'] },
-        ],
-      },
-      {
-        city: 'KABUPATEN BEKASI',
-        districts: [
-          { district: 'TAMBUN SELATAN', postalCodes: ['17510'] },
-        ],
-      },
-    ],
-  },
-  {
-    province: 'DKI JAKARTA',
-    cities: [
-      {
-        city: 'JAKARTA SELATAN',
-        districts: [
-          { district: 'KEBAYORAN BARU', postalCodes: ['12130'] },
-        ],
-      },
-    ],
-  },
-]
+const WILAYAH_BASE = 'https://www.emsifa.com/api-wilayah-indonesia/api'
+const KODEPOS_BASE = 'https://kodepos.vercel.app/search'
 
-export const getProvinceOptions = () => REGION_TREE.map((item) => item.province)
+const toRegionOption = (item) => ({ id: String(item.id), name: String(item.nama).toUpperCase() })
 
-export const getCityOptions = (province) => REGION_TREE.find((item) => item.province === province)?.cities?.map((item) => item.city) ?? []
+const requestJson = async (url) => {
+  const response = await fetch(url, { headers: { Accept: 'application/json' } })
+  if (!response.ok) throw new Error(`Region provider error (${response.status})`)
+  return response.json()
+}
 
-export const getDistrictOptions = (province, city) =>
-  REGION_TREE.find((item) => item.province === province)?.cities?.find((item) => item.city === city)?.districts?.map((item) => item.district) ?? []
+export async function getProvinces() {
+  const data = await requestJson(`${WILAYAH_BASE}/provinces.json`)
+  return Array.isArray(data) ? data.map(toRegionOption) : []
+}
 
-export const getPostalCodeOptions = (province, city, district) =>
-  REGION_TREE.find((item) => item.province === province)?.cities?.find((item) => item.city === city)?.districts?.find((item) => item.district === district)?.postalCodes ?? []
+export async function getCities(provinceId) {
+  if (!provinceId) return []
+  const data = await requestJson(`${WILAYAH_BASE}/regencies/${provinceId}.json`)
+  return Array.isArray(data) ? data.map(toRegionOption) : []
+}
+
+export async function getDistricts(cityId) {
+  if (!cityId) return []
+  const data = await requestJson(`${WILAYAH_BASE}/districts/${cityId}.json`)
+  return Array.isArray(data) ? data.map(toRegionOption) : []
+}
+
+export async function getPostalCodes(districtId, context = {}) {
+  if (!districtId || !context.district) return []
+  const q = [context.district, context.city, context.province].filter(Boolean).join(' ')
+  const data = await requestJson(`${KODEPOS_BASE}?q=${encodeURIComponent(q)}`)
+  const rows = Array.isArray(data?.data) ? data.data : []
+  const unique = new Map()
+  for (const row of rows) {
+    if (!row?.postalcode) continue
+    const key = String(row.postalcode)
+    if (!unique.has(key)) unique.set(key, { postalCode: key, village: row.urban, district: row.subdistrict, city: row.city, province: row.province })
+  }
+  return [...unique.values()]
+}
