@@ -1,16 +1,11 @@
 import { LocateFixed, MapPin, Save, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../lib/api'
 
-const MAP_BOUNDS = {
-  north: -6.1,
-  south: -6.3,
-  west: 106.72,
-  east: 106.92,
-}
-
 const defaultCenter = { lat: -6.2, lng: 106.816666 }
+const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
 
 const parseAddressData = (rawAddress = '') => {
   const [main = '', detail = '', coords = ''] = rawAddress.split('||')
@@ -30,10 +25,36 @@ const buildAddressPayload = ({ mainAddress, detail, location }) => {
   return [mainAddress.trim(), detail.trim(), coordinates].join('||')
 }
 
-const locationToPercent = ({ lat, lng }) => ({
-  x: ((lng - MAP_BOUNDS.west) / (MAP_BOUNDS.east - MAP_BOUNDS.west)) * 100,
-  y: ((MAP_BOUNDS.north - lat) / (MAP_BOUNDS.north - MAP_BOUNDS.south)) * 100,
-})
+const loadLeaflet = async () => {
+  if (window.L) return window.L
+
+  const existingCss = document.querySelector(`link[href="${LEAFLET_CSS}"]`)
+  if (!existingCss) {
+    const css = document.createElement('link')
+    css.rel = 'stylesheet'
+    css.href = LEAFLET_CSS
+    document.head.appendChild(css)
+  }
+
+  await new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${LEAFLET_JS}"]`)
+    if (existingScript) {
+      existingScript.addEventListener('load', resolve, { once: true })
+      existingScript.addEventListener('error', reject, { once: true })
+      if (window.L) resolve()
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = LEAFLET_JS
+    script.async = true
+    script.onload = resolve
+    script.onerror = reject
+    document.body.appendChild(script)
+  })
+
+  return window.L
+}
 
 function AddressBook() {
   const navigate = useNavigate()
@@ -44,6 +65,10 @@ function AddressBook() {
   const [detail, setDetail] = useState('')
   const [pickedLocation, setPickedLocation] = useState(defaultCenter)
   const [error, setError] = useState('')
+
+  const mapRef = useRef(null)
+  const mapElRef = useRef(null)
+  const markerRef = useRef(null)
 
   const isEditMode = useMemo(() => Boolean(addressId), [addressId])
 
@@ -67,6 +92,54 @@ function AddressBook() {
     loadAddress().catch(() => setError('Unable to load selected address.'))
   }, [addressId, isEditMode])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const initMap = async () => {
+      try {
+        const L = await loadLeaflet()
+        if (!isMounted || mapRef.current || !mapElRef.current) return
+
+        mapRef.current = L.map(mapElRef.current).setView([defaultCenter.lat, defaultCenter.lng], 13)
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(mapRef.current)
+
+        markerRef.current = L.marker([pickedLocation.lat, pickedLocation.lng]).addTo(mapRef.current)
+
+        mapRef.current.on('click', (event) => {
+          const nextLocation = {
+            lat: Number(event.latlng.lat.toFixed(6)),
+            lng: Number(event.latlng.lng.toFixed(6)),
+          }
+          setPickedLocation(nextLocation)
+        })
+      } catch {
+        if (isMounted) setError('Unable to load map. Please check your internet connection.')
+      }
+    }
+
+    initMap()
+
+    return () => {
+      isMounted = false
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+        markerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mapRef.current || !markerRef.current) return
+
+    markerRef.current.setLatLng([pickedLocation.lat, pickedLocation.lng])
+    mapRef.current.panTo([pickedLocation.lat, pickedLocation.lng], { animate: true })
+  }, [pickedLocation])
+
   const saveAddress = async (event) => {
     event.preventDefault()
     setError('')
@@ -89,21 +162,6 @@ function AddressBook() {
       setError('Unable to save address. Please try again.')
     }
   }
-
-  const handleMapPick = (event) => {
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const pointerX = event.clientX ?? event.nativeEvent?.clientX ?? 0
-    const pointerY = event.clientY ?? event.nativeEvent?.clientY ?? 0
-    const xPercent = Math.min(1, Math.max(0, (pointerX - bounds.left) / bounds.width))
-    const yPercent = Math.min(1, Math.max(0, (pointerY - bounds.top) / bounds.height))
-
-    const lng = MAP_BOUNDS.west + (MAP_BOUNDS.east - MAP_BOUNDS.west) * xPercent
-    const lat = MAP_BOUNDS.north - (MAP_BOUNDS.north - MAP_BOUNDS.south) * yPercent
-
-    setPickedLocation({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) })
-  }
-
-  const pinPosition = locationToPercent(pickedLocation)
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-8">
@@ -134,25 +192,11 @@ function AddressBook() {
             className="w-full rounded-2xl border border-aldesRed/20 bg-white px-4 py-3 outline-none transition focus:border-aldesRed/40 focus:ring-2 focus:ring-aldesYellow/35"
           />
 
-          <button
-            type="button"
-            onClick={handleMapPick}
-            onPointerDown={handleMapPick}
-            className="relative block h-72 w-full cursor-pointer overflow-hidden rounded-3xl border border-aldesRed/20 bg-aldesCream"
+          <div
+            ref={mapElRef}
+            className="h-72 w-full overflow-hidden rounded-3xl border border-aldesRed/20"
             title="Click anywhere to pin your location"
-          >
-            <img
-              src="https://staticmap.openstreetmap.de/staticmap.php?center=-6.2,106.82&zoom=12&size=1000x500"
-              alt="OpenStreetMap area"
-              className="h-full w-full object-cover"
-            />
-            <span
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${pinPosition.x}%`, top: `${pinPosition.y}%` }}
-            >
-              <span className="block h-5 w-5 rounded-full border-4 border-aldesYellow bg-aldesRed" />
-            </span>
-          </button>
+          />
 
           <p className="inline-flex items-center gap-2 rounded-2xl bg-aldesCream px-3 py-2 text-xs font-semibold text-aldesRed">
             <LocateFixed className="h-4 w-4" />
