@@ -36,11 +36,41 @@ const getIngredientImage = (name) => {
   return null
 }
 
-// 🌟 HELPER BARU: Mengecek apakah bahan adalah Bottom Bun
+// Mengecek apakah bahan adalah Bottom Bun
 const isBottomBunItem = (name) => {
   if (!name) return false
   const n = name.toLowerCase()
   return n.includes('bottom') || n.includes('bawah')
+}
+
+// Mengecek apakah bahan adalah Top Bun
+const isTopBunItem = (name) => {
+  if (!name) return false
+  const n = name.toLowerCase()
+  return n.includes('top') || n.includes('atas') || (n.includes('bun') && !n.includes('bottom') && !n.includes('bawah'))
+}
+
+// 🌟 HELPER BARU: Menentukan Prioritas Urutan di Pantry
+const getIngredientPriority = (name) => {
+  if (!name) return 99;
+  const n = name.toLowerCase();
+  
+  // 1. Roti selalu di atas (Bottom dan Top)
+  if (n.includes('bottom') || n.includes('bawah')) return 1;
+  if (n.includes('top') || n.includes('atas')) return 2;
+  if (n.includes('bun') || n.includes('roti')) return 3;
+  
+  // 2. Daging (Patty) di urutan kedua
+  if (n.includes('beef') || n.includes('chicken') || n.includes('patty') || n.includes('daging') || n.includes('ayam')) return 4;
+  
+  // 3. Pelengkap lainnya menyusul di bawahnya
+  if (n.includes('cheese') || n.includes('keju')) return 5;
+  if (n.includes('lettuce') || n.includes('selada')) return 6;
+  if (n.includes('tomato') || n.includes('tomat')) return 7;
+  if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 8;
+  
+  // Bahan lainnya yang tidak terdaftar akan ditaruh paling bawah
+  return 99;
 }
 
 // PENYESUAIAN KETEBALAN MIXED
@@ -115,7 +145,18 @@ function Kitchen() {
       try {
         const [menuRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
         setMenu(menuRes.data)
-        setIngredients(ingredientsRes.data)
+        
+        // PENANGKAL DUPLIKAT DARI BACKEND
+        const uniqueIngredients = [];
+        const seenNames = new Set();
+        ingredientsRes.data.forEach((item) => {
+          if (!seenNames.has(item.name)) {
+            seenNames.add(item.name);
+            uniqueIngredients.push(item);
+          }
+        });
+        
+        setIngredients(uniqueIngredients);
       } catch (error) {
         setMenu([])
         setIngredients([])
@@ -145,9 +186,17 @@ function Kitchen() {
 
   const pantryIngredients = useMemo(() => {
     if (!selectedMenu) return []
-    if (selectedMenu.is_custom) return ingredients
-    const allowedIds = (selectedMenu.ingredients ?? []).map((i) => i.id)
-    return ingredients.filter((i) => allowedIds.includes(i.id))
+    let result = []
+
+    if (selectedMenu.is_custom) {
+      result = [...ingredients]
+    } else {
+      const allowedIds = (selectedMenu.ingredients ?? []).map((i) => i.id)
+      result = ingredients.filter((i) => allowedIds.includes(i.id))
+    }
+
+    // 🌟 Mengurutkan ingredients di Pantry berdasarkan Helper Prioritas
+    return result.sort((a, b) => getIngredientPriority(a.name) - getIngredientPriority(b.name));
   }, [ingredients, selectedMenu])
 
   const layerCounts = useMemo(() => {
@@ -188,7 +237,17 @@ function Kitchen() {
     }
     setBurgerStack((prev) => {
       const next = [...prev]
-      next.splice(atIndex, 0, newLayer)
+      
+      if (isTopBunItem(ingredient.name)) {
+        next.push(newLayer); 
+      } else {
+        const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+        if (topBunIdx !== -1) {
+          next.splice(topBunIdx, 0, newLayer); 
+        } else {
+          next.splice(atIndex, 0, newLayer);
+        }
+      }
       return next
     })
   }
@@ -203,6 +262,11 @@ function Kitchen() {
       const next = [...prev];
       const [moved] = next.splice(dragIdx, 1);
       next.splice(dropIdx, 0, moved);
+      
+      if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev; 
+      const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+      if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev; 
+
       return next;
     });
   }
@@ -230,6 +294,11 @@ function Kitchen() {
         };
         const next = [...prev];
         next.splice(targetIdx, 0, newLayer); 
+        
+        if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
+        const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+        if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev;
+
         return next;
       });
     } else if (draggingData.type === 'stack') {
@@ -256,6 +325,11 @@ function Kitchen() {
         const next = [...prev]
         const [moved] = next.splice(srcIdx, 1)
         next.push(moved) 
+        
+        if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
+        const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+        if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev;
+
         return next
       })
     }
@@ -308,7 +382,7 @@ function Kitchen() {
   });
 
   const isBottomBunValid = burgerStack.length > 0 && isBottomBunItem(burgerStack[0]?.ingredient_name);
-  const isTopBunValid = burgerStack.length > 1 && getIngredientImage(burgerStack[burgerStack.length - 1]?.ingredient_name) === imgTopBurger;
+  const isTopBunValid = burgerStack.length > 1 && isTopBunItem(burgerStack[burgerStack.length - 1]?.ingredient_name);
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
@@ -463,7 +537,6 @@ function Kitchen() {
                         className="absolute left-1/2 -translate-x-1/2 pl-12 flex justify-center items-center w-full pointer-events-none"
                         style={{ 
                           bottom: `${layer.bottomPos + getVisualOffset(layer.ingredient_name)}px`, 
-                          // 🌟 zIndex hanya bergantung pada urutan tumpukan (index), tidak diubah oleh isHovered
                           zIndex: index + 10 
                         }}
                       >
@@ -577,19 +650,30 @@ function Kitchen() {
                   ) : (
                     [...burgerStack].reverse().map((layer) => {
                       const isHovered = hoveredLayerId === layer.instance_id;
+                      const isDragTarget = dragOverItemId === layer.instance_id;
                       
                       return (
                         <div 
                           key={layer.instance_id} 
                           
+                          draggable
+                          onDragStart={(e) => { 
+                            e.stopPropagation(); 
+                            setDraggingData({ type: 'stack', instance_id: layer.instance_id })
+                          }}
+                          onDragEnd={() => { setDraggingData(null); setDragOverItemId(null); }}
+                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverItemId(layer.instance_id); }}
+                          onDrop={(e) => handleDropOnItem(e, layer.instance_id)}
+
                           onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
                           onMouseLeave={() => setHoveredLayerId(null)}
 
-                          className={`flex items-center justify-between text-sm p-2 rounded-xl border transition-all
-                            ${isHovered ? 'border-aldesRed bg-red-50/50 shadow-md scale-[1.01] z-10 relative' : 'bg-white border-aldesCream/50 shadow-sm'}`}
+                          className={`flex items-center justify-between text-sm p-2 rounded-xl border transition-all cursor-grab active:cursor-grabbing
+                            ${isDragTarget ? 'border-aldesYellow border-2 shadow-md bg-aldesYellow/10 scale-[1.02]' : 
+                              isHovered ? 'border-aldesRed bg-red-50/50 shadow-md scale-[1.01] z-10 relative' : 'bg-white border-aldesCream/50 shadow-sm'}`}
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ml-1 transition-colors ${isHovered ? 'bg-aldesRed' : 'bg-gray-300'}`} />
+                            <GripVertical className={`h-4 w-4 flex-shrink-0 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-400'}`} />
                             {getIngredientImage(layer.ingredient_name) ? (
                               <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-7 w-7 object-contain drop-shadow-sm pointer-events-none flex-shrink-0" />
                             ) : (
