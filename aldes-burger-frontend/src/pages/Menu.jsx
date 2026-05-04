@@ -10,9 +10,9 @@ import promo1 from '../assets/promo1.png'
 import promo2 from '../assets/promo2.png'
 
 // Import gambar Menu
-import img1 from '../assets/menus/1.jpg'
-import img2 from '../assets/menus/2.jpg'
-import img3 from '../assets/menus/3.jpg'
+import img1 from '../assets/menus/1.png'
+import img2 from '../assets/menus/2.png'
+import img3 from '../assets/menus/3.png'
 import img4 from '../assets/menus/4.png'
 import img5 from '../assets/menus/5.png'
 import img6 from '../assets/menus/6.png'
@@ -203,13 +203,13 @@ function Menu() {
           scrollBanner(currentIndex + 1, true)
           setTimeout(() => {
             if (bannerRef.current) scrollBanner(0, false)
-          }, 500) 
+          }, 600) // Sedikit dinaikkan jadi 600ms agar transisinya benar-benar selesai sebelum reset
         } else if (currentIndex >= bannerSlides.length) {
           scrollBanner(0, false)
         } else {
           scrollBanner(currentIndex + 1, true)
         }
-      }, 4000)
+      }, 5000) // Waktu auto-play sedikit diperlambat jadi 5 detik agar user sempat membaca promo
     }
     return () => clearInterval(interval)
   }, [isDragging])
@@ -230,16 +230,20 @@ function Menu() {
           {extendedSlides.map((slide, index) => (
             <article 
               key={`${slide.id}-${index}`} 
-              className="min-w-full shrink-0 snap-center rounded-3xl shadow-sm overflow-hidden bg-aldesRed flex items-center justify-center"
+              // PERBAIKAN: Menambahkan transform-gpu untuk memaksa rendering border-radius lebih presisi
+              className="relative min-w-full shrink-0 snap-center rounded-3xl shadow-sm overflow-hidden bg-aldesRed aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] transform-gpu"
             >
               <img 
                 src={slide.image} 
                 alt={slide.alt} 
-                className="w-full h-48 sm:h-64 md:h-[360px] lg:h-[420px] object-cover pointer-events-none" 
+                // PERBAIKAN: Menambahkan rounded-3xl langsung di gambarnya agar lengkungannya ikut memotong gambar
+                className="absolute inset-0 w-full h-full object-cover rounded-3xl pointer-events-none" 
               />
             </article>
           ))}
         </div>
+        
+        {/* PERBAIKAN: Indikator titik dibuat lebih modern (efek kapsul saat aktif) */}
         <div className="flex items-center justify-center gap-2">
           {bannerSlides.map((slide, index) => (
             <button
@@ -249,8 +253,10 @@ function Menu() {
                 scrollBanner(index, true)
                 setActiveBannerIndex(index)
               }}
-              className={`h-2.5 w-2.5 cursor-pointer rounded-full transition ${
-                index === activeBannerIndex ? 'scale-110 bg-aldesRed' : 'bg-aldesRed/30 hover:bg-aldesRed/60'
+              className={`h-2.5 cursor-pointer rounded-full transition-all duration-500 ease-out ${
+                index === activeBannerIndex 
+                  ? 'w-8 bg-aldesRed' // Jika aktif, bentuknya memanjang seperti kapsul
+                  : 'w-2.5 bg-aldesRed/30 hover:bg-aldesRed/60'
               }`}
               aria-label={`Go to slide ${index + 1}`}
               aria-current={index === activeBannerIndex}
@@ -276,20 +282,17 @@ function Menu() {
               {menuBySection[section.key].map((item) => (
                 <article
                   key={item.id}
-                  // PERBAIKAN: Menambahkan 'group', 'transition-all', 'hover:-translate-y-1.5', dan 'hover:shadow-xl'
                   className={`group overflow-hidden flex flex-col rounded-3xl bg-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
                     item.is_custom 
                       ? 'border-2 border-aldesYellow hover:shadow-aldesYellow/20' 
                       : 'border border-aldesCream hover:shadow-aldesRed/10'
                   }`}
                 >
-                  {/* Container gambar dengan overflow-hidden agar saat gambar membesar tidak keluar kotak */}
                   <div className="relative overflow-hidden">
                     {menuImages[item.id] ? (
                       <img 
                         src={menuImages[item.id]} 
                         alt={item.name} 
-                        // PERBAIKAN: Menambahkan 'transition-transform' dan 'group-hover:scale-105' pada gambar
                         className="h-48 w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105" 
                       />
                     ) : (
