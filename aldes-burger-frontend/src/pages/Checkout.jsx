@@ -1,192 +1,220 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, TicketPercent, MapPin, CreditCard, ShoppingBag, Plus, Minus, Trash2, Sparkles } from 'lucide-react';
-import MascotBurger from '../assets/mascot-burger.png'; // Pastikan path asset benar
-
-// --- KOMPONEN KECIL UNTUK VIBES KONSISTEN ---
-
-// Icon Burger Kecil Gaya Neubrutalism - Disesuaikan konsistensinya
-const BurgerIconSmall = ({ size = 20, className = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 11a8 8 0 0 1 16 0" /><path d="M2 15h20" /><path d="M4 15a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4" /><path d="M2 12h20" />
-  </svg>
-);
-
-// --- DATA DUMMY CART ---
-const initialCart = [
-  { id: 1, name: 'Aldes OG Burger', price: 45000, qty: 1, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=400&auto=format&fit=crop' },
-  { id: 2, name: 'Cheese Overload', price: 55000, qty: 2, image: 'https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=400&auto=format&fit=crop' },
-];
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom'; // Tambah useNavigate untuk proteksi extra
+import { 
+  ArrowLeft, 
+  MapPin, 
+  CreditCard, 
+  ShoppingBag, 
+  CheckCircle2,
+  Banknote,
+  Landmark,
+  Flame,
+  Info,
+  User,
+  Phone,
+  Plus,
+  Minus,
+  Trash2
+} from 'lucide-react';
+import MascotBurger from '../assets/mascot-burger.png';
 
 function Checkout() {
-  const [cart, setCart] = useState(initialCart);
-  const [promo, setPromo] = useState('');
+  const navigate = useNavigate();
+  
+  // 1. MENGAMBIL DATA DARI LOCAL STORAGE
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('aldes_cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
+  const [paymentMethod, setPaymentMethod] = useState('bank');
+
+  // 2. UPDATE LOCAL STORAGE & SYNC
+  useEffect(() => {
+    localStorage.setItem('aldes_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Fungsi Update Quantity
   const updateQty = (id, delta) => {
-    setCart(prev => prev.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item));
+    setCart(prev => prev.map(item => 
+      item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
+    ));
   };
 
-  const calculateSubtotal = () => cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const subtotal = calculateSubtotal();
-  const deliveryFee = subtotal > 100000 ? 0 : 15000;
-  const platformFee = 2000;
+  // Fungsi Hapus Item
+  const removeItem = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Kalkulasi Harga
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  // Biaya pengiriman gratis jika di atas 100rb, tapi jika 0 (kosong) jangan tampilkan biaya
+  const deliveryFee = subtotal > 100000 || subtotal === 0 ? 0 : 15000;
+  const platformFee = subtotal === 0 ? 0 : 2000;
   const total = subtotal + deliveryFee + platformFee;
 
-  return (
-    <main className="min-h-screen w-full bg-[#F3E8CC] font-sans overflow-x-hidden relative text-[15px]">
-      
-      {/* HEADER SECTION - KONSISTEN & BERSIH */}
-      <header className="w-full bg-white border-b-[6px] border-black px-4 md:px-8 py-4 sticky top-0 z-50 shadow-[0_4px_0_0_#000]">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-            <Link to="/menu" className="flex items-center gap-2.5 bg-[#F3E8CC]/50 border-4 border-black px-5 py-2 rounded-full font-black shadow-[4px_4px_0_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all text-xs uppercase tracking-wider group">
-              <ArrowLeft className="w-4 h-4 group-hover:translate-x-[-2px] transition-transform" strokeWidth={3} />
-              Back
-            </Link>
-            
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-black uppercase italic tracking-tighter text-black drop-shadow-[2px_2px_0_#FFC926]">
-                Secure the Bag
-              </h1>
-              <ShoppingBag size={28} className="text-[#D52518]" strokeWidth={3}/>
-            </div>
+  // Fungsi Handle Checkout
+  const handlePlaceOrder = () => {
+    if (cart.length === 0) return;
+    
+    // Logika setelah klik order (misal: kirim ke API atau WA)
+    alert("Order Berhasil Ditempatkan!");
+    localStorage.removeItem('aldes_cart'); // Bersihkan cart setelah order
+    navigate('/success'); // Pindah ke page sukses
+  };
 
-            <Link to="/profile" className="w-12 h-12 rounded-full border-4 border-black overflow-hidden shadow-[4px_4px_0_0_#000]">
-              <img src={MascotBurger} alt="User" className="w-full h-full object-cover bg-[#FFC926]" />
-            </Link>
+  return (
+    <main className="min-h-screen w-full bg-[#F3E8CC] font-sans text-black selection:bg-[#FFC926] overflow-x-hidden">
+      
+      {/* MARQUEE */}
+      <div className="bg-black text-[#FFC926] py-1.5 overflow-hidden border-b-2 border-black">
+        <div className="flex animate-marquee whitespace-nowrap font-bold text-[10px] uppercase tracking-[0.3em]">
+          {[...Array(10)].map((_, i) => (
+            <span key={i} className="mx-6 italic">⚡ ALDES BURGER ⚡ BEST TASTE IN TOWN ⚡ GEN-Z VIBES ⚡</span>
+          ))}
+        </div>
+      </div>
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 w-full bg-white/60 backdrop-blur-lg border-b-2 border-black px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/menu" className="group flex items-center gap-2 bg-white border-2 border-black px-5 py-2 rounded-xl font-bold shadow-[4px_4px_0_0_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-[10px] uppercase tracking-wider">
+            <ArrowLeft size={16} strokeWidth={3} /> Menu
+          </Link>
+
+          <div className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-xl border-2 border-black shadow-[4px_4px_0_0_#D52518]">
+            <ShoppingBag size={18} className="text-[#FFC926]" strokeWidth={2.5} />
+            <h1 className="text-lg font-black uppercase italic tracking-tight">Checkout</h1>
+          </div>
+
+          <div className="w-12 h-12 rounded-xl border-2 border-black bg-[#FFC926] p-1 shadow-[4px_4px_0_0_#000]">
+            <img src={MascotBurger} alt="Mascot" className="w-full h-full object-contain" />
+          </div>
         </div>
       </header>
 
-      {/* MAIN CONTENT AREA - PADDING UTAMA */}
-      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
-        
-        {/* GRID LAYOUT - Dua Kolom yang Jelas */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+      <div className="max-w-7xl mx-auto p-4 md:p-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* KOLOM KIRI: CART & PROMO */}
-          <section className="lg:col-span-2 space-y-8">
-            <div className="bg-white border-[6px] border-black rounded-[2.5rem] p-6 md:p-8 shadow-[12px_12px_0_0_#000]">
-              
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b-4 border-black/10">
-                <BurgerIconSmall size={24} className="text-[#D52518]" />
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Your Munchies Loot</h2>
-                <span className="ml-auto font-black text-sm bg-black text-[#F3E8CC] px-4 py-1.5 rounded-full">{cart.length} Items</span>
-              </div>
+          {/* LIST PESANAN */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="flex items-end gap-3">
+              <h2 className="text-3xl font-black uppercase italic leading-none text-black">Order Summary</h2>
+              <div className="h-1 flex-1 bg-black/5 mb-1 rounded-full"></div>
+              <span className="bg-[#FFC926] border-2 border-black px-4 py-1 rounded-lg font-black text-[10px] uppercase">
+                {cart.length} Items
+              </span>
+            </div>
 
-              {/* CART ITEMS - KONSISTEN DENGAN FIELD INPUT */}
-              <div className="space-y-5">
-                {cart.map(item => (
-                  <div key={item.id} className="flex flex-col sm:flex-row items-center gap-5 bg-white border-4 border-black rounded-2xl p-5 shadow-[4px_4px_0_0_#000] group transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]">
-                    <img src={item.image} alt={item.name} className="w-24 h-24 rounded-xl border-4 border-black object-cover shadow-[4px_4px_0_0_#000] bg-[#F3E8CC]/50" />
+            <div className="space-y-4">
+              {cart.length > 0 ? (
+                cart.map(item => (
+                  <div key={item.id} className="bg-white border-2 border-black rounded-[1.5rem] p-5 shadow-[6px_6px_0_0_#000] flex flex-col md:flex-row items-center gap-6">
+                    <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-xl border-2 border-black overflow-hidden flex-shrink-0 shadow-[4px_4px_0_0_#F3E8CC]">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
                     
-                    <div className="flex-1 text-center sm:text-left">
-                      <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-1 group-hover:text-[#D52518]">{item.name}</h3>
-                      <p className="font-bold text-lg text-black bg-[#F3E8CC] px-3 py-1 rounded-full inline-block">Rp {item.price.toLocaleString('id-ID')}</p>
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="font-black text-xl uppercase tracking-tight">{item.name}</h3>
+                      <p className="font-bold text-[#D52518] italic text-sm mb-3">IDR {item.price.toLocaleString('id-ID')}</p>
+                      
+                      <div className="flex items-center justify-center md:justify-start gap-3">
+                        <div className="flex items-center bg-[#F3E8CC]/50 border-2 border-black rounded-lg p-0.5">
+                          <button onClick={() => updateQty(item.id, -1)} className="p-1.5 hover:bg-[#FFC926] rounded-md transition-colors"><Minus size={14} strokeWidth={4}/></button>
+                          <span className="font-black text-center w-8 text-xs">{item.qty}</span>
+                          <button onClick={() => updateQty(item.id, 1)} className="p-1.5 hover:bg-[#FFC926] rounded-md transition-colors"><Plus size={14} strokeWidth={4}/></button>
+                        </div>
+                        <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-[#D52518] transition-colors p-1"><Trash2 size={18}/></button>
+                      </div>
                     </div>
 
-                    {/* QTY CONTROLS - KONSISTEN DENGAN LOGIN BUTTON STYLE */}
-                    <div className="flex items-center gap-1 bg-white border-4 border-black rounded-full p-1 shadow-[4px_4px_0_0_#000]">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-10 h-10 flex items-center justify-center text-[#D52518] hover:scale-110 active:scale-95"><Minus size={18} strokeWidth={4}/></button>
-                      <span className="font-black text-2xl text-black w-14 text-center tabular-nums">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-10 h-10 flex items-center justify-center text-[#D52518] hover:scale-110 active:scale-95"><Plus size={18} strokeWidth={4}/></button>
-                    </div>
-
-                    <div className="text-center sm:text-right flex flex-row sm:flex-col items-center gap-2">
-                       <p className="font-black text-2xl tabular-nums text-black">Rp {(item.price * item.qty).toLocaleString('id-ID')}</p>
-                       <button className="text-gray-400 hover:text-[#D52518] hover:scale-110 transition-all"><Trash2 size={22} strokeWidth={3}/></button>
+                    <div className="text-right">
+                      <p className="font-black text-xl italic tabular-nums">IDR {(item.price * item.qty).toLocaleString('id-ID')}</p>
                     </div>
                   </div>
-                ))}
+                ))
+              ) : (
+                <div className="bg-white border-2 border-black rounded-[1.5rem] p-12 text-center shadow-[6px_6px_0_0_#000]">
+                  <p className="font-black uppercase italic text-gray-400">Empty!</p>
+                  <Link to="/menu" className="inline-block mt-4 text-[#D52518] font-black uppercase text-xs border-b-2 border-[#D52518]">Go grab some burgers</Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SUMMARY & BILL */}
+          <div className="lg:col-span-5">
+            <aside className="sticky top-28 space-y-6">
+              
+              <div className="bg-white border-2 border-black rounded-[1.5rem] p-6 shadow-[6px_6px_0_0_#D52518]">
+                <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                  <MapPin size={14} className="text-black" /> Delivery Details
+                </h4>
+                <div className="border-2 border-black rounded-xl p-4 bg-[#F3E8CC]/30">
+                   <div className="flex justify-between items-center text-xs font-bold uppercase mb-2">
+                      <span className="text-gray-500">Alex Thompson</span>
+                      <span>+62 812-3456-7890</span>
+                   </div>
+                   <p className="text-xs font-black uppercase leading-tight">South Residence, Block B No. 42, South Jakarta</p>
+                </div>
               </div>
 
-              {/* PROMO CODE SECTION - KONSISTEN DENGAN FIELD INPUT LOGIN */}
-              <div className="mt-8 pt-6 border-t-4 border-black/10">
-                <label className="block font-black text-xs uppercase tracking-wider mb-2.5 ml-3 text-[#D52518]"> flex your code here </label>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 flex items-center bg-[#F3E8CC]/10 border-4 border-black rounded-full px-5 py-3.5 focus-within:bg-white focus-within:shadow-[4px_4px_0_0_#000] transition-all">
-                    <TicketPercent size={24} className="text-black mr-3" />
-                    <input type="text" value={promo} onChange={(e) => setPromo(e.target.value)} className="bg-transparent w-full outline-none font-bold text-lg uppercase placeholder:text-gray-400 placeholder:normal-case" placeholder="Type here..." />
+              {/* PAYMENT */}
+              <div className="bg-white border-2 border-black rounded-[1.5rem] p-6 shadow-[6px_6px_0_0_#FFC926]">
+                <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                  <CreditCard size={14} className="text-black" /> Payment Method
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => setPaymentMethod('bank')} className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-black transition-all ${paymentMethod === 'bank' ? 'bg-[#FFC926] shadow-[4px_4px_0_0_#000] -translate-y-1' : 'bg-white'}`}>
+                    <Landmark size={24}/><span className="font-black text-[10px] uppercase">Bank Transfer</span>
+                  </button>
+                  <button onClick={() => setPaymentMethod('cash')} className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-black transition-all ${paymentMethod === 'cash' ? 'bg-[#FFC926] shadow-[4px_4px_0_0_#000] -translate-y-1' : 'bg-white'}`}>
+                    <Banknote size={24}/><span className="font-black text-[10px] uppercase">Cash</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* FINAL BILL */}
+              <div className="bg-black text-white rounded-[2rem] p-8 border-2 border-black shadow-[8px_8px_0_0_#000]">
+                <div className="space-y-3 mb-6 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
+                  <div className="flex justify-between"><span>Subtotal</span><span className="text-white">IDR {subtotal.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between"><span>Delivery</span><span className="text-white">IDR {deliveryFee.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between pb-3 border-b border-white/10"><span>Service Fee</span><span className="text-white">IDR {platformFee.toLocaleString('id-ID')}</span></div>
+                </div>
+
+                <div className="flex justify-between items-end mb-8">
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-[#FFC926] mb-1 tracking-widest">Grand Total</p>
+                    <p className="text-4xl font-black italic tracking-tighter leading-none">IDR {total.toLocaleString('id-ID')}</p>
                   </div>
-                  <button className="bg-[#FFC926] text-black px-12 py-4 rounded-full border-4 border-black font-black text-lg uppercase tracking-tight shadow-[6px_6px_0_0_#000] hover:translate-y-1 hover:shadow-[3px_3px_0_0_#000] active:translate-y-2 active:shadow-none transition-all">Apply</button>
+                  <Flame className={`text-[#D52518] ${cart.length > 0 ? 'animate-bounce' : ''}`} size={28} fill="currentColor" />
                 </div>
-              </div>
-            </div>
-          </section>
 
-          {/* KOLOM KANAN: PAYMENT & FINAL SUMMARY */}
-          <aside className="space-y-8">
-            
-            {/* DROP POINT & PAYMENT SELECTOR */}
-            <div className="bg-white border-[6px] border-black rounded-[2.5rem] p-6 shadow-[12px_12px_0_0_#000]">
-              
-              {/* Delivery */}
-              <div className="mb-6 pb-5 border-b-4 border-black/10">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <MapPin size={24} className="text-[#D52518]" strokeWidth={3}/>
-                  <h3 className="text-2xl font-black uppercase tracking-tight">Drop Point</h3>
-                </div>
-                <div className="bg-white border-4 border-black rounded-xl p-4 shadow-[4px_4px_0_0_#000] flex items-center gap-4 transition-all hover:bg-[#F3E8CC]/20 hover:border-[#D52518]">
-                  <div className='flex-1'>
-                      <p className="font-black text-lg mb-0.5">Rumah Skena Pusat</p>
-                      <p className="text-xs font-medium text-gray-700">Jl. Burger Raya No. 42, Jaksel</p>
-                  </div>
-                  <span className='font-black text-xs bg-black text-[#F3E8CC] px-3 py-1 rounded-full uppercase cursor-pointer hover:bg-[#D52518] transition-colors'>Change</span>
-                </div>
+                {/* TOMBOL ORDER DENGAN KONDISI DISABLED */}
+                <button 
+                  onClick={handlePlaceOrder}
+                  disabled={cart.length === 0}
+                  className={`w-full py-5 rounded-2xl border-2 font-black text-xl uppercase italic transition-all flex items-center justify-center gap-3
+                    ${cart.length > 0 
+                      ? 'bg-[#D52518] text-white border-white shadow-[0_5px_0_0_#fff] hover:translate-y-[5px] hover:shadow-none active:scale-95' 
+                      : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-50'
+                    }`}
+                >
+                  {cart.length > 0 ? "Place Order" : "Cart Empty"} <CheckCircle2 size={24} strokeWidth={3} />
+                </button>
+                
+                <p className="mt-5 text-center text-[8px] font-bold text-gray-500 uppercase tracking-widest italic flex items-center justify-center gap-1">
+                  <Info size={10} /> Quality guaranteed or it's on us
+                </p>
               </div>
-
-              {/* Payment */}
-              <div>
-                <div className="flex items-center gap-2.5 mb-4">
-                  <CreditCard size={24} className="text-[#D52518]" strokeWidth={3}/>
-                  <h3 className="text-2xl font-black uppercase tracking-tight">Payment</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {['QRIS', 'AldesPay'].map((method, idx) => (
-                    <button key={method} className={`border-4 border-black rounded-xl p-4 font-black text-base uppercase tracking-tight shadow-[4px_4px_0_0_#000] transition-all flex flex-col items-center gap-2 ${idx === 0 ? 'bg-[#FFC926]' : 'bg-white hover:bg-[#F3E8CC]/50 hover:border-[#D52518]'}`}>
-                      {idx === 0 ? <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/QRIS_logo.svg" alt="QRIS" className="h-6" /> : <BurgerIconSmall className="text-[#D52518]"/>}
-                      {method}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* FINAL SUMMARY & ORDER BUTTON - KONSISTEN DENGAN SIDE PANEL LOGIN */}
-            <div className="bg-white border-[6px] border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_#000] relative overflow-hidden">
-              
-              <Sparkles size={80} className="absolute -bottom-8 -left-8 text-[#FFC926]/20 rotate-12" />
-              
-              <h3 className="text-3xl font-black uppercase tracking-tighter mb-6 pb-3 border-b-4 border-black/10 text-center relative z-10 text-black">Damage Report</h3>
-              
-              <div className="space-y-3 font-bold tabular-nums relative z-10 text-sm">
-                <div className="flex justify-between text-black/80"><span>Munchies Subtotal</span><span className='font-black'>Rp {subtotal.toLocaleString('id-ID')}</span></div>
-                <div className="flex justify-between text-black/80"><span>Skena Delivery</span><span className='font-black'>{deliveryFee === 0 ? <span className="text-[#D52518] font-black uppercase tracking-wider">FREE</span> : `Rp ${deliveryFee.toLocaleString('id-ID')}`}</span></div>
-                <div className="flex justify-between text-black/80"><span>Platform Fee</span><span className='font-black'>Rp {platformFee.toLocaleString('id-ID')}</span></div>
-                <div className="flex justify-between text-2xl font-black uppercase tracking-tight pt-4 mt-2 border-t-4 border-black/10 text-black">
-                  <span>Total</span>
-                  <span className="text-3xl text-black drop-shadow-[2px_2px_0_#FFC926]">Rp {total.toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-
-              <button className="w-full mt-8 bg-[#D52518] text-[#FFC926] py-5 rounded-2xl border-[5px] border-black font-black text-2xl uppercase tracking-tighter shadow-[0_8px_0_0_#000] hover:translate-y-1 hover:shadow-[0_4px_0_0_#000] active:translate-y-2 active:shadow-none transition-all flex justify-center items-center gap-3 relative z-10 active:scale-[0.98]">
-                ORDER NOW! 🔥
-              </button>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
-
-        {/* FOOTER KECIL - KONSISTEN DENGAN LOGIN FOOTER */}
-        <footer className="mt-12 text-center font-black text-xs text-gray-400 uppercase tracking-[0.3em] bg-black px-6 py-3 rounded-full inline-block mx-auto transform translate-x-[calc(50vw-50%)]">
-          Aldes Burger © 2026 • Taste the Skena
-        </footer>
       </div>
 
-      {/* GLOBAL NEUBRUTALISM STYLES - KONSISTEN */}
       <style>{`
-        /* Custom Scrollbar Brutalist */
-        ::-webkit-scrollbar { width: 12px; }
-        ::-webkit-scrollbar-track { background: #F3E8CC; border-left: 2px solid black; }
-        ::-webkit-scrollbar-thumb { background: black; border: 2px solid #F3E8CC; border-radius: 6px; }
-        ::-webkit-scrollbar-thumb:hover { background: #D52518; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 35s linear infinite; }
       `}</style>
     </main>
   );
