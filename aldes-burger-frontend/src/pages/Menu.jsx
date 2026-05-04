@@ -1,4 +1,4 @@
-import { ChevronRight, Flame } from 'lucide-react'
+import { ChevronRight, Flame, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
@@ -82,6 +82,27 @@ function Menu() {
   const [scrollLeft, setScrollLeft] = useState(0)
   const bannerRef = useRef(null)
 
+  const [activeActionId, setActiveActionId] = useState(null)
+  const [tempQty, setTempQty] = useState(1)
+  
+  const activeCardRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeCardRef.current && !activeCardRef.current.contains(event.target)) {
+        setActiveActionId(null) 
+      }
+    }
+
+    if (activeActionId !== null) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [activeActionId])
+
   useEffect(() => {
     const loadMenu = async () => {
       setIsFetching(true)
@@ -114,10 +135,10 @@ function Menu() {
     [menuBySection],
   )
 
-  const handleMenuAdd = (item) => {
+  const handleInitialClick = (item) => {
     const sectionKey = resolveSectionKey(item)
 
-    if (sectionKey === 'burgers') {
+    if (sectionKey === 'burgers' && item.is_custom) {
       navigate('/kitchen', {
         state: {
           menuId: item.id,
@@ -128,20 +149,43 @@ function Menu() {
       return
     }
 
+    if (activeActionId === item.id) {
+      setActiveActionId(null)
+    } else {
+      setActiveActionId(item.id)
+      setTempQty(1)
+    }
+  }
+
+  const handleGoToKitchen = (item) => {
+    navigate('/kitchen', {
+      state: {
+        menuId: item.id,
+        menu: item,
+        category: resolveSectionKey(item),
+      },
+    })
+  }
+
+  const handleDirectAddToCart = (item, qty) => {
+    const sectionKey = resolveSectionKey(item)
+    
     addToCart({
-      id: `menu-${item.id}`,
+      id: `menu-${item.id}-${Date.now()}`,
       menu_id: item.id,
       name: item.name,
-      qty: 1,
+      qty: qty,
       base_price: item.price ?? 0,
       unit_price: item.price ?? 0,
-      total_price: item.price ?? 0,
+      total_price: (item.price ?? 0) * qty,
       modifiers: [],
       stack_order: [],
       ingredients: [],
       category: sectionKey,
       is_customized: false,
     })
+    
+    setActiveActionId(null)
   }
 
   const scrollBanner = (index, smooth = true) => {
@@ -203,13 +247,13 @@ function Menu() {
           scrollBanner(currentIndex + 1, true)
           setTimeout(() => {
             if (bannerRef.current) scrollBanner(0, false)
-          }, 600) // Sedikit dinaikkan jadi 600ms agar transisinya benar-benar selesai sebelum reset
+          }, 600) 
         } else if (currentIndex >= bannerSlides.length) {
           scrollBanner(0, false)
         } else {
           scrollBanner(currentIndex + 1, true)
         }
-      }, 5000) // Waktu auto-play sedikit diperlambat jadi 5 detik agar user sempat membaca promo
+      }, 5000) 
     }
     return () => clearInterval(interval)
   }, [isDragging])
@@ -230,20 +274,17 @@ function Menu() {
           {extendedSlides.map((slide, index) => (
             <article 
               key={`${slide.id}-${index}`} 
-              // PERBAIKAN: Menambahkan transform-gpu untuk memaksa rendering border-radius lebih presisi
               className="relative min-w-full shrink-0 snap-center rounded-3xl shadow-sm overflow-hidden bg-aldesRed aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] transform-gpu"
             >
               <img 
                 src={slide.image} 
                 alt={slide.alt} 
-                // PERBAIKAN: Menambahkan rounded-3xl langsung di gambarnya agar lengkungannya ikut memotong gambar
                 className="absolute inset-0 w-full h-full object-cover rounded-3xl pointer-events-none" 
               />
             </article>
           ))}
         </div>
         
-        {/* PERBAIKAN: Indikator titik dibuat lebih modern (efek kapsul saat aktif) */}
         <div className="flex items-center justify-center gap-2">
           {bannerSlides.map((slide, index) => (
             <button
@@ -255,7 +296,7 @@ function Menu() {
               }}
               className={`h-2.5 cursor-pointer rounded-full transition-all duration-500 ease-out ${
                 index === activeBannerIndex 
-                  ? 'w-8 bg-aldesRed' // Jika aktif, bentuknya memanjang seperti kapsul
+                  ? 'w-8 bg-aldesRed' 
                   : 'w-2.5 bg-aldesRed/30 hover:bg-aldesRed/60'
               }`}
               aria-label={`Go to slide ${index + 1}`}
@@ -282,6 +323,7 @@ function Menu() {
               {menuBySection[section.key].map((item) => (
                 <article
                   key={item.id}
+                  ref={activeActionId === item.id ? activeCardRef : null}
                   className={`group overflow-hidden flex flex-col rounded-3xl bg-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
                     item.is_custom 
                       ? 'border-2 border-aldesYellow hover:shadow-aldesYellow/20' 
@@ -303,26 +345,84 @@ function Menu() {
                   </div>
                   
                   <div className="p-4 flex flex-col flex-1">
+                    {/* PERBAIKAN: Variasi Badge berdasarkan jenis menu dan category */}
                     <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-2xl px-2 py-1 text-xs font-bold ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-aldesCream text-aldesRed'}`}>
-                      {item.is_custom ? <><Flame className="h-3.5 w-3.5" /> Kitchen Route</> : 'Signature Menu'}
+                      {item.is_custom ? (
+                        <><Flame className="h-3.5 w-3.5" /> Kitchen</>
+                      ) : section.key === 'sides' ? (
+                        'Tasty Side'
+                      ) : section.key === 'drinks' ? (
+                        'Refreshment'
+                      ) : (
+                        'Signature Burger'
+                      )}
                     </div>
+                    
                     <h3 className="text-lg font-bold text-aldesRed">{item.name}</h3>
                     <p className="mt-2 text-sm text-aldesRed/80 flex-1">{item.description}</p>
                     <p className="mt-3 text-base font-semibold text-aldesRed">{currencyFormatter.format(item.price ?? 0)}</p>
-                    <button
-                      type="button"
-                      onClick={() => handleMenuAdd(item)}
-                      className={`cursor-pointer mt-4 flex w-full items-center justify-center gap-1 rounded-2xl px-4 py-2 font-semibold transition ${
-                        section.key === 'burgers'
-                          ? item.is_custom
+                    
+                    {activeActionId === item.id ? (
+                      section.key === 'burgers' ? (
+                        <div className="mt-4 flex gap-2 h-10">
+                          <button
+                            type="button"
+                            onClick={() => handleGoToKitchen(item)}
+                            className="flex-1 rounded-2xl border-2 border-aldesRed text-aldesRed text-sm font-bold transition hover:bg-aldesRed hover:text-white"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDirectAddToCart(item, 1)}
+                            className="flex-1 rounded-2xl bg-aldesRed text-white text-sm font-bold transition hover:brightness-110"
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 flex items-center justify-between gap-2 h-10">
+                          <div className="flex h-full items-center rounded-2xl bg-aldesCream px-1">
+                            <button
+                              type="button"
+                              onClick={() => setTempQty((p) => Math.max(1, p - 1))}
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-8 text-center font-bold text-aldesRed">{tempQty}</span>
+                            <button
+                              type="button"
+                              onClick={() => setTempQty((p) => p + 1)}
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDirectAddToCart(item, tempQty)}
+                            className="flex h-full flex-1 items-center justify-center gap-1 rounded-2xl bg-aldesYellow font-semibold text-black transition hover:brightness-95"
+                          >
+                            Confirm <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleInitialClick(item)}
+                        className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-2xl px-4 font-semibold transition ${
+                          item.is_custom
                             ? 'bg-aldesYellow text-black hover:brightness-95'
                             : 'bg-aldesRed text-white hover:brightness-110'
-                          : 'bg-aldesYellow text-black hover:brightness-95'
-                      }`}
-                    >
-                      {section.key === 'burgers' ? (item.is_custom ? 'Customize' : 'Add') : 'Add'}
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                        }`}
+                      >
+                        {section.key === 'burgers' ? (item.is_custom ? 'Customize' : 'Add') : 'Add'}
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
+                    
                   </div>
                 </article>
               ))}
