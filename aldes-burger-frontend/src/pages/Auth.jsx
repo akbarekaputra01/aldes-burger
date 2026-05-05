@@ -1,122 +1,240 @@
-import { Eye, EyeOff, Loader2, Sparkles, ArrowRight, Lock, User } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../lib/api';
-import { setAuthSession } from '../utils/auth';
-import MascotBurger from '../assets/mascot-burger.png'; 
+import {
+  ArrowLeft,
+  MapPin,
+  CreditCard,
+  ShoppingBag,
+  CheckCircle2,
+  Banknote,
+  Landmark,
+  Flame,
+  Info,
+  User,
+  Phone,
+  Plus,
+  Minus,
+  Trash2,
+  Loader2 // <-- Tambahkan Loader2 untuk animasi loading
+} from 'lucide-react';
+import MascotBurger from '../assets/mascot-burger.png';
+import { useCart } from '../context/CartContext';
+import api from '../lib/api'; // <-- Import instance API
 
-function Auth() {
+function Checkout() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { cart, updateQty, removeFromCart, clearCart } = useCart();
+  
+  const [paymentMethod, setPaymentMethod] = useState('bank');
+  const [isSubmitting, setIsSubmitting] = useState(false); // <-- State untuk loading
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  // Kalkulasi Harga
+  const subtotal = cart.reduce((sum, item) => sum + ((item.unit_price ?? 0) * (item.qty ?? 1)), 0);
+  const deliveryFee = subtotal > 100000 || subtotal === 0 ? 0 : 15000;
+  const platformFee = subtotal === 0 ? 0 : 2000;
+  const total = subtotal + deliveryFee + platformFee;
+
+  // Fungsi Handle Checkout dengan API
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) return;
     
+    setIsSubmitting(true);
+
     try {
-      const { data } = await api.post('/login', form);
-      setAuthSession(data);
-      navigate(data.user?.role === 'admin' ? '/admin' : '/menu');
-    } catch (err) {
-      const message = err.response?.data?.message || 'Login Gagal! 🍔';
-      setError(message.toUpperCase());
+      // 1. Siapkan payload / data yang akan dikirim ke Backend
+      const payload = {
+        amount: total,
+        payment_method: paymentMethod,
+        destination_address: "South Residence, Block B No. 42, South Jakarta", // Sesuai dengan UI saat ini
+        items: cart.map(item => ({
+          menu_id: item.menu_id,
+          name: item.name,
+          qty: item.qty,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          modifiers: item.modifiers || [],
+          ingredients: item.ingredients || [],
+          is_customized: item.is_customized
+        }))
+      };
+
+      // 2. Kirim ke Backend menggunakan axios (api.js)
+      await api.post('/transactions', payload);
+
+      // 3. Jika berhasil, bersihkan keranjang & navigasi ke halaman sukses
+      clearCart();
+      navigate('/payment-status?status=success');
+
+    } catch (error) {
+      console.error("Gagal memproses pesanan:", error);
+      // Jika terjadi error dari server (misal validasi gagal atau server mati)
+      navigate('/payment-status?status=failed');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#F3E8CC] overflow-x-hidden font-sans">
-      <section className="w-full md:w-[40%] bg-[#D52518] relative flex flex-col justify-center items-center p-8 md:p-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
-        <div className="relative z-10 text-center">
-          <div className="bg-white border-[6px] border-black p-4 rounded-[3rem] inline-block mb-6 shadow-[15px_15px_0_0_#000] rotate-3 animate-bounce-slow">
-            <img src={MascotBurger} alt="Mascot" className="w-32 h-32 md:w-56 md:h-56 object-contain" />
-          </div>
-          <h1 className="text-5xl lg:text-7xl font-black text-[#FFC926] uppercase italic tracking-tighter leading-none mb-4 drop-shadow-[6px_6px_0_#000]">ALDES<br/>BURGER</h1>
-          <p className="text-[#F3E8CC] font-black text-sm uppercase tracking-[0.3em] bg-black px-6 py-2 rounded-full inline-block">EST. 2026</p>
+    <main className="min-h-screen w-full bg-[#F3E8CC] font-sans text-black selection:bg-[#FFC926] overflow-x-hidden">
+             
+      {/* MARQUEE */}
+      <div className="bg-black text-[#FFC926] py-1.5 overflow-hidden border-b-2 border-black">
+        <div className="flex animate-marquee whitespace-nowrap font-bold text-[10px] uppercase tracking-[0.3em]">
+          {[...Array(10)].map((_, i) => (
+            <span key={i} className="mx-6 italic"> ALDES BURGER   BEST TASTE IN TOWN   GEN-Z VIBES </span>
+          ))}
         </div>
-      </section>
+      </div>
 
-      <section className="flex-1 flex items-center justify-center p-4 md:p-10">
-        <div className="animate-flip-in w-full max-w-[500px] bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 shadow-[12px_12px_0_0_#000] md:shadow-[18px_18px_0_0_#000] relative">
-          <div className="absolute -top-6 -right-4 md:-top-10 md:-right-8 bg-[#D52518] border-[4px] border-black px-5 py-2.5 md:px-7 md:py-3.5 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
-            <span className="font-black text-[#FFC926] text-lg md:text-2xl uppercase italic tracking-tighter">LOG IN</span>
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 w-full bg-white/60 backdrop-blur-lg border-b-2 border-black px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/cart" className="group flex items-center gap-2 bg-white border-2 border-black px-5 py-2 rounded-xl font-bold shadow-[4px_4px_0_0_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-[10px] uppercase tracking-wider">
+            <ArrowLeft size={16} strokeWidth={3} /> Cart
+          </Link>
+          <div className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-xl border-2 border-black shadow-[4px_4px_0_0_#D52518]">
+            <ShoppingBag size={18} className="text-[#FFC926]" strokeWidth={2.5} />
+            <h1 className="text-lg font-black uppercase italic tracking-tight">Checkout</h1>
+          </div>
+          <div className="w-12 h-12 rounded-xl border-2 border-black bg-[#FFC926] p-1 shadow-[4px_4px_0_0_#000]">
+            <img src={MascotBurger} alt="Mascot" className="w-full h-full object-contain" />
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto p-4 md:p-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                     
+          {/* LIST PESANAN */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="flex items-end gap-3">
+              <h2 className="text-3xl font-black uppercase italic leading-none text-black">Order Summary</h2>
+              <div className="h-1 flex-1 bg-black/5 mb-1 rounded-full"></div>
+              <span className="bg-[#FFC926] border-2 border-black px-4 py-1 rounded-lg font-black text-[10px] uppercase">
+                {cart.length} Items
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {cart.length > 0 ? (
+                cart.map(item => (
+                  <div key={item.id} className="bg-white border-2 border-black rounded-[1.5rem] p-5 shadow-[6px_6px_0_0_#000] flex flex-col md:flex-row items-center gap-6">
+                    <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-xl border-2 border-black overflow-hidden flex-shrink-0 shadow-[4px_4px_0_0_#F3E8CC]">
+                      <img src={item.image || MascotBurger} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                                         
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="font-black text-xl uppercase tracking-tight">{item.name}</h3>
+                      <p className="font-bold text-[#D52518] italic text-sm mb-3">IDR {(item.unit_price ?? 0).toLocaleString('id-ID')}</p>
+                                             
+                      <div className="flex items-center justify-center md:justify-start gap-3">
+                        <div className="flex items-center bg-[#F3E8CC]/50 border-2 border-black rounded-lg p-0.5">
+                          <button onClick={() => updateQty(item.id, (item.qty ?? 1) - 1)} className="p-1.5 hover:bg-[#FFC926] rounded-md transition-colors"><Minus size={14} strokeWidth={4}/></button>
+                          <span className="font-black text-center w-8 text-xs">{item.qty ?? 1}</span>
+                          <button onClick={() => updateQty(item.id, (item.qty ?? 1) + 1)} className="p-1.5 hover:bg-[#FFC926] rounded-md transition-colors"><Plus size={14} strokeWidth={4}/></button>
+                        </div>
+                        <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-[#D52518] transition-colors p-1"><Trash2 size={18}/></button>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-black text-xl italic tabular-nums">IDR {((item.unit_price ?? 0) * (item.qty ?? 1)).toLocaleString('id-ID')}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white border-2 border-black rounded-[1.5rem] p-12 text-center shadow-[6px_6px_0_0_#000]">
+                  <p className="font-black uppercase italic text-gray-400">Empty!</p>
+                  <Link to="/menu" className="inline-block mt-4 text-[#D52518] font-black uppercase text-xs border-b-2 border-[#D52518]">Go grab some burgers</Link>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="mb-8 flex justify-between items-start">
-            <div className="text-left">
-              <h2 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none">WELCOME BACK!</h2>
-              <p className="text-gray-400 font-bold text-[10px] md:text-xs uppercase mt-2">Ready for another bite? 🍔</p>
-            </div>
-            <Sparkles className="text-[#FFC926] fill-[#FFC926] animate-pulse mt-4" size={32} />
-          </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border-[3px] border-red-600 text-red-700 font-black rounded-2xl animate-shake text-xs flex items-center gap-2">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2 text-left">
-              <label className="text-xs font-black text-[#D52518] uppercase ml-2 tracking-wider">Email or Phone</label>
-              <div className="flex items-center bg-[#F3E8CC]/20 border-4 border-black rounded-2xl px-4 py-4 focus-within:bg-white transition-all">
-                <User size={20} className="mr-3 text-black" />
-                <input 
-                  type="text"
-                  value={form.email}
-                  onChange={(e) => setForm({...form, email: e.target.value})} 
-                  className="bg-transparent w-full outline-none font-bold text-base text-black" 
-                  placeholder="name@mail.com / 0812..." 
-                  required 
-                />
+          {/* SUMMARY & BILL */}
+          <div className="lg:col-span-5">
+            <aside className="sticky top-28 space-y-6">
+                             
+              <div className="bg-white border-2 border-black rounded-[1.5rem] p-6 shadow-[6px_6px_0_0_#D52518]">
+                <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                  <MapPin size={14} className="text-black" /> Delivery Details
+                </h4>
+                <div className="border-2 border-black rounded-xl p-4 bg-[#F3E8CC]/30">
+                   <div className="flex justify-between items-center text-xs font-bold uppercase mb-2">
+                      <span className="text-gray-500">Alex Thompson</span>
+                      <span>+62 812-3456-7890</span>
+                   </div>
+                   <p className="text-xs font-black uppercase leading-tight">South Residence, Block B No. 42, South Jakarta</p>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2 text-left">
-              <label className="text-xs font-black text-[#D52518] uppercase ml-2 tracking-wider">Password</label>
-              <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-4 shadow-[4px_4px_0_0_#000]">
-                <Lock size={20} className="mr-3 text-black" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  value={form.password}
-                  onChange={(e) => setForm({...form, password: e.target.value})} 
-                  className="bg-transparent w-full outline-none font-bold text-base text-black" 
-                  placeholder="••••••••" 
-                  required 
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-black">
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {/* PAYMENT */}
+              <div className="bg-white border-2 border-black rounded-[1.5rem] p-6 shadow-[6px_6px_0_0_#FFC926]">
+                <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                  <CreditCard size={14} className="text-black" /> Payment Method
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => setPaymentMethod('bank')} className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-black transition-all ${paymentMethod === 'bank' ? 'bg-[#FFC926] shadow-[4px_4px_0_0_#000] -translate-y-1' : 'bg-white'}`}>
+                    <Landmark size={24}/><span className="font-black text-[10px] uppercase">Bank Transfer</span>
+                  </button>
+                  <button onClick={() => setPaymentMethod('cash')} className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-black transition-all ${paymentMethod === 'cash' ? 'bg-[#FFC926] shadow-[4px_4px_0_0_#000] -translate-y-1' : 'bg-white'}`}>
+                    <Banknote size={24}/><span className="font-black text-[10px] uppercase">Cash</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* FINAL BILL */}
+              <div className="bg-black text-white rounded-[2rem] p-8 border-2 border-black shadow-[8px_8px_0_0_#000]">
+                <div className="space-y-3 mb-6 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
+                  <div className="flex justify-between"><span>Subtotal</span><span className="text-white">IDR {subtotal.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between"><span>Delivery</span><span className="text-white">IDR {deliveryFee.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between pb-3 border-b border-white/10"><span>Service Fee</span><span className="text-white">IDR {platformFee.toLocaleString('id-ID')}</span></div>
+                </div>
+                
+                <div className="flex justify-between items-end mb-8">
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-[#FFC926] mb-1 tracking-widest">Grand Total</p>
+                    <p className="text-4xl font-black italic tracking-tighter leading-none">IDR {total.toLocaleString('id-ID')}</p>
+                  </div>
+                  <Flame className={`text-[#D52518] ${cart.length > 0 ? 'animate-bounce' : ''}`} size={28} fill="currentColor" />
+                </div>
+
+                {/* TOMBOL ORDER DENGAN KONDISI DISABLED & LOADING */}
+                <button 
+                  onClick={handlePlaceOrder}
+                  disabled={cart.length === 0 || isSubmitting}
+                  className={`w-full py-5 rounded-2xl border-2 font-black text-xl uppercase italic transition-all flex items-center justify-center gap-3
+                    ${cart.length > 0 && !isSubmitting
+                       ? 'bg-[#D52518] text-white border-white shadow-[0_5px_0_0_#fff] hover:translate-y-[5px] hover:shadow-none active:scale-95' 
+                       : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-50'
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="animate-spin h-6 w-6 text-[#FFC926]" />
+                  ) : cart.length > 0 ? (
+                    <>Place Order <CheckCircle2 size={24} strokeWidth={3} /></>
+                  ) : (
+                    "Cart Empty"
+                  )}
                 </button>
+                                 
+                <p className="mt-5 text-center text-[8px] font-bold text-gray-500 uppercase tracking-widest italic flex items-center justify-center gap-1">
+                  <Info size={10} /> Quality guaranteed or it's on us
+                </p>
               </div>
-            </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-[#D52518] text-[#FFC926] py-5 rounded-2xl border-[5px] border-black font-black text-2xl uppercase shadow-[0_8px_0_0_#000] active:translate-y-1 active:shadow-[0_4px_0_0_#000] transition-all flex justify-center items-center gap-3">
-              {isLoading ? <Loader2 className="animate-spin" /> : <>START COOKING! <ArrowRight strokeWidth={4} size={28}/></>}
-            </button>
-          </form>
+            </aside>
+          </div>
 
-          <p className="mt-10 text-center font-black text-xs text-gray-400 uppercase tracking-widest leading-none">
-            New to the kitchen? <Link to="/signup" className="text-[#D52518] underline decoration-[#FFC926] decoration-[5px] underline-offset-4 hover:text-black transition-colors">SIGN UP</Link>
-          </p>
         </div>
-      </section>
+      </div>
 
       <style>{`
-        @keyframes flip-in { 0% { transform: rotateY(-90deg); opacity: 0; } 100% { transform: rotateY(0deg); opacity: 1; } }
-        .animate-flip-in { animation: flip-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes bounce-slow { 0%, 100% { transform: translateY(0) rotate(3deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
-        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 35s linear infinite; }
       `}</style>
     </main>
   );
 }
 
-export default Auth;
+export default Checkout;
