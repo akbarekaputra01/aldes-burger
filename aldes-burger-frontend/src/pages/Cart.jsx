@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
@@ -68,7 +68,6 @@ const getVisualOffset = (name) => {
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
   let currentBottom = 4
-  
   return (
     <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
       <div className="absolute bottom-2 w-full flex justify-center items-end">
@@ -77,16 +76,13 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
           const thickness = getIngredientThickness(name)
           const pos = currentBottom
           currentBottom += thickness
-
           return (
             <div 
               key={index}
               className="absolute left-1/2 -translate-x-1/2 w-20"
               style={{ bottom: `${pos + getVisualOffset(name)}px`, zIndex: index }}
             >
-              {img && (
-                <img src={img} alt={name} className="w-full h-auto drop-shadow-sm" />
-              )}
+              {img && <img src={img} alt={name} className="w-full h-auto drop-shadow-sm" />}
             </div>
           )
         })}
@@ -104,9 +100,7 @@ const MenuMiniPreview = ({ name }) => {
     }
     return null;
   }
-
   const img = getMenuImage(name);
-
   return (
     <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center p-2">
       {img ? (
@@ -125,6 +119,8 @@ function Cart() {
   const cart = contextValue?.cart ?? []
   const removeFromCart = contextValue?.removeFromCart ?? (() => { })
   const updateQty = contextValue?.updateQty
+
+  const [selectedIds, setSelectedIds] = useState([])
 
   const toNumber = (value) => {
     if (typeof value === 'number') return value
@@ -155,6 +151,20 @@ function Cart() {
     return `Item #${id}`
   }
 
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === cart.length && cart.length > 0) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(cart.map(item => item.id))
+    }
+  }
+
   const handleIncrease = (item) => {
     if (updateQty) updateQty(item.id, (item.qty ?? 1) + 1)
   }
@@ -168,9 +178,7 @@ function Cart() {
     }
   }
 
-  const isCartEmpty = !Array.isArray(cart) || cart.length === 0
-
-  if (isCartEmpty) {
+  if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <main className="bg-aldesCream min-h-screen pb-32 px-4 py-8">
         <section className="mx-auto max-w-3xl rounded-xl bg-white p-8 text-center shadow">
@@ -187,112 +195,121 @@ function Cart() {
     )
   }
 
-  const subtotal = cart.reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
-  const grandTotal = subtotal // Menghapus fee pengiriman dan platform
+  const grandTotal = cart
+    .filter(item => selectedIds.includes(item.id))
+    .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <main className="bg-aldesCream min-h-screen pb-40 px-4 py-6">
-      <div className="mx-auto w-full max-w-4xl">
-        
-        {/* Items Section */}
-        <section className="mb-6">
-          {cart.map((item) => {
-            const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
-            const isMenuItem = menuImageMap[item.name.toLowerCase().replace(" ", "_")];
-            
-            return (
-              <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
-                  {isBurger ? (
-                    <BurgerMiniPreview ingredients={item.ingredients} />
-                  ) : (
-                    <MenuMiniPreview name={item.name} />
-                  )}
-                  
-                  <div className="min-w-0">
-                    <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
-                    {item.modifiers?.length > 0 && (
-                      <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
-                        Mods: {item.modifiers.map(m => {
-                          const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                          return `${m.action} ${name}`;
-                        }).join(', ')}
-                      </p>
+    <div className="bg-aldesCream flex flex-col min-h-full">
+      {/* 1. Konten Items */}
+      <div className="px-4 py-6 flex-grow">
+        <div className="mx-auto w-full max-w-4xl">
+          
+          {/* Select All Section */}
+          <div className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-3">
+            <button onClick={toggleSelectAll} className="flex-shrink-0">
+              {selectedIds.length === cart.length && cart.length > 0 ? (
+                <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-6 h-6 border-2 border-gray-300 rounded-full bg-white" />
+              )}
+            </button>
+            <span className="font-bold text-gray-900 text-base">Select All ({cart.length})</span>
+          </div>
+
+          {/* Items Section */}
+          <section className="mb-6">
+            {cart.map((item) => {
+              const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
+              const isSelected = selectedIds.includes(item.id);
+              
+              return (
+                <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-4">
+                  {/* Custom Checkbox Centang Putih */}
+                  <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0">
+                    {isSelected ? (
+                      <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 border-2 border-gray-300 rounded-full bg-white" />
                     )}
-                    <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-aldesCream/50 p-1 rounded-lg">
-                    <button
-                      onClick={() => handleDecrease(item)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="w-5 text-center text-sm font-bold text-gray-800">{item.qty ?? 1}</span>
-                    <button
-                      onClick={() => handleIncrease(item)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="ml-2 text-gray-400 hover:text-aldesRed transition-colors"
-                  >
-                    <Trash2 className="h-5 w-5" />
                   </button>
-                </div>
-              </article>
-            );
-          })}
 
-          {/* Add More Section */}
-          <button 
-            onClick={() => navigate('/menu')}
-            className="w-full mt-2 py-2 bg-white border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-[15px] font-bold flex items-center justify-center gap-2 hover:border-aldesRed hover:text-aldesRed transition-all active:scale-[0.98]"
-          >
-            <Plus className="h-5 w-5" />
-            Add more orders
-          </button>
-        </section>
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {isBurger ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
+                    
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
+                      
+                      {/* Mods / Modifiers */}
+                      {item.modifiers?.length > 0 && (
+                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
+                          Mods: {item.modifiers.map(m => {
+                            const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
+                            return `${m.action} ${name}`;
+                          }).join(', ')}
+                        </p>
+                      )}
 
-        {/* Summary Section */}
-        <section className="bg-white rounded-xl shadow p-4 mb-6">
-          <h2 className="mb-4 text-lg font-bold text-gray-900">Payment Summary</h2>
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
-            </div>
-          </div>
-          <div className="my-4 border-t border-dashed border-gray-200" />
-          <div className="flex justify-between text-base font-bold text-gray-900">
-            <span>Total</span>
-            <span className="text-aldesRed">{formatCurrency(grandTotal)}</span>
-          </div>
-        </section>
+                      <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-aldesCream/50 p-1 rounded-lg">
+                      <button onClick={() => handleDecrease(item)} className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed active:scale-90 transition-transform"><Minus className="h-3 w-3" /></button>
+                      <span className="w-5 text-center text-sm font-bold text-gray-800">{item.qty ?? 1}</span>
+                      <button onClick={() => handleIncrease(item)} className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed active:scale-90 transition-transform"><Plus className="h-3 w-3" /></button>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="ml-2 text-gray-400 hover:text-aldesRed transition-colors"><Trash2 className="h-5 w-5" /></button>
+                  </div>
+                </article>
+              );
+            })}
+
+            <button 
+              onClick={() => navigate('/menu')}
+              className="w-full mt-2 py-2 bg-white border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-[15px] font-bold flex items-center justify-center gap-2 hover:border-aldesRed hover:text-aldesRed transition-colors active:scale-[0.98]"
+            >
+              <Plus className="h-5 w-5" />
+              Add more orders
+            </button>
+          </section>
+        </div>
       </div>
 
-      {/* Floating Checkout Bar */}
-      <section className="fixed bottom-0 left-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.05)] p-4 z-40 border-t border-gray-100">
+      {/* 2. STICKY Checkout Bar (Tertahan & Melayang) */}
+      <section className="sticky bottom-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.08)] p-4 z-40 border-t border-gray-100">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Payment</p>
-            <p className="text-xl font-black text-aldesRed">{formatCurrency(grandTotal)}</p>
+            <p className="text-xs text-gray-500 uppercase font-bold italic tracking-wider">
+              Total Payment ({selectedIds.length} items)
+            </p>
+            <p className="text-2xl font-black text-aldesRed leading-tight">
+              {formatCurrency(grandTotal)}
+            </p>
           </div>
           <button
+            disabled={selectedIds.length === 0}
             onClick={() => navigate('/checkout')}
-            className="bg-aldesRed text-white px-10 py-3.5 rounded-2xl font-black text-lg shadow-lg shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
+            className={`px-10 py-3.5 rounded-2xl font-black text-lg transition-all ${
+              selectedIds.length > 0 
+              ? 'bg-aldesRed text-white shadow-lg shadow-red-100 active:scale-95' 
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
           >
             Checkout
           </button>
         </div>
       </section>
-    </main>
+    </div>
   )
 }
 
