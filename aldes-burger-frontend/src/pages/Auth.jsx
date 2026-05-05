@@ -7,7 +7,7 @@ import MascotBurger from '../assets/mascot-burger.png';
 
 function Auth() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ login_identity: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,8 +69,8 @@ function Auth() {
                 <User size={20} className="mr-3 text-black" />
                 <input 
                   type="text"
-                  value={form.login_identity}
-                  onChange={(e) => setForm({...form, login_identity: e.target.value})} 
+                  value={form.email}
+                  onChange={(e) => setForm({...form, email: e.target.value})} 
                   className="bg-transparent w-full outline-none font-bold text-base text-black" 
                   placeholder="name@mail.com / 0812..." 
                   required 
