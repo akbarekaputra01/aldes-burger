@@ -1,8 +1,9 @@
 import React from 'react'
-import { MapPin, Minus, Plus, Trash2, X, Ticket } from 'lucide-react'
+import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
+// --- IMPORT ASSETS (BURGER) ---
 import imgBeefPatty from '../assets/beef_patty.png'
 import imgBottomBurger from '../assets/bottom_burger.png'
 import imgCheese from '../assets/cheese.png'
@@ -12,17 +13,40 @@ import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
 
+// --- IMPORT ASSETS (MENUS) ---
+import imgFrenchFries from '../assets/menus png/french_fries.png'
+import imgNugget from '../assets/menus png/nugget.png'
+import imgOnionRing from '../assets/menus png/onion_ring.png'
+import imgSoda from '../assets/menus png/soda.png'
+import imgTea from '../assets/menus png/tea.png'
+import imgWater from '../assets/menus png/water.png'
+
+const ingredientImageMap = {
+  bottom: imgBottomBurger,
+  top: imgTopBurger,
+  beef: imgBeefPatty,
+  chicken: imgChickenPatty,
+  cheese: imgCheese,
+  lettuce: imgLettuce,
+  pickle: imgPickles,
+  tomato: imgTomato,
+}
+
+const menuImageMap = {
+  nugget: imgNugget,
+  french_fries: imgFrenchFries,
+  onion_ring: imgOnionRing,
+  soda: imgSoda,
+  tea: imgTea,
+  water: imgWater,
+}
+
 const getIngredientImage = (name) => {
   if (!name) return null
   const n = name.toLowerCase()
-  if (n.includes('bottom')) return imgBottomBurger
-  if (n.includes('top')) return imgTopBurger
-  if (n.includes('beef')) return imgBeefPatty
-  if (n.includes('chicken')) return imgChickenPatty
-  if (n.includes('cheese')) return imgCheese
-  if (n.includes('lettuce')) return imgLettuce
-  if (n.includes('pickle')) return imgPickles
-  if (n.includes('tomato')) return imgTomato
+  for (const key in ingredientImageMap) {
+    if (n.includes(key)) return ingredientImageMap[key]
+  }
   return null
 }
 
@@ -71,39 +95,33 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
   )
 }
 
+const MenuMiniPreview = ({ name }) => {
+  const getMenuImage = (itemName) => {
+    if (!itemName) return null;
+    const n = itemName.toLowerCase().replace(" ", "_");
+    for (const key in menuImageMap) {
+      if (n.includes(key)) return menuImageMap[key];
+    }
+    return null;
+  }
+
+  const img = getMenuImage(name);
+
+  return (
+    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center p-2">
+      {img ? (
+        <img src={img} alt={name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+      ) : (
+        <div className="text-xs text-gray-400 text-center">No Image</div>
+      )}
+    </div>
+  );
+}
+
 function Cart() {
   const navigate = useNavigate()
   const contextValue = useCart()
 
-  const [addresses, setAddresses] = React.useState([
-    { id: 1, label: 'Home', detail: '123 Sudirman Street, Jakarta', isSelected: true },
-    { id: 2, label: 'Office', detail: 'Gandaria 8 Office Tower, South Jakarta', isSelected: false },
-  ])
-  const [isAddressModalOpen, setIsAddressModalOpen] = React.useState(false)
-  const [isAddingNew, setIsAddingNew] = React.useState(false) // State untuk buka form input baru
-  const [newAddr, setNewAddr] = React.useState({ label: '', detail: '' })
-
-  const selectedAddress = addresses.find(a => a.isSelected) || addresses[0]
-
-  const handleSelectAddress = (id) => {
-    setAddresses(addresses.map(addr => ({ ...addr, isSelected: addr.id === id })))
-    setIsAddressModalOpen(false)
-  }
-
-  const handleAddNewAddress = () => {
-    if (!newAddr.label || !newAddr.detail) return alert("Please fill in all the required information!")
-    const freshAddr = {
-      id: Date.now(),
-      label: newAddr.label,
-      detail: newAddr.detail,
-      isSelected: true
-    }
-    setAddresses(addresses.map(a => ({ ...a, isSelected: false })).concat(freshAddr))
-    setNewAddr({ label: '', detail: '' })
-    setIsAddingNew(false)
-    setIsAddressModalOpen(false)
-  }
-  
   const cart = contextValue?.cart ?? []
   const removeFromCart = contextValue?.removeFromCart ?? (() => { })
   const updateQty = contextValue?.updateQty
@@ -170,166 +188,67 @@ function Cart() {
   }
 
   const subtotal = cart.reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
-  const deliveryFee = 10000
-  const platformFee = 3000
-  const grandTotal = subtotal + deliveryFee + platformFee
+  const grandTotal = subtotal // Menghapus fee pengiriman dan platform
+
   return (
     <main className="bg-aldesCream min-h-screen pb-40 px-4 py-6">
       <div className="mx-auto w-full max-w-4xl">
         
-        {/* Address Section */}
-        <section className="bg-white rounded-xl shadow p-4 mb-6">
-          <div className="flex items-center justify-between border-b border-gray-50">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-aldesRed" />
-              <h2 className="font-bold text-gray-900">Delivery Address</h2>
-            </div>
-            <button 
-              onClick={() => setIsAddressModalOpen(true)}
-              className="text-sm font-semibold text-aldesRed hover:underline"
-            >
-              Change
-            </button>
-          </div>
-          <div className="mt-3">
-            <span className="text-[10px] bg-aldesRed/10 text-aldesRed px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-              {selectedAddress.label}
-            </span>
-            <p className="mt-1 text-sm text-gray-600">{selectedAddress.detail}</p>
-          </div>
-        </section>
-
-        {isAddressModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in duration-300">
-              
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {isAddingNew ? 'Tambah Alamat Baru' : 'Pilih Alamat Pengiriman'}
-                </h3>
-                <button onClick={() => { setIsAddingNew(false); setIsAddressModalOpen(false); }}>
-                  <X className="h-6 w-6 text-gray-400" />
-                </button>
-              </div>
-
-              {isAddingNew ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Label Alamat (Contoh: Kos, Kampus)</label>
-                    <input 
-                      type="text"
-                      className="w-full mt-1 border-2 border-gray-100 rounded-xl p-3 text-sm focus:border-aldesRed outline-none"
-                      placeholder="Nama tempat..."
-                      value={newAddr.label}
-                      onChange={(e) => setNewAddr({...newAddr, label: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Alamat Lengkap</label>
-                    <textarea 
-                      className="w-full mt-1 border-2 border-gray-100 rounded-xl p-3 text-sm focus:border-aldesRed outline-none resize-none"
-                      rows="3"
-                      placeholder="Nama jalan, nomor rumah..."
-                      value={newAddr.detail}
-                      onChange={(e) => setNewAddr({...newAddr, detail: e.target.value})}
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button 
-                      onClick={() => setIsAddingNew(false)}
-                      className="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl"
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      onClick={handleAddNewAddress}
-                      className="flex-1 py-3 font-bold text-white bg-aldesRed rounded-xl shadow-lg shadow-red-100"
-                    >
-                      Simpan & Pakai
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                    {addresses.map((item) => (
-                      <div 
-                        key={item.id}
-                        onClick={() => handleSelectAddress(item.id)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          item.isSelected ? 'border-aldesRed bg-red-50/30' : 'border-gray-100'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            item.isSelected ? 'bg-aldesRed text-white' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {item.label}
-                          </span>
-                          {item.isSelected && <div className="w-2 h-2 rounded-full bg-aldesRed" />}
-                        </div>
-                        <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => setIsAddingNew(true)}
-                    className="w-full mt-6 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold text-sm hover:border-aldesRed hover:text-aldesRed transition-all"
-                  >
-                    + Tambah Alamat Baru
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Items Section */}
         <section className="mb-6">
-          {cart.map((item) => (
-            <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <BurgerMiniPreview ingredients={item.ingredients} />
-                
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
-                  {item.modifiers?.length > 0 && (
-                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
-                      Mods: {item.modifiers.map(m => {
-                        const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                        return `${m.action} ${name}`;
-                      }).join(', ')}
-                    </p>
+          {cart.map((item) => {
+            const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
+            const isMenuItem = menuImageMap[item.name.toLowerCase().replace(" ", "_")];
+            
+            return (
+              <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  {isBurger ? (
+                    <BurgerMiniPreview ingredients={item.ingredients} />
+                  ) : (
+                    <MenuMiniPreview name={item.name} />
                   )}
-                  <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
+                  
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
+                    {item.modifiers?.length > 0 && (
+                      <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
+                        Mods: {item.modifiers.map(m => {
+                          const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
+                          return `${m.action} ${name}`;
+                        }).join(', ')}
+                      </p>
+                    )}
+                    <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-aldesCream/50 p-1 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-aldesCream/50 p-1 rounded-lg">
+                    <button
+                      onClick={() => handleDecrease(item)}
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-5 text-center text-sm font-bold text-gray-800">{item.qty ?? 1}</span>
+                    <button
+                      onClick={() => handleIncrease(item)}
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
                   <button
-                    onClick={() => handleDecrease(item)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
+                    onClick={() => removeFromCart(item.id)}
+                    className="ml-2 text-gray-400 hover:text-aldesRed transition-colors"
                   >
-                    <Minus className="h-3 w-3" />
-                  </button>
-                  <span className="w-5 text-center text-sm font-bold text-gray-800">{item.qty ?? 1}</span>
-                  <button
-                    onClick={() => handleIncrease(item)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed shadow-sm active:scale-90 transition-transform"
-                  >
-                    <Plus className="h-3 w-3" />
+                    <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="ml-2 text-gray-400 hover:text-aldesRed transition-colors"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
 
           {/* Add More Section */}
           <button 
@@ -348,14 +267,6 @@ function Cart() {
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span className="font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Delivery Fee</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(deliveryFee)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Platform Fee</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(platformFee)}</span>
             </div>
           </div>
           <div className="my-4 border-t border-dashed border-gray-200" />
