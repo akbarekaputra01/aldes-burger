@@ -11,11 +11,13 @@ function Layout() {
 
       <div className="checkerboard-strip h-2" aria-hidden="true" />
 
-      <main className="flex-1">
+      {/* Hapus flex-1 agar tidak memaksa sisa ruang menjadi krem */}
+      <main>
         <Outlet />
       </main>
 
-      <footer className="mt-12 bg-aldesRed p-8 text-white">
+      {/* Hapus mt-12 agar footer menempel langsung dengan bar checkout putih */}
+      <footer className="bg-aldesRed p-8 text-white">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 sm:grid-cols-3">
           <div>
             <h4 className="mb-3 text-lg font-bold">Menu Links</h4>
