@@ -36,7 +36,7 @@ const menuImageMap = {
   nugget: imgNugget,
   french_fries: imgFrenchFries,
   onion_ring: imgOnionRing,
-  soda: imgSoda,
+  soft_drink: imgSoda,
   tea: imgTea,
   water: imgWater,
 }
@@ -53,11 +53,11 @@ const getIngredientImage = (name) => {
 const getIngredientThickness = (name) => {
   if (!name) return 8
   const n = name.toLowerCase()
-  if (n.includes('bottom')) return 2
+  if (n.includes('bottom')) return 4
   if (n.includes('top')) return 12
   if (n.includes('beef') || n.includes('chicken')) return 10
-  if (n.includes('cheese') || n.includes('lettuce')) return 2
-  return 4
+  if (n.includes('cheese') || n.includes('lettuce') || n.includes('tomato') || n.includes('pickles')) return 2
+  return 2
 }
 
 const getVisualOffset = (name) => {
@@ -69,7 +69,7 @@ const getVisualOffset = (name) => {
 const BurgerMiniPreview = ({ ingredients = [] }) => {
   let currentBottom = 4
   return (
-    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
+    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl flex-shrink-0 border border-gray-100 flex items-center justify-center overflow-visible pt-10">
       <div className="absolute bottom-2 w-full flex justify-center items-end">
         {ingredients.map((name, index) => {
           const img = getIngredientImage(name)
@@ -100,6 +100,7 @@ const MenuMiniPreview = ({ name }) => {
     }
     return null;
   }
+  
   const img = getMenuImage(name);
   return (
     <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center p-2">
@@ -122,11 +123,18 @@ function Cart() {
 
   const [selectedIds, setSelectedIds] = useState([])
 
-  const toNumber = (value) => {
-    if (typeof value === 'number') return value
-    if (typeof value !== 'string') return 0
-    return Number(value.replace(/[^\d]/g, '')) || 0
-  }
+  // Handler untuk Tambah Kurang Quantity
+  const handleIncrease = (item) => {
+    updateQty(item.id, (item.qty ?? 1) + 1);
+  };
+
+  const handleDecrease = (item) => {
+    if ((item.qty ?? 1) > 1) {
+      updateQty(item.id, (item.qty ?? 1) - 1);
+    } else {
+      removeFromCart(item.id);
+    }
+  };
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('id-ID', {
@@ -135,48 +143,15 @@ function Cart() {
       maximumFractionDigits: 0,
     }).format(amount)
 
-  const getItemPrice = (item) => toNumber(item.unit_price ?? item.price ?? 0)
+  const getItemPrice = (item) => Number((item.unit_price ?? item.price ?? 0).toString().replace(/[^\d]/g, '')) || 0;
 
   const getIngredientNameById = (item, id) => {
-    const list = item.ingredients || []
-    const stringId = String(id)
-    if (stringId === '1') return list.find(n => n.toLowerCase().includes('beef')) || 'Beef Patty'
-    if (stringId === '2') return list.find(n => n.toLowerCase().includes('chicken')) || 'Chicken Patty'
-    if (stringId === '3') return list.find(n => n.toLowerCase().includes('cheese')) || 'Cheese'
-    if (stringId === '4') return list.find(n => n.toLowerCase().includes('pickle')) || 'Pickles'
-    if (stringId === '5') return list.find(n => n.toLowerCase().includes('lettuce')) || 'Lettuce'
-    if (stringId === '6') return list.find(n => n.toLowerCase().includes('tomato')) || 'Tomato'
-    if (stringId === '7') return list.find(n => n.toLowerCase().includes('top')) || 'Top Bun'
-    if (stringId === '8') return list.find(n => n.toLowerCase().includes('bottom')) || 'Bottom Bun'
-    return `Item #${id}`
-  }
+    const names = { '1':'Beef','2':'Chicken','3':'Cheese','4':'Pickles','5':'Lettuce','6':'Tomato','7':'Top Bun','8':'Bottom Bun' };
+    return names[String(id)] || `Item #${id}`;
+  };
 
-  const toggleSelect = (id) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    )
-  }
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === cart.length && cart.length > 0) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(cart.map(item => item.id))
-    }
-  }
-
-  const handleIncrease = (item) => {
-    if (updateQty) updateQty(item.id, (item.qty ?? 1) + 1)
-  }
-
-  const handleDecrease = (item) => {
-    const nextQty = (item.qty ?? 1) - 1
-    if (nextQty <= 0) {
-      removeFromCart(item.id)
-    } else if (updateQty) {
-      updateQty(item.id, nextQty)
-    }
-  }
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () => (selectedIds.length === cart.length && cart.length > 0) ? setSelectedIds([]) : setSelectedIds(cart.map(i => i.id));
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
@@ -200,12 +175,11 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <div className="bg-aldesCream flex flex-col min-h-full">
-      {/* 1. Konten Items */}
+    <div className="bg-aldesCream min-h-screen flex flex-col">
       <div className="px-4 py-6 flex-grow">
         <div className="mx-auto w-full max-w-4xl">
           
-          {/* Select All Section */}
+          {/* Select All */}
           <div className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-3">
             <button onClick={toggleSelectAll} className="flex-shrink-0">
               {selectedIds.length === cart.length && cart.length > 0 ? (
@@ -224,12 +198,22 @@ function Cart() {
           {/* Items Section */}
           <section className="mb-6">
             {cart.map((item) => {
-              const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
+              let displayIngredients = Array.isArray(item.ingredients) ? [...item.ingredients] : [];
+
+              if (item.modifiers && item.modifiers.length > 0) {
+                item.modifiers.forEach(mod => {
+                  if (mod.action?.toLowerCase() === 'remove') {
+                    const toRemove = mod.ingredient_name || getIngredientNameById(item, mod.ingredient_id);
+                    displayIngredients = displayIngredients.filter(ing => !ing.toLowerCase().includes(toRemove.toLowerCase()));
+                  }
+                });
+              }
+
+              const isBurger = displayIngredients.length > 0;
               const isSelected = selectedIds.includes(item.id);
               
               return (
                 <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-4">
-                  {/* Custom Checkbox Centang Putih */}
                   <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0">
                     {isSelected ? (
                       <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
@@ -243,18 +227,14 @@ function Cart() {
                   </button>
 
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {isBurger ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
+                    {isBurger ? <BurgerMiniPreview ingredients={displayIngredients} /> : <MenuMiniPreview name={item.name} />}
                     
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
                       
-                      {/* Mods / Modifiers */}
-                      {item.modifiers?.length > 0 && (
-                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
-                          Mods: {item.modifiers.map(m => {
-                            const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                            return `${m.action} ${name}`;
-                          }).join(', ')}
+                      {isBurger && (
+                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
+                          Ingredients: {displayIngredients.join(', ')}
                         </p>
                       )}
 
@@ -285,7 +265,7 @@ function Cart() {
         </div>
       </div>
 
-      {/* 2. STICKY Checkout Bar (Tertahan & Melayang) */}
+      {/* Floating Checkout Bar */}
       <section className="sticky bottom-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.08)] p-4 z-40 border-t border-gray-100">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div>

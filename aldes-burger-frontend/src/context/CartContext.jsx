@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const CartContext = createContext(null)
@@ -7,7 +6,6 @@ const CART_STORAGE_KEY = 'aldes_cart'
 const loadStoredCart = () => {
   const rawCart = localStorage.getItem(CART_STORAGE_KEY)
   if (!rawCart) return []
-
   try {
     const parsed = JSON.parse(rawCart)
     return Array.isArray(parsed) ? parsed : []
@@ -18,7 +16,6 @@ const loadStoredCart = () => {
 
 const normalizeModifierList = (modifiers) => {
   if (!Array.isArray(modifiers)) return []
-
   return modifiers
     .filter((modifier) => modifier?.ingredient_id && modifier?.action)
     .map((modifier) => ({
@@ -29,7 +26,7 @@ const normalizeModifierList = (modifiers) => {
 }
 
 const createItemKey = (item) => {
-  if (!item.is_customized && item.menu_id) {
+  if (!item.is_customized) {
     return `menu-${item.menu_id}`
   }
 
@@ -39,7 +36,6 @@ const createItemKey = (item) => {
     stack_order: item.stack_order,
     unit_price: item.unit_price,
   }
-
   return `custom-${item.menu_id}-${JSON.stringify(signature)}`
 }
 
@@ -49,11 +45,11 @@ const normalizeCartItem = (inputItem) => {
   const unitPrice = Number(inputItem.unit_price ?? inputItem.price ?? basePrice)
   const modifiers = normalizeModifierList(inputItem.modifiers)
   const stackOrder = Array.isArray(inputItem.stack_order) ? inputItem.stack_order : []
+  
   const isCustomized = Boolean(inputItem.is_customized ?? (modifiers.length > 0 || stackOrder.length > 0))
 
   const normalized = {
-    id: inputItem.id ?? null,
-    menu_id: inputItem.menu_id,
+    menu_id: inputItem.menu_id || inputItem.id, 
     name: inputItem.name,
     qty,
     base_price: basePrice,
@@ -66,7 +62,7 @@ const normalizeCartItem = (inputItem) => {
     is_customized: isCustomized,
   }
 
-  normalized.id = normalized.id ?? createItemKey(normalized)
+  normalized.id = createItemKey(normalized)
   return normalized
 }
 
@@ -77,24 +73,25 @@ export function CartProvider({ children }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
   }, [cart])
 
-  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + (item.qty ?? 1), 0), [cart])
+  const cartCount = useMemo(() => cart.length, [cart])
 
   const addToCart = (item) => {
     const normalized = normalizeCartItem(item)
 
     setCart((prev) => {
-      const existing = prev.find((cartItem) => cartItem.id === normalized.id)
-      if (!existing) {
+      const existingIndex = prev.findIndex((cartItem) => cartItem.id === normalized.id)
+
+      if (existingIndex === -1) {
         return [...prev, normalized]
       }
 
-      const mergedQty = (existing.qty ?? 1) + normalized.qty
-      return prev.map((cartItem) => {
-        if (cartItem.id !== normalized.id) return cartItem
+      return prev.map((cartItem, idx) => {
+        if (idx !== existingIndex) return cartItem
+        const newQty = (cartItem.qty ?? 0) + normalized.qty
         return {
           ...cartItem,
-          qty: mergedQty,
-          total_price: (cartItem.unit_price ?? normalized.unit_price) * mergedQty,
+          qty: newQty,
+          total_price: cartItem.unit_price * newQty,
         }
       })
     })
