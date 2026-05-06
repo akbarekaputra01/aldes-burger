@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { User, Mail, Phone, MapPin, Edit, Trash2, Plus, LogOut, Loader2, AlertCircle } from 'lucide-react'
+import { 
+  User, Mail, Phone, MapPin, Edit, Trash2, 
+  Plus, LogOut, Loader2, AlertCircle, Key, 
+  Lock, Eye, EyeOff, Save, X 
+} from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
@@ -10,16 +14,24 @@ function Profile() {
   const [user, setUser] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [error, setError] = useState('')
-  
-  // State baru untuk UX yang lebih halus
+
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  // State untuk Ubah Password
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    password: '',
+    password_confirmation: ''
+  })
+  const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' })
+
   const initials = useMemo(() => {
     const name = user?.name?.trim() ?? ''
     if (!name) return 'AB'
-
     return name
       .split(/\s+/)
       .slice(0, 2)
@@ -70,6 +82,36 @@ function Profile() {
     }
   }
 
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault()
+    setPwdStatus({ loading: true, error: '', success: '' })
+
+    if (passwordForm.password !== passwordForm.password_confirmation) {
+      setPwdStatus({ loading: false, error: 'Konfirmasi password baru tidak cocok!', success: '' })
+      return
+    }
+
+    try {
+      // Pastikan endpoint ini sudah dibuat di rute backend (api.php)
+      await api.put('/user/password', passwordForm)
+      
+      setPwdStatus({ loading: false, error: '', success: 'Password berhasil diperbarui!' })
+      setPasswordForm({ current_password: '', password: '', password_confirmation: '' })
+      
+      setTimeout(() => {
+        setIsChangingPassword(false)
+        setPwdStatus({ loading: false, error: '', success: '' })
+        setShowPassword(false)
+      }, 2000)
+    } catch (err) {
+      setPwdStatus({
+        loading: false,
+        error: err.response?.data?.message || 'Gagal mengubah password. Pastikan password lama Anda benar.',
+        success: ''
+      })
+    }
+  }
+
   const handleLogout = async () => {
     setIsLoggingOut(true)
     try {
@@ -108,9 +150,7 @@ function Profile() {
 
         {/* --- SECTION: USER INFO --- */}
         <section className="bg-white rounded-3xl shadow-sm border border-aldesCream/50 p-6 md:p-8 w-full relative overflow-hidden">
-          {/* Aksen Dekoratif */}
           <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-aldesYellow/20 to-transparent pointer-events-none" />
-
           <div className="flex flex-col items-center text-center relative z-10">
             <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mb-5 border-4 border-aldesCream shadow-md shadow-aldesYellow/10 text-aldesRed font-black text-3xl tracking-wider">
               {initials}
@@ -142,6 +182,106 @@ function Profile() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* --- SECTION: KEAMANAN AKUN (UBAH PASSWORD) --- */}
+        <section className="bg-white rounded-3xl shadow-sm border border-aldesCream/50 p-6 md:p-8 w-full">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+              <Key className="w-5 h-5 text-aldesRed" />
+              Keamanan Akun
+            </h2>
+          </div>
+
+          {!isChangingPassword ? (
+            <button
+              type="button"
+              onClick={() => setIsChangingPassword(true)}
+              className="w-full sm:w-auto px-6 py-3 bg-aldesCream/30 hover:bg-aldesYellow/20 text-gray-800 font-bold rounded-2xl transition-colors border-2 border-aldesCream flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4 text-gray-600" />
+              Ubah Password
+            </button>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              {pwdStatus.error && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm font-bold rounded-xl border border-red-100 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{pwdStatus.error}</span>
+                </div>
+              )}
+              {pwdStatus.success && (
+                <div className="p-3 bg-emerald-50 text-emerald-600 text-sm font-bold rounded-xl border border-emerald-100 flex items-start gap-2">
+                  <Key className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{pwdStatus.success}</span>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password Lama"
+                    required
+                    value={passwordForm.current_password}
+                    onChange={(e) => setPasswordForm(p => ({...p, current_password: e.target.value}))}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-semibold focus:border-aldesRed focus:bg-white outline-none transition-all pr-12"
+                  />
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password Baru"
+                    required
+                    value={passwordForm.password}
+                    onChange={(e) => setPasswordForm(p => ({...p, password: e.target.value}))}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-semibold focus:border-aldesRed focus:bg-white outline-none transition-all pr-12"
+                  />
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Konfirmasi Password Baru"
+                    required
+                    value={passwordForm.password_confirmation}
+                    onChange={(e) => setPasswordForm(p => ({...p, password_confirmation: e.target.value}))}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-semibold focus:border-aldesRed focus:bg-white outline-none transition-all pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={pwdStatus.loading}
+                  className="flex-1 bg-aldesRed text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-70 active:scale-[0.98]"
+                >
+                  {pwdStatus.loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  Simpan Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangingPassword(false)
+                    setPwdStatus({ loading: false, error: '', success: '' })
+                    setPasswordForm({ current_password: '', password: '', password_confirmation: '' })
+                    setShowPassword(false)
+                  }}
+                  className="px-4 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 hover:text-gray-700 transition-all active:scale-[0.95]"
+                  title="Batal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </form>
+          )}
         </section>
 
         {/* --- SECTION: ADDRESSES --- */}
