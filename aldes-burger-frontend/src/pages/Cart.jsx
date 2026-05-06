@@ -106,6 +106,7 @@ const MenuMiniPreview = ({ name }) => {
     }
     return null;
   }
+  
   const img = getMenuImage(name);
   return (
     <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center p-2">
@@ -128,11 +129,18 @@ function Cart() {
 
   const [selectedIds, setSelectedIds] = useState([])
 
-  const toNumber = (value) => {
-    if (typeof value === 'number') return value
-    if (typeof value !== 'string') return 0
-    return Number(value.replace(/[^\d]/g, '')) || 0
-  }
+  // Handler untuk Tambah Kurang Quantity
+  const handleIncrease = (item) => {
+    updateQty(item.id, (item.qty ?? 1) + 1);
+  };
+
+  const handleDecrease = (item) => {
+    if ((item.qty ?? 1) > 1) {
+      updateQty(item.id, (item.qty ?? 1) - 1);
+    } else {
+      removeFromCart(item.id);
+    }
+  };
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('id-ID', {
@@ -141,48 +149,15 @@ function Cart() {
       maximumFractionDigits: 0,
     }).format(amount)
 
-  const getItemPrice = (item) => toNumber(item.unit_price ?? item.price ?? 0)
+  const getItemPrice = (item) => Number((item.unit_price ?? item.price ?? 0).toString().replace(/[^\d]/g, '')) || 0;
 
   const getIngredientNameById = (item, id) => {
-    const list = item.ingredients || []
-    const stringId = String(id)
-    if (stringId === '1') return list.find(n => n.toLowerCase().includes('beef')) || 'Beef Patty'
-    if (stringId === '2') return list.find(n => n.toLowerCase().includes('chicken')) || 'Chicken Patty'
-    if (stringId === '3') return list.find(n => n.toLowerCase().includes('cheese')) || 'Cheese'
-    if (stringId === '4') return list.find(n => n.toLowerCase().includes('pickle')) || 'Pickles'
-    if (stringId === '5') return list.find(n => n.toLowerCase().includes('lettuce')) || 'Lettuce'
-    if (stringId === '6') return list.find(n => n.toLowerCase().includes('tomato')) || 'Tomato'
-    if (stringId === '7') return list.find(n => n.toLowerCase().includes('top')) || 'Top Bun'
-    if (stringId === '8') return list.find(n => n.toLowerCase().includes('bottom')) || 'Bottom Bun'
-    return `Item #${id}`
-  }
+    const names = { '1':'Beef','2':'Chicken','3':'Cheese','4':'Pickles','5':'Lettuce','6':'Tomato','7':'Top Bun','8':'Bottom Bun' };
+    return names[String(id)] || `Item #${id}`;
+  };
 
-  const toggleSelect = (id) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    )
-  }
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === cart.length && cart.length > 0) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(cart.map(item => item.id))
-    }
-  }
-
-  const handleIncrease = (item) => {
-    if (updateQty) updateQty(item.id, (item.qty ?? 1) + 1)
-  }
-
-  const handleDecrease = (item) => {
-    const nextQty = (item.qty ?? 1) - 1
-    if (nextQty <= 0) {
-      removeFromCart(item.id)
-    } else if (updateQty) {
-      updateQty(item.id, nextQty)
-    }
-  }
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () => (selectedIds.length === cart.length && cart.length > 0) ? setSelectedIds([]) : setSelectedIds(cart.map(i => i.id));
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
