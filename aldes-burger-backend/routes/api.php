@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\MenuController;
-use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,9 +24,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/addresses/{address}', [CheckoutController::class, 'destroyAddress']);
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
+    Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
-
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+    
     Route::prefix('/admin')->group(function (): void {
         Route::get('/orders', [AdminController::class, 'orders']);
         Route::patch('/orders/{transaction}/status', [AdminController::class, 'updateOrderStatus']);

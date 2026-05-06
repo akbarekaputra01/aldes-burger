@@ -542,8 +542,17 @@ function Kitchen() {
 
                 <div className="absolute bottom-[65px] w-[50%] h-8 bg-black/15 rounded-[100%] blur-[6px] pl-12 z-0" />
                 
+  
                 {/* BIG VISUAL BURGER STACK */}
-                {burgerStack.length === 0 ? (
+                {isFetching ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
+                    <Loader2 className="h-16 w-16 text-aldesRed animate-spin mb-4 drop-shadow-md" />
+                    <div className="bg-white/80 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-red-100 flex flex-col items-center animate-pulse">
+                      <span className="font-black text-lg text-aldesRed uppercase tracking-wide">Preparing Your Burger...</span>
+                      <span className="text-xs font-bold text-gray-500">Merapikan resep dari dapur</span>
+                    </div>
+                  </div>
+                ) : burgerStack.length === 0 ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
                     <img src={imgBottomBurger} alt="placeholder" className="w-40 grayscale opacity-40 drop-shadow-xl animate-pulse" />
                     <div className="mt-6 bg-aldesRed text-white px-6 py-2.5 rounded-full shadow-lg flex flex-col items-center animate-bounce">
