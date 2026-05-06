@@ -17,7 +17,8 @@ Route::get('/ingredients', [IngredientController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    Route::put('/user/password', [AuthController::class, 'updatePassword']);
+    
     Route::get('/addresses', [CheckoutController::class, 'addresses']);
     Route::post('/addresses', [CheckoutController::class, 'storeAddress']);
     Route::put('/addresses/{address}', [CheckoutController::class, 'updateAddress']);
