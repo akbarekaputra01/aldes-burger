@@ -43,7 +43,6 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi data yang masuk dari React Checkout.jsx
         $validatedData = $request->validate([
             'amount'         => 'required|numeric',
             'status'         => 'required|string',
@@ -53,14 +52,13 @@ class TransactionController extends Controller
             'items'          => 'required|array',
             'items.*.id'     => 'required',
             'items.*.qty'    => 'required|integer|min:1',
-            'items.*.price'  => 'required|numeric'
+            'items.*.price'  => 'required|numeric',
+            'items.*.name'   => 'nullable|string',
+            'items.*.ingredients' => 'nullable|array' // <--- TAMBAHKAN VALIDASI INI
         ]);
 
         try {
-            // 2. Simpan ke database (Contoh implementasi)
-            // Pastikan kolom-kolom ini sudah ada di property $fillable pada model Transaction Anda
             $paymentId = ($validatedData['payment_method'] === 'cash') ? 2 : 1;
-
             $transaction = Transaction::create([
                 'id'                  => (string) \Illuminate\Support\Str::uuid(),
                 'user_id'             => auth()->id(),
@@ -68,30 +66,27 @@ class TransactionController extends Controller
                 'status'              => 'pending', 
                 'destination_address' => $validatedData['address'],
                 'address_id'          => $validatedData['address_id'],
-                'payment_id'          => $paymentId, // <--- Gunakan payment_id di sini
+                'payment_id'          => $paymentId,
             ]);
 
-            // 3. Simpan detail item (Opsional: Jika Anda punya tabel detail transaksi)
-            // foreach ($validatedData['items'] as $item) {
-            //     TransactionDetail::create([
-            //         'transaction_id' => $transaction->id,
-            //         'menu_id'        => $item['id'],
-            //         'quantity'       => $item['qty'],
-            //         'snapshot_price' => $item['price']
-            //     ]);
-            // }
+            foreach ($validatedData['items'] as $item) {
+                \App\Models\TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'menu_id'        => $item['id'],
+                    'quantity'       => $item['qty'],
+                    'snapshot_price' => $item['price'],
+                    'snapshot_name'  => $item['name'] ?? 'Menu Item',
+                    // SIMPAN URUTAN BAHAN KE DALAM SNAPSHOT MODIFIERS:
+                    'snapshot_modifiers' => isset($item['ingredients']) && count($item['ingredients']) > 0 ? $item['ingredients'] : null
+                ]);
+            }
 
-            // 4. Kembalikan response sukses ke Frontend
             return response()->json([
                 'message' => 'Transaction created successfully',
                 'transaction' => $transaction
-            ], 201); // 201 adalah status code HTTP untuk "Created"
-
+            ], 201); 
         } catch (\Exception $e) {
-            // Tangkap error database jika ada dan kembalikan response 500
-            return response()->json([
-                'message' => 'Failed to create transaction: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Failed to create transaction: ' . $e->getMessage()], 500);
         }
     }
 }
