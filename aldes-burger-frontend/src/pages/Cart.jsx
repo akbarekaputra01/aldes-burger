@@ -36,7 +36,7 @@ const menuImageMap = {
   nugget: imgNugget,
   french_fries: imgFrenchFries,
   onion_ring: imgOnionRing,
-  soda: imgSoda,
+  soft_drink: imgSoda,
   tea: imgTea,
   water: imgWater,
 }
@@ -53,11 +53,12 @@ const getIngredientImage = (name) => {
 const getIngredientThickness = (name) => {
   if (!name) return 8
   const n = name.toLowerCase()
-  if (n.includes('bottom')) return 2
-  if (n.includes('top')) return 12
+  if (n.includes('lettuce')) return 0 
+  if (n.includes('bottom') || n.includes('pickle') || n.includes('tomato')) return 2
+  if (n.includes('cheese')) return 4
   if (n.includes('beef') || n.includes('chicken')) return 10
-  if (n.includes('cheese') || n.includes('lettuce')) return 2
-  return 4
+  if (n.includes('top')) return 12
+  return 2
 }
 
 const getVisualOffset = (name) => {
@@ -68,9 +69,14 @@ const getVisualOffset = (name) => {
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
   let currentBottom = 4
+  const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
+
   return (
     <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
-      <div className="absolute bottom-2 w-full flex justify-center items-end">
+      <div 
+        className="absolute bottom-2 w-full flex justify-center items-end transition-transform duration-300"
+        style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
+      >
         {ingredients.map((name, index) => {
           const img = getIngredientImage(name)
           const thickness = getIngredientThickness(name)
@@ -201,11 +207,9 @@ function Cart() {
 
   return (
     <div className="bg-aldesCream flex flex-col min-h-full">
-      {/* 1. Konten Items */}
       <div className="px-4 py-6 flex-grow">
         <div className="mx-auto w-full max-w-4xl">
           
-          {/* Select All Section */}
           <div className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-3">
             <button onClick={toggleSelectAll} className="flex-shrink-0">
               {selectedIds.length === cart.length && cart.length > 0 ? (
@@ -221,15 +225,13 @@ function Cart() {
             <span className="font-bold text-gray-900 text-base">Select All ({cart.length})</span>
           </div>
 
-          {/* Items Section */}
           <section className="mb-6">
             {cart.map((item) => {
-              const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
+              const hasIngredients = Array.isArray(item.ingredients) && item.ingredients.length > 0;
               const isSelected = selectedIds.includes(item.id);
               
               return (
                 <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-4">
-                  {/* Custom Checkbox Centang Putih */}
                   <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0">
                     {isSelected ? (
                       <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
@@ -243,20 +245,26 @@ function Cart() {
                   </button>
 
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {isBurger ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
+                    {hasIngredients ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
                     
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
                       
-                      {/* Mods / Modifiers */}
-                      {item.modifiers?.length > 0 && (
-                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">
-                          Mods: {item.modifiers.map(m => {
-                            const name = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                            return `${m.action} ${name}`;
-                          }).join(', ')}
-                        </p>
-                      )}
+                      <div className="mt-1">
+                        {item.modifiers?.length > 0 ? (
+                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
+                            Ingridients: {item.modifiers.map(m => {
+                              const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
+                              const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
+                              return `${cleanAction} ${rawName}`.trim();
+                            }).join(', ')}
+                          </p>
+                        ) : hasIngredients ? (
+                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
+                            Ingredients: {item.ingredients.join(', ')}
+                          </p>
+                        ) : null}
+                      </div>
 
                       <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
                     </div>
@@ -285,7 +293,6 @@ function Cart() {
         </div>
       </div>
 
-      {/* 2. STICKY Checkout Bar (Tertahan & Melayang) */}
       <section className="sticky bottom-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.08)] p-4 z-40 border-t border-gray-100">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div>
