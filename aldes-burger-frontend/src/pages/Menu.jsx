@@ -33,6 +33,7 @@ const menuImages = {
   9: img9,
 }
 
+
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'IDR',
@@ -47,6 +48,19 @@ const sectionDefinitions = [
 
 const sideKeywords = ['fries', 'side', 'nugget', 'onion ring', 'salad']
 const drinkKeywords = ['drink', 'cola', 'coke', 'tea', 'coffee', 'juice', 'soda', 'water']
+
+// Helper untuk mengurutkan tumpukan burger dari bawah ke atas
+const getStackOrder = (name) => {
+  const n = name.toLowerCase()
+  if (n.includes('bottom') || n.includes('bawah')) return 1
+  if (n.includes('lettuce') || n.includes('selada')) return 2
+  if (n.includes('tomato') || n.includes('tomat')) return 3
+  if (n.includes('pickle') || n.includes('acar') || n.includes('onion')) return 4
+  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 5
+  if (n.includes('cheese') || n.includes('keju')) return 6
+  if (n.includes('top') || n.includes('atas')) return 7
+  return 99
+}
 
 const resolveSectionKey = (menu) => {
   const name = menu.name?.toLowerCase() ?? ''
@@ -169,7 +183,31 @@ function Menu() {
 
   const handleDirectAddToCart = (item, qty) => {
     const sectionKey = resolveSectionKey(item)
-    
+
+    // --- KODE BARU: Siapkan susunan bahan (ingredients) ---
+    let itemIngredients = []
+    if (sectionKey === 'burgers') {
+      if (item.ingredients && item.ingredients.length > 0) {
+        // Jika backend mengirimkan data bahan, ekstrak namanya dan urutkan
+        itemIngredients = item.ingredients
+          .map(i => i.name)
+          .sort((a, b) => getStackOrder(a) - getStackOrder(b));
+      } else {
+        // Resep default (fallback) jika backend belum mengaitkan bahan ke menu ini
+        const isChicken = item.name.toLowerCase().includes('chicken')
+        itemIngredients = [
+          'Bottom Bun', 
+          'Lettuce', 
+          'Tomato', 
+          'Pickles', 
+          isChicken ? 'Chicken Patty' : 'Beef Patty', 
+          'Cheese', 
+          'Top Bun'
+        ]
+      }
+    }
+    // ------------------------------------------------------
+
     addToCart({
       id: `menu-${item.id}-${Date.now()}`,
       menu_id: item.id,
@@ -180,7 +218,7 @@ function Menu() {
       total_price: (item.price ?? 0) * qty,
       modifiers: [],
       stack_order: [],
-      ingredients: [],
+      ingredients: itemIngredients, // <--- UBAH DI SINI: Gunakan variabel yang baru dibuat
       category: sectionKey,
       is_customized: false,
     })

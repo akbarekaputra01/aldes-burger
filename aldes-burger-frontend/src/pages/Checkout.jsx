@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../lib/api'; // <--- Tambahkan import ini
+// ... import lainnya
 import {
   ArrowLeft,
   MapPin,
@@ -15,10 +17,10 @@ import {
 import MascotBurger from '../assets/mascot-burger.png';
 import { useCart } from '../context/CartContext';
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
-  withCredentials: true 
-});
+// const api = axios.create({
+//   baseURL: 'http://localhost:8000/api',
+//   withCredentials: true 
+// });
 
 function Checkout() {
   const navigate = useNavigate();
@@ -59,9 +61,10 @@ function Checkout() {
     try {
       const payload = {
         amount: total,
-        status: 'paid',
-        payment_method: paymentMethod, // Data payment method dikirim ke backend
+        status: 'pending', // <--- UBAH DARI 'paid' MENJADI 'pending'
+        payment_method: paymentMethod, 
         address: selectedAddress.detail,
+        address_id: selectedAddress.id,
         items: cart.map(item => ({
           id: item.id,
           qty: item.qty,

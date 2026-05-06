@@ -12,7 +12,6 @@ class Transaction extends Model
     use HasFactory;
 
     public $incrementing = false;
-
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -35,13 +34,24 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function payment(): BelongsTo
+    // public function payment(): BelongsTo
+    // {
+    //     return $this->belongsTo(Payment::class);
+    // }
+
+    // public function details(): HasMany
+    // {
+    //     return $this->hasMany(TransactionDetail::class);
+    // }
+    // Relasi ke tabel transaction_details
+    public function details()
     {
-        return $this->belongsTo(Payment::class);
+        return $this->hasMany(TransactionDetail::class, 'transaction_id', 'id');
     }
 
-    public function details(): HasMany
+    // Relasi ke tabel payments
+    public function payment()
     {
-        return $this->hasMany(TransactionDetail::class);
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
     }
 }
