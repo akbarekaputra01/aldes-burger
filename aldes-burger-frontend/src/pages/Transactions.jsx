@@ -2,18 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Clock3, 
-  ChevronRight, 
   History,
-  Search,
   CheckCircle2,
   Package,
   ArrowUpRight,
   MapPin,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Ticket,
+  Sparkles
 } from 'lucide-react';
 import { ListItemSkeleton } from '../components/Skeletons';
 import api from '../lib/api';
-import MascotBurger from '../assets/mascot-burger.png';
 
 function Transactions() {
   const navigate = useNavigate();
@@ -21,65 +20,78 @@ function Transactions() {
   const [activeTab, setActiveTab] = useState('on_progress');
   const [isFetching, setIsFetching] = useState(true);
 
+  // 1. MENGAMBIL DATA DARI API LARAVEL
   useEffect(() => {
-    setIsFetching(true);
-    api.get('/transactions')
-      .then(({ data }) => setTransactions(data))
-      .catch(() => setTransactions([]))
-      .finally(() => setIsFetching(false));
+    const fetchOrders = async () => {
+      setIsFetching(true);
+      try {
+        // Mengambil data dari TransactionController@index yang sudah di-order by desc
+        const { data } = await api.get('/transactions');
+        setTransactions(data);
+      } catch (error) {
+        console.error("Gagal memuat transaksi:", error);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
+  // 2. LOGIKA PEMISAH OTOMATIS (ON GOING VS HISTORY)
   const currentOrders = useMemo(() => 
-    transactions.filter((order) => 
-      activeTab === 'on_progress' ? order.status !== 'done' : order.status === 'done'
-    ), [activeTab, transactions]
+    transactions.filter((order) => {
+      // Normalisasi status ke huruf kecil supaya tidak error saat pengecekan
+      const status = order.status?.toLowerCase();
+      
+      if (activeTab === 'on_progress') {
+        // Tampilkan semua kecuali yang sudah 'done' atau 'completed'
+        return status !== 'done' && status !== 'completed';
+      } else {
+        // Masuk ke tab History hanya jika statusnya 'done' atau 'completed'
+        return status === 'done' || status === 'completed';
+      }
+    }), [activeTab, transactions]
   );
 
   return (
-    <main className="min-h-screen w-full bg-[#FDF8EE] font-sans text-[#2D2D2D] pb-24 overflow-x-hidden">
-      
-      {/* 1. TOP NAV */}
-      <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-2xl border-b border-[#F3E8CC] px-8 py-5">
-        <div className="max-w-xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-[#FFC926] rounded-[1.2rem] flex items-center justify-center rotate-[-8deg] shadow-lg shadow-[#FFC926]/30">
-                <img src={MascotBurger} alt="Mascot" className="w-7 h-7 object-contain rotate-[8deg]" />
-             </div>
-             <h1 className="text-xl font-black italic tracking-tight uppercase">Aldes Tracker</h1>
-          </div>
-          <button className="p-2 bg-gray-50 rounded-full hover:bg-[#F3E8CC] transition-colors">
-            <Search size={20} className="text-gray-400" />
-          </button>
-        </div>
-      </nav>
-
-      <div className="max-w-xl mx-auto px-6">
+    <main className="min-h-screen w-full bg-[#F3E8CC] pb-24 pt-10 font-sans text-[#2D2D2D]">
+      <div className="mx-auto max-w-xl px-6">
         
-        {/* 2. HERO GREETING (Tanpa Exclusive Member) */}
-        <section className="py-12">
-          <h2 className="text-4xl font-black text-black leading-tight">Where's my <br/> <span className="text-[#D52518]">Burger?</span></h2>
+        <section className="py-10 text-center">
+          <div className="mb-4 inline-block rotate-[-2deg] rounded-full border-2 border-black bg-[#D52518] px-4 py-1 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+              <Sparkles size={12} /> Status Update
+            </p>
+          </div>
+          <h2 className="text-5xl font-black uppercase leading-none tracking-tighter text-black italic">
+            Order <br/> 
+            <span className="text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] [-webkit-text-stroke:2px_black]">
+              Journal
+            </span>
+          </h2>
         </section>
 
-        {/* 3. FLOATING GLASS TABS */}
-        <div className="flex p-1.5 bg-gray-100/50 rounded-[2rem] border border-white mb-10 shadow-inner">
+        {/* TABS (KOTAK BIRU STYLE) */}
+        <div className="mb-10 flex rounded-full border-4 border-black bg-white p-1.5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <button 
             onClick={() => setActiveTab('on_progress')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[1.8rem] font-black text-[10px] uppercase tracking-widest transition-all duration-500
-              ${activeTab === 'on_progress' ? 'bg-black text-white shadow-xl' : 'text-gray-400 hover:text-black'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
+              ${activeTab === 'on_progress' ? 'bg-[#FFC926] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
-            <UtensilsCrossed size={14} /> Active Order
+            <UtensilsCrossed size={16} strokeWidth={3} /> On Going
           </button>
           <button 
             onClick={() => setActiveTab('history')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[1.8rem] font-black text-[10px] uppercase tracking-widest transition-all duration-500
-              ${activeTab === 'history' ? 'bg-black text-white shadow-xl' : 'text-gray-400 hover:text-black'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
+              ${activeTab === 'history' ? 'bg-[#FFC926] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
-            <History size={14} /> My History
+            <History size={16} strokeWidth={3} /> History
           </button>
         </div>
 
-        {/* 4. TRANSACTION CARDS */}
-        <div className="space-y-8">
+        {/* LIST TRANSAKSI */}
+        <div className="space-y-6">
           {isFetching ? (
             Array.from({ length: 3 }).map((_, i) => <ListItemSkeleton key={i} />)
           ) : currentOrders.length > 0 ? (
@@ -87,49 +99,39 @@ function Transactions() {
               <article 
                 key={order.id} 
                 onClick={() => navigate(`/transactions/${order.id}`)}
-                className="group relative bg-white rounded-[3rem] p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] border border-gray-50 hover:shadow-2xl hover:shadow-[#FFC926]/10 transition-all duration-500 cursor-pointer overflow-hidden"
+                className="group cursor-pointer rounded-[2.5rem] border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#FFC926]/10 to-transparent rounded-bl-[5rem] -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
-
-                <div className="relative z-10">
-                  <header className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center
-                          ${activeTab === 'on_progress' ? 'bg-[#D52518] text-white shadow-lg shadow-[#D52518]/20' : 'bg-[#F3E8CC] text-[#D52518]'}`}>
-                          {activeTab === 'on_progress' ? <Package size={22} /> : <CheckCircle2 size={22} />}
-                       </div>
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Order ID</p>
-                          <p className="text-sm font-black text-black">#{order.id.slice(0,10)}</p>
-                       </div>
+                <div className="mb-6 flex items-start justify-between">
+                  <div className="flex gap-4">
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black
+                      ${activeTab === 'on_progress' ? 'bg-[#D52518] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                      {activeTab === 'on_progress' ? <Package size={28} className="animate-pulse" /> : <CheckCircle2 size={28} />}
                     </div>
-                    <div className="bg-gray-50 p-2 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
-                       <ArrowUpRight size={18} />
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-[#D52518]">#ADL-{order.id}</p>
+                      <h3 className="mt-1 text-xl font-black uppercase italic leading-none">{order.status}</h3>
                     </div>
-                  </header>
+                  </div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black transition-colors group-hover:bg-[#FFC926]">
+                    <ArrowUpRight size={20} strokeWidth={3} />
+                  </div>
+                </div>
 
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2">
-                       <MapPin size={14} className="text-[#D52518]" />
-                       <p className="text-[11px] font-bold text-gray-500 truncate">Delivery to: South Residence, Block B...</p>
+                <div className="flex flex-col gap-3 border-t-2 border-dashed border-black pt-4">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <MapPin size={14} />
+                    <p className="text-[10px] font-bold">Aldes Burger Central</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total Bill</p>
+                      <p className="text-2xl font-black text-black">Rp {order.amount?.toLocaleString('id-ID')}</p>
                     </div>
-                    
-                    <div className="h-[1px] w-full bg-gray-100"></div>
-
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Total Bill</p>
-                        <p className="text-2xl font-black text-black tracking-tight">
-                           <span className="text-xs mr-1 text-[#D52518]">IDR</span>
-                           {order.amount.toLocaleString('id-ID')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{order.created_at}</p>
-                         <span className={`inline-block mt-1 px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest
-                            ${order.status === 'pending' ? 'bg-[#FFC926] text-black' : 'bg-green-100 text-green-600'}`}>
-                            {order.status}
-                         </span>
+                    <div className="text-right">
+                      <p className="text-[9px] font-bold italic">{new Date(order.created_at).toLocaleDateString('id-ID')}</p>
+                      <div className="mt-1 flex items-center gap-1 rounded-lg border border-black bg-[#FDF8EE] px-2 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <Ticket size={10} />
+                        <span className="text-[8px] font-black uppercase">Promo Applied</span>
                       </div>
                     </div>
                   </div>
@@ -137,28 +139,22 @@ function Transactions() {
               </article>
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="relative mb-8">
-                 <div className="absolute inset-0 bg-[#FFC926] blur-3xl opacity-20 rounded-full animate-pulse"></div>
-                 <div className="relative w-32 h-32 bg-white rounded-[3rem] border border-[#F3E8CC] flex items-center justify-center shadow-xl">
-                    <Clock3 size={40} className="text-[#D52518] animate-bounce" />
-                 </div>
+            <div className="flex flex-col items-center py-20 text-center">
+              <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[40px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                 <Clock3 size={48} className="text-[#D52518]" />
               </div>
-              <h3 className="text-2xl font-black mb-2">No Active Cravings</h3>
-              <p className="text-sm font-medium text-gray-400 px-10 mb-8 leading-relaxed">
-                Your order list is currently empty. Time to treat yourself to something delicious!
-              </p>
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">Kitchen is Quiet!</h3>
+              <p className="mb-8 mt-2 text-xs font-bold text-gray-500 px-10">You haven't ordered anything yet. Let's get some burgers!</p>
               <button 
                 onClick={() => navigate('/menu')}
-                className="group flex items-center gap-3 bg-black text-[#FFC926] px-10 py-4 rounded-3xl font-black uppercase text-xs hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20"
+                className="rounded-2xl border-4 border-black bg-[#FFC926] px-10 py-4 text-sm font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
               >
-                Start Ordering <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                Let's Cook Something!
               </button>
             </div>
           )}
         </div>
       </div>
-
     </main>
   );
 }
