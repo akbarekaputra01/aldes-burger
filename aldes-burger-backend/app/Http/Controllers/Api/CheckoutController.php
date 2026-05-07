@@ -94,7 +94,7 @@ class CheckoutController extends Controller
             }
 
             $transaction = Transaction::query()->create([
-                'id' => (string) Str::uuid(),
+                'id' => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999),
                 'payment_id' => $payment->id,
                 'address_id' => $address->id,
                 'destination_address' => $address->address,
