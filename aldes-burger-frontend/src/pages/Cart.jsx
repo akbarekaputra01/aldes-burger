@@ -53,10 +53,11 @@ const getIngredientImage = (name) => {
 const getIngredientThickness = (name) => {
   if (!name) return 8
   const n = name.toLowerCase()
-  if (n.includes('bottom')) return 4
-  if (n.includes('top')) return 12
+  if (n.includes('lettuce')) return 0 
+  if (n.includes('bottom') || n.includes('pickle') || n.includes('tomato')) return 2
+  if (n.includes('cheese')) return 4
   if (n.includes('beef') || n.includes('chicken')) return 10
-  if (n.includes('cheese') || n.includes('lettuce') || n.includes('tomato') || n.includes('pickles')) return 2
+  if (n.includes('top')) return 12
   return 2
 }
 
@@ -68,9 +69,14 @@ const getVisualOffset = (name) => {
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
   let currentBottom = 4
+  const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
+
   return (
-    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl flex-shrink-0 border border-gray-100 flex items-center justify-center overflow-visible pt-10">
-      <div className="absolute bottom-2 w-full flex justify-center items-end">
+    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
+      <div 
+        className="absolute bottom-2 w-full flex justify-center items-end transition-transform duration-300"
+        style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
+      >
         {ingredients.map((name, index) => {
           const img = getIngredientImage(name)
           const thickness = getIngredientThickness(name)
@@ -175,11 +181,10 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <div className="bg-aldesCream min-h-screen flex flex-col">
+    <div className="bg-aldesCream flex flex-col min-h-full">
       <div className="px-4 py-6 flex-grow">
         <div className="mx-auto w-full max-w-4xl">
           
-          {/* Select All */}
           <div className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-3">
             <button onClick={toggleSelectAll} className="flex-shrink-0">
               {selectedIds.length === cart.length && cart.length > 0 ? (
@@ -195,21 +200,9 @@ function Cart() {
             <span className="font-bold text-gray-900 text-base">Select All ({cart.length})</span>
           </div>
 
-          {/* Items Section */}
           <section className="mb-6">
             {cart.map((item) => {
-              let displayIngredients = Array.isArray(item.ingredients) ? [...item.ingredients] : [];
-
-              if (item.modifiers && item.modifiers.length > 0) {
-                item.modifiers.forEach(mod => {
-                  if (mod.action?.toLowerCase() === 'remove') {
-                    const toRemove = mod.ingredient_name || getIngredientNameById(item, mod.ingredient_id);
-                    displayIngredients = displayIngredients.filter(ing => !ing.toLowerCase().includes(toRemove.toLowerCase()));
-                  }
-                });
-              }
-
-              const isBurger = displayIngredients.length > 0;
+              const hasIngredients = Array.isArray(item.ingredients) && item.ingredients.length > 0;
               const isSelected = selectedIds.includes(item.id);
               
               return (
@@ -227,16 +220,26 @@ function Cart() {
                   </button>
 
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {isBurger ? <BurgerMiniPreview ingredients={displayIngredients} /> : <MenuMiniPreview name={item.name} />}
+                    {hasIngredients ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
                     
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
                       
-                      {isBurger && (
-                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
-                          Ingredients: {displayIngredients.join(', ')}
-                        </p>
-                      )}
+                      <div className="mt-1">
+                        {item.modifiers?.length > 0 ? (
+                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
+                            Ingridients: {item.modifiers.map(m => {
+                              const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
+                              const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
+                              return `${cleanAction} ${rawName}`.trim();
+                            }).join(', ')}
+                          </p>
+                        ) : hasIngredients ? (
+                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
+                            Ingredients: {item.ingredients.join(', ')}
+                          </p>
+                        ) : null}
+                      </div>
 
                       <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
                     </div>
@@ -265,7 +268,6 @@ function Cart() {
         </div>
       </div>
 
-      {/* Floating Checkout Bar */}
       <section className="sticky bottom-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.08)] p-4 z-40 border-t border-gray-100">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div>
