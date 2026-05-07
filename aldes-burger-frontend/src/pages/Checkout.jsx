@@ -140,36 +140,37 @@ const fetchProfileData = async () => {
   const handlePlaceOrder = async () => {
   if (cart.length === 0) return;
 
-  // Cek apakah ID sudah ada
-  if (!selectedAddress.id) {
-    alert("Silakan pilih atau atur alamat pengiriman di profil terlebih dahulu.");
-    return;
-  }
-
   setLoading(true);
   try {
     const payload = {
-      amount: total,
+      // Tambahkan field utama yang diminta TransactionController
+      amount: total, 
       status: 'pending',
       payment_method: paymentMethod,
-      address: selectedAddress.detail,
-      address_id: selectedAddress.id, // ID sekarang sudah terisi
+      address: selectedAddress.detail, // Pastikan ini string alamat lengkap
+      address_id: selectedAddress.id,
+
+      // Sesuaikan struktur array items
       items: cart.map(item => ({ 
-        id: item.id, 
-        qty: item.qty, 
+        id: item.menu_id,   // TransactionController meminta 'id'
+        qty: item.qty,      // TransactionController meminta 'qty'
         price: item.unit_price, 
         name: item.name 
       }))
     };
-      await api.post('/transactions', payload);
-      clearCart();
-      navigate('/payment-status?status=success'); 
-    } catch (error) {
-      alert("Gagal memproses pesanan.");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    // Mengirim ke TransactionController
+    await api.post('/transactions', payload);
+    
+    clearCart();
+    navigate('/payment-status?status=success'); 
+  } catch (error) {
+    console.error("Detail Error:", error.response?.data);
+    alert("Gagal memproses pesanan.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen w-full bg-[#F3E8CC] font-sans text-black pb-20">
