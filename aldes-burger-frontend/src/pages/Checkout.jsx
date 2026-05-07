@@ -61,17 +61,22 @@ function Checkout() {
     try {
       const payload = {
         amount: total,
-        status: 'pending', // <--- UBAH DARI 'paid' MENJADI 'pending'
+        status: 'pending',
         payment_method: paymentMethod, 
         address: selectedAddress.detail,
         address_id: selectedAddress.id,
         items: cart.map(item => ({
-          id: item.id,
+          id: item.menu_id, 
           qty: item.qty,
-          price: item.unit_price
+          price: item.unit_price,
+          name: item.name,
+          ingredients: item.ingredients || [] // <--- TAMBAHKAN BARIS INI
         }))
       };
+
+      // Pastikan mengarah ke /transactions
       const response = await api.post('/transactions', payload);
+
       if (response.status === 201 || response.status === 200) {
         clearCart();
         navigate('/payment-status?status=success'); 

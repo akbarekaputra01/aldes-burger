@@ -1,5 +1,8 @@
-import { ChefHat, LayoutDashboard, Package, UtensilsCrossed } from 'lucide-react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { ChefHat, LayoutDashboard, Package, UtensilsCrossed, LogOut, Loader2 } from 'lucide-react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import api from '../lib/api'
+import { clearAuthSession } from '../utils/auth'
 
 const navItems = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -10,15 +13,30 @@ const navItems = [
 
 function AdminLayout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await api.post('/logout')
+    } catch {
+      // Abaikan error network, paksa hapus sesi lokal
+    } finally {
+      clearAuthSession()
+      navigate('/login')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-aldesCream lg:grid lg:grid-cols-[260px_1fr]">
+      {/* Hapus flex-col dan justify-between di sini agar elemen tidak terlempar ke bawah */}
       <aside className="bg-slate-900 p-4 text-white lg:min-h-screen lg:p-6">
         <p className="text-xs uppercase tracking-[0.2em] text-red-200">Aldes Burger</p>
         <h1 className="mt-2 text-2xl font-black">Admin Panel</h1>
         <div className="checkerboard-strip mt-4 h-3 rounded-full" aria-hidden="true" />
-
-        <nav className="mt-6 space-y-2">
+        
+        <nav className="mt-6 flex flex-col gap-2">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.to
@@ -33,14 +51,34 @@ function AdminLayout() {
               </Link>
             )
           })}
+
+          {/* Garis pemisah tipis agar Logout sedikit berjarak tapi tetap menyatu */}
+          <div className="my-2 h-px w-full bg-white/10" />
+
+          {/* TOMBOL LOGOUT MENYATU DENGAN MENU LAIN */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
+          >
+            {isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+            <span className="text-left flex-1">{isLoggingOut ? 'Sedang keluar...' : 'Logout'}</span>
+          </button>
         </nav>
       </aside>
-
-      <section className="min-w-0">
+      
+      <section className="min-w-0 flex flex-col">
         <header className="border-b border-red-100 bg-red-600 px-5 py-4 text-white sm:px-8">
           <h2 className="text-lg font-bold">Kitchen Operations & Business Insights</h2>
         </header>
-        <Outlet />
+        <div className="flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
       </section>
     </div>
   )
