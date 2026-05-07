@@ -1,4 +1,5 @@
-import { ChevronRight, Flame, Minus, Plus } from 'lucide-react'
+// export default Menu
+import { CheckCircle, ChevronRight, Flame, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
@@ -32,7 +33,6 @@ const menuImages = {
   8: img8,
   9: img9,
 }
-
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -99,6 +99,9 @@ function Menu() {
   const [activeActionId, setActiveActionId] = useState(null)
   const [tempQty, setTempQty] = useState(1)
   
+  // STATE BARU: Untuk menyimpan pesan sukses
+  const [toastMessage, setToastMessage] = useState(null)
+  
   const activeCardRef = useRef(null)
 
   useEffect(() => {
@@ -152,7 +155,8 @@ function Menu() {
   const handleInitialClick = (item) => {
     const sectionKey = resolveSectionKey(item)
 
-    if (sectionKey === 'burgers' && item.is_custom) {
+    // PERBAIKAN: Semua menu yang ada di kategori Burgers akan langsung dilempar ke Kitchen
+    if (sectionKey === 'burgers') {
       navigate('/kitchen', {
         state: {
           menuId: item.id,
@@ -171,29 +175,16 @@ function Menu() {
     }
   }
 
-  const handleGoToKitchen = (item) => {
-    navigate('/kitchen', {
-      state: {
-        menuId: item.id,
-        menu: item,
-        category: resolveSectionKey(item),
-      },
-    })
-  }
-
   const handleDirectAddToCart = (item, qty) => {
     const sectionKey = resolveSectionKey(item)
 
-    // --- KODE BARU: Siapkan susunan bahan (ingredients) ---
     let itemIngredients = []
     if (sectionKey === 'burgers') {
       if (item.ingredients && item.ingredients.length > 0) {
-        // Jika backend mengirimkan data bahan, ekstrak namanya dan urutkan
         itemIngredients = item.ingredients
           .map(i => i.name)
           .sort((a, b) => getStackOrder(a) - getStackOrder(b));
       } else {
-        // Resep default (fallback) jika backend belum mengaitkan bahan ke menu ini
         const isChicken = item.name.toLowerCase().includes('chicken')
         itemIngredients = [
           'Bottom Bun', 
@@ -206,7 +197,6 @@ function Menu() {
         ]
       }
     }
-    // ------------------------------------------------------
 
     addToCart({
       id: `menu-${item.id}-${Date.now()}`,
@@ -218,12 +208,20 @@ function Menu() {
       total_price: (item.price ?? 0) * qty,
       modifiers: [],
       stack_order: [],
-      ingredients: itemIngredients, // <--- UBAH DI SINI: Gunakan variabel yang baru dibuat
+      ingredients: itemIngredients,
       category: sectionKey,
       is_customized: false,
     })
     
+    // Tutup opsi kuantitas
     setActiveActionId(null)
+
+    // PERBAIKAN: Tampilkan pesan sukses (Toast)
+    setToastMessage(`Successfully added ${qty}x ${item.name}`)
+    // Sembunyikan otomatis setelah 3 detik
+    setTimeout(() => {
+      setToastMessage(null)
+    }, 3000)
   }
 
   const scrollBanner = (index, smooth = true) => {
@@ -297,7 +295,16 @@ function Menu() {
   }, [isDragging])
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 bg-aldesCream px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 bg-aldesCream px-4 py-6 sm:px-6 lg:px-8 relative">
+      
+      {/* KODE BARU: Komponen Toast Notification (z-index maksimal agar tidak tertutup) */}
+      {toastMessage && (
+        <div className="fixed top-20 right-5 z-[999] flex items-center gap-2 rounded-full bg-green-500 px-6 py-3 text-sm font-bold text-white shadow-2xl transition-all">
+          <CheckCircle className="h-5 w-5" />
+          {toastMessage}
+        </div>
+      )}
+
       <section className="space-y-3">
         <div 
           ref={bannerRef} 
@@ -383,7 +390,6 @@ function Menu() {
                   </div>
                   
                   <div className="p-4 flex flex-col flex-1">
-                    {/* PERBAIKAN: Variasi Badge berdasarkan jenis menu dan category */}
                     <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-2xl px-2 py-1 text-xs font-bold ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-aldesCream text-aldesRed'}`}>
                       {item.is_custom ? (
                         <><Flame className="h-3.5 w-3.5" /> Kitchen</>
@@ -400,52 +406,34 @@ function Menu() {
                     <p className="mt-2 text-sm text-aldesRed/80 flex-1">{item.description}</p>
                     <p className="mt-3 text-base font-semibold text-aldesRed">{currencyFormatter.format(item.price ?? 0)}</p>
                     
+                    {/* PERBAIKAN: Hanya render opsi kuantitas untuk Sides dan Drinks */}
                     {activeActionId === item.id ? (
-                      section.key === 'burgers' ? (
-                        <div className="mt-4 flex gap-2 h-10">
+                      <div className="mt-4 flex items-center justify-between gap-2 h-10">
+                        <div className="flex h-full items-center rounded-2xl bg-aldesCream px-1">
                           <button
                             type="button"
-                            onClick={() => handleGoToKitchen(item)}
-                            className="flex-1 rounded-2xl border-2 border-aldesRed text-aldesRed text-sm font-bold transition hover:bg-aldesRed hover:text-white"
+                            onClick={() => setTempQty((p) => Math.max(1, p - 1))}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
                           >
-                            Edit
+                            <Minus className="h-4 w-4" />
                           </button>
+                          <span className="w-8 text-center font-bold text-aldesRed">{tempQty}</span>
                           <button
                             type="button"
-                            onClick={() => handleDirectAddToCart(item, 1)}
-                            className="flex-1 rounded-2xl bg-aldesRed text-white text-sm font-bold transition hover:brightness-110"
+                            onClick={() => setTempQty((p) => p + 1)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
                           >
-                            Add to Cart
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="mt-4 flex items-center justify-between gap-2 h-10">
-                          <div className="flex h-full items-center rounded-2xl bg-aldesCream px-1">
-                            <button
-                              type="button"
-                              onClick={() => setTempQty((p) => Math.max(1, p - 1))}
-                              className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-8 text-center font-bold text-aldesRed">{tempQty}</span>
-                            <button
-                              type="button"
-                              onClick={() => setTempQty((p) => p + 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDirectAddToCart(item, tempQty)}
-                            className="flex h-full flex-1 items-center justify-center gap-1 rounded-2xl bg-aldesYellow font-semibold text-black transition hover:brightness-95"
-                          >
-                            Confirm <ChevronRight className="h-4 w-4" />
+                            <Plus className="h-4 w-4" />
                           </button>
                         </div>
-                      )
+                        <button
+                          type="button"
+                          onClick={() => handleDirectAddToCart(item, tempQty)}
+                          className="flex h-full flex-1 items-center justify-center gap-1 rounded-2xl bg-aldesYellow font-semibold text-black transition hover:brightness-95"
+                        >
+                          Confirm <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
                     ) : (
                       <button
                         type="button"
