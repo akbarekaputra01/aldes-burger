@@ -28,6 +28,9 @@ function App() {
           <Route path="/login" element={<Auth />} />
           <Route path="/signup" element={<SignUp />} />
 
+          {/* Checkout dikeluarkan dari Layout agar Navbar global tidak muncul */}
+          <Route path="/checkout" element={<Checkout />} />
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
@@ -40,7 +43,7 @@ function App() {
             <Route path="/menu" element={<Menu />} />
             <Route path="/kitchen" element={<Kitchen />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
+            {/* Route checkout di sini sudah dihapus */}
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/transactions/:id" element={<TransactionDetail />} />
             <Route path="/address-book" element={<AddressBook />} />
