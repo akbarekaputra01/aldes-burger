@@ -54,10 +54,29 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            // 'current_password' otomatis mengecek kecocokan dengan password user yang sedang login
+            'current_password' => ['required', 'current_password'], 
+            'password' => ['required', 'confirmed', 'min:6'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully.'
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()?->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Logged out.']);
     }
+
+    
 }
