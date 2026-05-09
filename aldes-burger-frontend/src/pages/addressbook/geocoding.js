@@ -1,4 +1,10 @@
 const GEOCODING_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEOCODING_BASE ? import.meta.env.VITE_GEOCODING_BASE : 'https://geocode.maps.co').replace(/\/$/, '')
+const GEOCODING_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEOCODING_API_KEY ? import.meta.env.VITE_GEOCODING_API_KEY : '').trim()
+
+const withApiKey = (params) => {
+  if (GEOCODING_API_KEY) params.set('api_key', GEOCODING_API_KEY)
+  return params
+}
 
 const toSuggestion = (item) => ({
   id: String(item.place_id),
@@ -26,13 +32,13 @@ export async function searchAddressSuggestions(query, region = {}) {
   let data = []
   let lastError
   for (const candidate of [...new Set(queryCandidates)]) {
-    const params = new URLSearchParams({
+    const params = withApiKey(new URLSearchParams({
       q: candidate,
       format: 'jsonv2',
       addressdetails: '1',
       countrycodes: 'id',
       limit: '8',
-    })
+    }))
 
     try {
       const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
@@ -61,12 +67,12 @@ export async function searchAddressSuggestions(query, region = {}) {
 }
 
 export async function reverseGeocode(latitude, longitude) {
-  const params = new URLSearchParams({
+  const params = withApiKey(new URLSearchParams({
     format: 'jsonv2',
     lat: String(latitude),
     lon: String(longitude),
     addressdetails: '1',
-  })
+  }))
   const response = await fetch(`${GEOCODING_BASE}/reverse?${params.toString()}`, {
     headers: { Accept: 'application/json' },
   })
