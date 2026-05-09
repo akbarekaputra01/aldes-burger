@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Loader2, MapPin, X } from 'lucide-react'
 import api from '../lib/api'
 import { applySuggestionToForm, canSubmitAddress } from '../pages/addressbook/formLogic'
-import { searchAddressSuggestions } from '../pages/addressbook/geocoding'
+import { geocodeAddress, searchAddressSuggestions } from '../pages/addressbook/geocoding'
 import { getCities, getDistricts, getPostalCodes, getProvinces } from '../pages/addressbook/regions'
 
 export default function AddressBookModal({ open, onClose, onSaved, initialAddress, userPhone }) {
@@ -13,7 +13,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [showPhoneReco, setShowPhoneReco] = useState(false)
   const [showMapLayer, setShowMapLayer] = useState(false)
   const [error, setError] = useState('')
-  const markerRef = useRef(null)
+
+  const fullAddressQuery = useMemo(() => {
+    return [form.street_address, form.district, form.city, form.province, form.postal_code, 'Indonesia'].filter(Boolean).join(', ')
+  }, [form.street_address, form.district, form.city, form.province, form.postal_code])
 
   useEffect(() => {
     if (!open) return
@@ -35,6 +38,39 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       .catch(() => setSuggestions([]))
   }, [form.street_address, form.province, form.city, form.district, form.postal_code])
 
+  useEffect(() => {
+    if (!fullAddressQuery || fullAddressQuery.length < 8) return
+    if (form.pin_source === 'manual_map' || form.pin_source === 'manual_adjusted') return
+
+    let cancelled = false
+    geocodeAddress(fullAddressQuery)
+      .then((result) => {
+        if (!result || cancelled) return
+        setForm((prev) => {
+          if (prev.pin_source === 'manual_map' || prev.pin_source === 'manual_adjusted') return prev
+          return {
+            ...prev,
+            latitude: result.latitude,
+            longitude: result.longitude,
+            pin_source: prev.pin_source === 'suggestion' ? 'suggestion' : 'default',
+            pin_confirmed: Boolean(result.latitude && result.longitude),
+          }
+        })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [fullAddressQuery, form.pin_source])
+
+  const updatePin = (latitude, longitude, source = 'manual_adjusted') => {
+    setForm((prev) => ({
+      ...prev,
+      latitude,
+      longitude,
+      pin_source: source,
+      pin_confirmed: true,
+    }))
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault()
     if (!canSubmitAddress(form)) return setError('Lengkapi data alamat dulu.')
@@ -53,7 +89,24 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   return <div className="fixed inset-0 z-50 bg-black/45 p-4"><div className="mx-auto mt-8 w-full max-w-2xl rounded-2xl bg-white p-6">
     {showMapLayer ? <div>
       <div className='mb-3 flex items-center gap-2'><button type='button' onClick={()=>setShowMapLayer(false)}><ArrowLeft className='h-5 w-5'/></button><h3 className='font-bold'>Edit Location</h3></div>
-      <div className='h-80 rounded-xl border bg-aldesCream grid place-items-center text-sm text-gray-600'>Map layer (drag pin) - klik confirm untuk kembali</div>
+      <div className='space-y-3 rounded-xl border bg-aldesCream p-4 text-sm text-gray-700'>
+        <p>Titik otomatis mengikuti alamat yang diisi. Kamu juga bisa geser manual dengan tombol atau ubah koordinat.</p>
+        <div className='grid grid-cols-2 gap-3'>
+          <label className='text-xs'>Latitude
+            <input type='number' step='0.000001' className='mt-1 w-full rounded-lg border bg-white px-2 py-1' value={form.latitude ?? ''} onChange={(e)=>updatePin(Number(e.target.value), Number(form.longitude ?? 0), 'manual_map')} />
+          </label>
+          <label className='text-xs'>Longitude
+            <input type='number' step='0.000001' className='mt-1 w-full rounded-lg border bg-white px-2 py-1' value={form.longitude ?? ''} onChange={(e)=>updatePin(Number(form.latitude ?? 0), Number(e.target.value), 'manual_map')} />
+          </label>
+        </div>
+        <div className='grid grid-cols-4 gap-2'>
+          <button type='button' className='rounded-lg border bg-white px-2 py-1' onClick={()=>updatePin(Number(form.latitude ?? 0) + 0.0002, Number(form.longitude ?? 0))}>↑ Geser</button>
+          <button type='button' className='rounded-lg border bg-white px-2 py-1' onClick={()=>updatePin(Number(form.latitude ?? 0) - 0.0002, Number(form.longitude ?? 0))}>↓ Geser</button>
+          <button type='button' className='rounded-lg border bg-white px-2 py-1' onClick={()=>updatePin(Number(form.latitude ?? 0), Number(form.longitude ?? 0) - 0.0002)}>← Geser</button>
+          <button type='button' className='rounded-lg border bg-white px-2 py-1' onClick={()=>updatePin(Number(form.latitude ?? 0), Number(form.longitude ?? 0) + 0.0002)}>→ Geser</button>
+        </div>
+        {(form.latitude !== null && form.longitude !== null) && <a className='inline-block text-aldesRed underline' href={`https://www.openstreetmap.org/?mlat=${form.latitude}&mlon=${form.longitude}#map=18/${form.latitude}/${form.longitude}`} target='_blank' rel='noreferrer'>Preview titik di peta</a>}
+      </div>
       <div className='mt-4 flex justify-end gap-3'><button type='button' onClick={()=>setShowMapLayer(false)} className='px-4 py-2'>Back</button><button type='button' onClick={()=>setShowMapLayer(false)} className='rounded-xl bg-aldesRed px-5 py-2 text-white'>Confirm</button></div>
     </div> : <form onSubmit={onSubmit} className='space-y-3'>
       <div className='flex items-center justify-between'><h3 className='text-2xl font-black'>{isEdit ? 'Edit Address' : 'New Address'}</h3><button type='button' onClick={onClose}><X/></button></div>
