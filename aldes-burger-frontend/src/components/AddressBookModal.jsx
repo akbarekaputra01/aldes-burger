@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Loader2, MapPin, X } from 'lucide-react'
 import api from '../lib/api'
 import { applySuggestionToForm, canSubmitAddress } from '../pages/addressbook/formLogic'
