@@ -1,4 +1,4 @@
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org'
+const GEOCODING_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEOCODING_BASE ? import.meta.env.VITE_GEOCODING_BASE : 'https://geocode.maps.co').replace(/\/$/, '')
 
 const toSuggestion = (item) => ({
   id: String(item.place_id),
@@ -6,7 +6,7 @@ const toSuggestion = (item) => ({
   formattedAddress: item.display_name,
   latitude: Number(item.lat),
   longitude: Number(item.lon),
-  provider: 'nominatim',
+  provider: 'mapsco',
   raw: item,
 })
 
@@ -35,7 +35,7 @@ export async function searchAddressSuggestions(query, region = {}) {
     })
 
     try {
-      const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
+      const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) throw new Error('Address provider error')
@@ -67,7 +67,7 @@ export async function reverseGeocode(latitude, longitude) {
     lon: String(longitude),
     addressdetails: '1',
   })
-  const response = await fetch(`${NOMINATIM_BASE}/reverse?${params.toString()}`, {
+  const response = await fetch(`${GEOCODING_BASE}/reverse?${params.toString()}`, {
     headers: { Accept: 'application/json' },
   })
   if (!response.ok) throw new Error('Reverse geocode failed')

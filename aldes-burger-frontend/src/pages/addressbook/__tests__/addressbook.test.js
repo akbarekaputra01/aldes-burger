@@ -36,7 +36,7 @@ test('street suggestions call provider and return real coordinates', async () =>
   globalThis.fetch = async () => ({ ok: true, json: async () => ([{ place_id: 1, name: 'Pesona Anggrek', display_name: 'Pesona Anggrek, Bekasi', lat: '-6.1', lon: '106.9' }]) })
   const region = { province: 'JAWA BARAT', city: 'KOTA BEKASI', district: 'BEKASI UTARA', postalCode: '17124' }
   const results = await searchAddressSuggestions('pesona', region)
-  assert.equal(results[0].provider, 'nominatim')
+  assert.equal(results[0].provider, 'mapsco')
   assert.equal(results[0].latitude, -6.1)
   assert.equal(results[0].longitude, 106.9)
 })
