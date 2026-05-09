@@ -5,6 +5,29 @@ import { applySuggestionToForm, canSubmitAddress } from '../pages/addressbook/fo
 import { geocodeAddress, searchAddressSuggestions } from '../pages/addressbook/geocoding'
 import { getCities, getDistricts, getPostalCodes, getProvinces } from '../pages/addressbook/regions'
 
+const defaultCenter = { lat: -6.2, lng: 106.816666 }
+const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+
+const loadLeaflet = async () => {
+  if (window.L) return window.L
+  if (!document.querySelector(`link[href="${LEAFLET_CSS}"]`)) {
+    const css = document.createElement('link')
+    css.rel = 'stylesheet'
+    css.href = LEAFLET_CSS
+    document.head.appendChild(css)
+  }
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = LEAFLET_JS
+    script.async = true
+    script.onload = resolve
+    script.onerror = reject
+    document.body.appendChild(script)
+  })
+  return window.L
+}
+
 export default function AddressBookModal({ open, onClose, onSaved, initialAddress, userPhone }) {
   const isEdit = Boolean(initialAddress?.id)
   const [form, setForm] = useState({ recipient_name: '', phone_number: '', province: '', city: '', district: '', postal_code: '', street_address: '', detail_address: '', label: 'Home', is_default: false, is_pickup: false, is_return: false, latitude: null, longitude: null, pin_source: 'default', pin_confirmed: false })
@@ -13,6 +36,9 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [showPhoneReco, setShowPhoneReco] = useState(false)
   const [showMapLayer, setShowMapLayer] = useState(false)
   const [error, setError] = useState('')
+  const mapElRef = useRef(null)
+  const mapRef = useRef(null)
+  const markerRef = useRef(null)
 
   const fullAddressQuery = useMemo(() => {
     return [form.street_address, form.district, form.city, form.province, form.postal_code, 'Indonesia'].filter(Boolean).join(', ')
@@ -71,6 +97,50 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }))
   }
 
+  useEffect(() => {
+    if (!showMapLayer) return
+    let mounted = true
+
+    loadLeaflet().then((L) => {
+      if (!mounted || !mapElRef.current || mapRef.current) return
+      const lat = form.latitude ?? defaultCenter.lat
+      const lng = form.longitude ?? defaultCenter.lng
+
+      mapRef.current = L.map(mapElRef.current).setView([lat, lng], 16)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(mapRef.current)
+
+      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current)
+      markerRef.current.on('dragend', (event) => {
+        const pos = event.target.getLatLng()
+        updatePin(Number(pos.lat.toFixed(8)), Number(pos.lng.toFixed(8)))
+      })
+
+      mapRef.current.on('click', (event) => {
+        updatePin(Number(event.latlng.lat.toFixed(8)), Number(event.latlng.lng.toFixed(8)))
+      })
+    }).catch(() => setError('Map gagal dimuat. Coba refresh halaman.'))
+
+    return () => {
+      mounted = false
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+      }
+      markerRef.current = null
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMapLayer])
+
+  useEffect(() => {
+    if (!showMapLayer || !mapRef.current || !markerRef.current) return
+    if (form.latitude === null || form.longitude === null) return
+    markerRef.current.setLatLng([form.latitude, form.longitude])
+    mapRef.current.panTo([form.latitude, form.longitude])
+  }, [form.latitude, form.longitude, showMapLayer])
+
   const onSubmit = async (e) => {
     e.preventDefault()
     if (!canSubmitAddress(form)) return setError('Lengkapi data alamat dulu.')
@@ -90,7 +160,8 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     {showMapLayer ? <div>
       <div className='mb-3 flex items-center gap-2'><button type='button' onClick={()=>setShowMapLayer(false)}><ArrowLeft className='h-5 w-5'/></button><h3 className='font-bold'>Edit Location</h3></div>
       <div className='space-y-3 rounded-xl border bg-aldesCream p-4 text-sm text-gray-700'>
-        <p>Titik otomatis mengikuti alamat yang diisi. Kamu juga bisa geser manual dengan tombol atau ubah koordinat.</p>
+        <p>Klik peta atau drag pin untuk geser titik lokasi.</p>
+        <div ref={mapElRef} className='h-72 w-full overflow-hidden rounded-lg border bg-white' />
         <div className='grid grid-cols-2 gap-3'>
           <label className='text-xs'>Latitude
             <input type='number' step='0.000001' className='mt-1 w-full rounded-lg border bg-white px-2 py-1' value={form.latitude ?? ''} onChange={(e)=>updatePin(Number(e.target.value), Number(form.longitude ?? 0), 'manual_map')} />
