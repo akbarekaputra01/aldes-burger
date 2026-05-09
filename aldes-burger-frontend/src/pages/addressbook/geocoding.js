@@ -89,3 +89,28 @@ export async function reverseGeocode(latitude, longitude) {
     raw: data,
   }
 }
+
+export async function geocodeAddress(query) {
+  const q = query?.trim()
+  if (!q || q.length < 3) return null
+
+  const params = withApiKey(new URLSearchParams({
+    q,
+    format: 'jsonv2',
+    addressdetails: '1',
+    countrycodes: 'id',
+    limit: '1',
+  }))
+
+  const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) throw new Error('Address provider error')
+
+  const data = await response.json()
+  if (!Array.isArray(data) || data.length === 0) return null
+
+  const suggestion = toSuggestion(data[0])
+  if (!Number.isFinite(suggestion.latitude) || !Number.isFinite(suggestion.longitude)) return null
+  return suggestion
+}
