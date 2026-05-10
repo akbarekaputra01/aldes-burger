@@ -42,7 +42,7 @@ export async function searchAddressSuggestions(query, region = {}) {
 
     try {
       const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: 'application/json', 'Accept-Language': 'id' },
       })
       if (!response.ok) throw new Error('Address provider error')
       data = await response.json()
@@ -74,7 +74,7 @@ export async function reverseGeocode(latitude, longitude) {
     addressdetails: '1',
   }))
   const response = await fetch(`${GEOCODING_BASE}/reverse?${params.toString()}`, {
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', 'Accept-Language': 'id' },
   })
   if (!response.ok) throw new Error('Reverse geocode failed')
 
@@ -103,7 +103,7 @@ export async function geocodeAddress(query) {
   }))
 
   const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', 'Accept-Language': 'id' },
   })
   if (!response.ok) throw new Error('Address provider error')
 
