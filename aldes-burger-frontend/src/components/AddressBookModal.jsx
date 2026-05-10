@@ -64,6 +64,18 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialAddress, userPhone])
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   const [provinceOptions, setProvinceOptions] = useState([])
   const [cityOptions, setCityOptions] = useState([])
   const [districtOptions, setDistrictOptions] = useState([])
@@ -302,10 +314,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
         
         updates.district = reverseData.district ? reverseData.district.toUpperCase() : ''
         updates.postal_code = reverseData.postalCode || ''
-        
-        if (!form.street_address) {
-           updates.street_address = reverseData.formattedAddress
-        }
+        updates.street_address = reverseData.formattedAddress || ''
         
         setForm(prev => ({ ...prev, ...updates }))
       } catch (err) {
@@ -393,7 +402,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <button type='button' onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X className="h-6 w-6" /></button>
             </div>
             
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 pt-1">
+            <div className="relative z-[70] grid grid-cols-1 gap-5 sm:grid-cols-2 pt-1">
               <div className="relative">
                 <input 
                   id="recipient_name"
@@ -621,8 +630,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 sm:gap-6 text-sm text-gray-600">
               <label className="flex items-center gap-2 cursor-pointer group"><input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-aldesRed focus:ring-aldesRed cursor-pointer" checked={!!form.is_default} onChange={e => setForm(p => ({ ...p, is_default: e.target.checked }))} /> <span className="group-hover:text-gray-800 transition-colors">Set as Default Address</span></label>
-              <label className="flex items-center gap-2 cursor-pointer group"><input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-aldesRed focus:ring-aldesRed cursor-pointer" checked={!!form.is_pickup} onChange={e => setForm(p => ({ ...p, is_pickup: e.target.checked }))} /> <span className="group-hover:text-gray-800 transition-colors">Set as Pickup Address</span></label>
-              <label className="flex items-center gap-2 cursor-pointer group"><input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-aldesRed focus:ring-aldesRed cursor-pointer" checked={!!form.is_return} onChange={e => setForm(p => ({ ...p, is_return: e.target.checked }))} /> <span className="group-hover:text-gray-800 transition-colors">Set as Return Address</span></label>
             </div>
             
             {error && <p className="text-sm text-aldesRed font-medium">{error}</p>}
