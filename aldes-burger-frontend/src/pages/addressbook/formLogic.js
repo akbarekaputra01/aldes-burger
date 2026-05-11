@@ -12,14 +12,39 @@ export function canSubmitAddress(form) {
 }
 
 export function applySuggestionToForm(form, suggestion) {
-  return {
-    ...form,
+  const updates = {
     street_address: suggestion.formattedAddress || suggestion.title,
     latitude: suggestion.latitude,
     longitude: suggestion.longitude,
     pin_source: 'suggestion',
     pin_confirmed: true,
   }
+  
+  if (suggestion.raw?.address) {
+    const address = suggestion.raw.address;
+    updates.province = address.state ? address.state.toUpperCase() : '';
+    
+    let city = address.city || address.town || address.county || '';
+    if (city) {
+      if (city.toLowerCase().startsWith('kota ')) updates.city = city.toUpperCase();
+      else if (city.toLowerCase().startsWith('kabupaten ')) updates.city = city.toUpperCase();
+      else if (address.city) updates.city = `KOTA ${city.toUpperCase()}`; // guess
+      else updates.city = `KABUPATEN ${city.toUpperCase()}`;
+    } else {
+      updates.city = '';
+    }
+    
+    let district = address.suburb || address.city_district || address.village || '';
+    updates.district = district ? district.toUpperCase() : '';
+    updates.postal_code = address.postcode || '';
+  } else {
+    updates.province = '';
+    updates.city = '';
+    updates.district = '';
+    updates.postal_code = '';
+  }
+
+  return { ...form, ...updates }
 }
 
 export function applyCurrentLocationToForm(form, latitude, longitude) {

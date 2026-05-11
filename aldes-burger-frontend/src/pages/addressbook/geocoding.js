@@ -1,4 +1,10 @@
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org'
+const GEOCODING_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEOCODING_BASE ? import.meta.env.VITE_GEOCODING_BASE : 'https://geocode.maps.co').replace(/\/$/, '')
+const GEOCODING_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEOCODING_API_KEY ? import.meta.env.VITE_GEOCODING_API_KEY : '').trim()
+
+const withApiKey = (params) => {
+  if (GEOCODING_API_KEY) params.set('api_key', GEOCODING_API_KEY)
+  return params
+}
 
 const toSuggestion = (item) => ({
   id: String(item.place_id),
@@ -6,7 +12,7 @@ const toSuggestion = (item) => ({
   formattedAddress: item.display_name,
   latitude: Number(item.lat),
   longitude: Number(item.lon),
-  provider: 'nominatim',
+  provider: 'mapsco',
   raw: item,
 })
 
@@ -26,17 +32,17 @@ export async function searchAddressSuggestions(query, region = {}) {
   let data = []
   let lastError
   for (const candidate of [...new Set(queryCandidates)]) {
-    const params = new URLSearchParams({
+    const params = withApiKey(new URLSearchParams({
       q: candidate,
       format: 'jsonv2',
       addressdetails: '1',
       countrycodes: 'id',
       limit: '8',
-    })
+    }))
 
     try {
-      const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
-        headers: { Accept: 'application/json' },
+      const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
+        headers: { Accept: 'application/json', 'Accept-Language': 'id' },
       })
       if (!response.ok) throw new Error('Address provider error')
       data = await response.json()
@@ -61,14 +67,14 @@ export async function searchAddressSuggestions(query, region = {}) {
 }
 
 export async function reverseGeocode(latitude, longitude) {
-  const params = new URLSearchParams({
+  const params = withApiKey(new URLSearchParams({
     format: 'jsonv2',
     lat: String(latitude),
     lon: String(longitude),
     addressdetails: '1',
-  })
-  const response = await fetch(`${NOMINATIM_BASE}/reverse?${params.toString()}`, {
-    headers: { Accept: 'application/json' },
+  }))
+  const response = await fetch(`${GEOCODING_BASE}/reverse?${params.toString()}`, {
+    headers: { Accept: 'application/json', 'Accept-Language': 'id' },
   })
   if (!response.ok) throw new Error('Reverse geocode failed')
 
@@ -82,4 +88,29 @@ export async function reverseGeocode(latitude, longitude) {
     postalCode: address.postcode,
     raw: data,
   }
+}
+
+export async function geocodeAddress(query) {
+  const q = query?.trim()
+  if (!q || q.length < 3) return null
+
+  const params = withApiKey(new URLSearchParams({
+    q,
+    format: 'jsonv2',
+    addressdetails: '1',
+    countrycodes: 'id',
+    limit: '1',
+  }))
+
+  const response = await fetch(`${GEOCODING_BASE}/search?${params.toString()}`, {
+    headers: { Accept: 'application/json', 'Accept-Language': 'id' },
+  })
+  if (!response.ok) throw new Error('Address provider error')
+
+  const data = await response.json()
+  if (!Array.isArray(data) || data.length === 0) return null
+
+  const suggestion = toSuggestion(data[0])
+  if (!Number.isFinite(suggestion.latitude) || !Number.isFinite(suggestion.longitude)) return null
+  return suggestion
 }

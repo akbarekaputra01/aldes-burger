@@ -5,6 +5,7 @@ import {
   Lock, Eye, EyeOff, Save, X
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import AddressBookModal from '../components/AddressBookModal'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
 
@@ -17,6 +18,8 @@ function Profile() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [editingAddress, setEditingAddress] = useState(null)
 
   // State untuk Ubah Password
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -140,7 +143,8 @@ function Profile() {
     return (
       <main className="min-h-screen bg-aldesCream flex items-center justify-center p-4">
         <Loader2 className="w-10 h-10 text-aldesRed animate-spin" />
-      </main>
+        <AddressBookModal open={isAddressModalOpen} initialAddress={editingAddress} userPhone={user?.phone} onClose={() => setIsAddressModalOpen(false)} onSaved={async () => { const { data } = await api.get('/addresses'); setAddresses(data) }} />
+    </main>
     )
   }
 
@@ -397,7 +401,7 @@ function Profile() {
                         )}
                         <button
                           type="button"
-                          onClick={() => navigate(`/address-book?addressId=${address.id}`)}
+                          onClick={() => { setEditingAddress(address); setIsAddressModalOpen(true) }}
                           className="rounded-xl p-2.5 text-gray-400 bg-white shadow-sm border border-gray-100 transition-colors hover:text-blue-500"
                           title="Edit Address"
                         >
@@ -424,7 +428,7 @@ function Profile() {
 
               <button
                 type="button"
-                onClick={() => navigate('/address-book')}
+                onClick={() => { setEditingAddress(null); setIsAddressModalOpen(true) }}
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 bg-white py-3.5 text-sm font-bold text-gray-500 transition-all hover:border-aldesRed hover:text-aldesRed hover:bg-aldesCream/30 active:scale-[0.98]"
               >
                 <Plus className="h-5 w-5" />
@@ -435,6 +439,7 @@ function Profile() {
 
         </div>
       </div>
+      <AddressBookModal open={isAddressModalOpen} initialAddress={editingAddress} userPhone={user?.phone} onClose={() => setIsAddressModalOpen(false)} onSaved={async () => { const { data } = await api.get('/addresses'); setAddresses(data) }} />
     </main>
   )
 }
