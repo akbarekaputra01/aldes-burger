@@ -60,7 +60,8 @@ class TransactionController extends Controller
         try {
             $paymentId = ($validatedData['payment_method'] === 'cash') ? 2 : 1;
             $transaction = Transaction::create([
-                'id'                  => (string) \Illuminate\Support\Str::uuid(),
+                // UBAH BARIS INI: Ganti Str::uuid() menjadi format TRX-
+                'id'                  => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999), 
                 'user_id'             => auth()->id(),
                 'amount'              => $validatedData['amount'],
                 'status'              => 'pending', 
