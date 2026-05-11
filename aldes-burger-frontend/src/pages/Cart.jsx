@@ -129,7 +129,6 @@ function Cart() {
 
   const [selectedIds, setSelectedIds] = useState([])
 
-  // Handler untuk Tambah Kurang Quantity
   const handleIncrease = (item) => {
     updateQty(item.id, (item.qty ?? 1) + 1);
   };
@@ -228,7 +227,7 @@ function Cart() {
                       <div className="mt-1">
                         {item.modifiers?.length > 0 ? (
                           <p className="text-[10px] text-gray-500 line-clamp-1 italic">
-                            Ingridients: {item.modifiers.map(m => {
+                            Ingredients: {item.modifiers.map(m => {
                               const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
                               const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
                               return `${cleanAction} ${rawName}`.trim();
@@ -280,7 +279,11 @@ function Cart() {
           </div>
           <button
             disabled={selectedIds.length === 0}
-            onClick={() => navigate('/checkout')}
+            // UPDATE: Mengirimkan data item yang dipilih ke halaman checkout
+            onClick={() => {
+              const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
+              navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
+            }}
             className={`px-10 py-3.5 rounded-2xl font-black text-lg transition-all ${
               selectedIds.length > 0 
               ? 'bg-aldesRed text-white shadow-lg shadow-red-100 active:scale-95' 
