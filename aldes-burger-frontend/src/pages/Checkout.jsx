@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // UPDATE: Tambah useLocation
 import api from '../lib/api';
 import {
   ArrowLeft,
@@ -33,8 +33,6 @@ import imgOnionRing from '../assets/menus png/onion_ring.png'
 import imgSoda from '../assets/menus png/soda.png'
 import imgTea from '../assets/menus png/tea.png'
 import imgWater from '../assets/menus png/water.png'
-
-const MascotBurger = "https://img.icons8.com/color/512/hamburger.png";
 
 const ingredientImageMap = {
   bottom: imgBottomBurger,
@@ -136,7 +134,14 @@ const MenuMiniPreview = ({ name }) => {
 
 function Checkout() {
   const navigate = useNavigate();
-  const { cart, clearCart, cartCount } = useCart();
+  const location = useLocation(); // UPDATE: Tangkap lokasi
+  
+  // UPDATE: Gunakan item yang dikirim dari Cart, jika tidak ada default ke array kosong
+  const checkoutItems = location.state?.checkoutItems || [];
+  
+  // UPDATE: Gunakan removeFromCart alih-alih clearCart agar sisa keranjang tetap ada
+  const { removeFromCart, cartCount } = useCart();
+  
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   
@@ -174,13 +179,13 @@ function Checkout() {
     return () => { if (globalNav) globalNav.style.display = 'block'; };
   }, []);
 
-  const subtotal = cart.reduce((sum, item) => sum + ((item.unit_price ?? 0) * (item.qty ?? 1)), 0);
-  
+  // UPDATE: Hitung subtotal berdasarkan checkoutItems
+  const subtotal = checkoutItems.reduce((sum, item) => sum + ((item.unit_price ?? 0) * (item.qty ?? 1)), 0);
   const deliveryFee = 0; 
   const total = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
-    if (cart.length === 0) return;
+    if (checkoutItems.length === 0) return;
     setLoading(true);
     try {
       const payload = {
@@ -189,7 +194,8 @@ function Checkout() {
         payment_method: paymentMethod,
         address: selectedAddress.detail,
         address_id: selectedAddress.id,
-        items: cart.map(item => ({ 
+        // UPDATE: Payload data dari checkoutItems
+        items: checkoutItems.map(item => ({ 
           id: item.menu_id,
           qty: item.qty,
           price: item.unit_price, 
@@ -198,7 +204,10 @@ function Checkout() {
       };
 
       await api.post('/transactions', payload);
-      clearCart();
+      
+      // UPDATE: Hapus HANYA item yang baru saja dibeli dari keranjang
+      checkoutItems.forEach(item => removeFromCart(item.id));
+      
       navigate('/payment-status?status=success'); 
     } catch (error) {
       console.error("Detail Error:", error.response?.data);
@@ -293,7 +302,8 @@ function Checkout() {
                 <ShoppingBag size={22} strokeWidth={3} /> Order Summary
               </h2>
               <div className="space-y-4">
-                {cart.map((item) => {
+                {/* UPDATE: Render berdasarkan checkoutItems */}
+                {checkoutItems.map((item) => {
                   const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
                   return (
                     <div key={item.id} className="bg-white border-[3px] border-black rounded-2xl p-4 flex items-center gap-5 shadow-[5px_5px_0_0_#000]">
@@ -346,7 +356,7 @@ function Checkout() {
               
               <button 
                 onClick={handlePlaceOrder} 
-                disabled={cart.length === 0 || loading} 
+                disabled={checkoutItems.length === 0 || loading} 
                 className="w-full py-4 rounded-xl bg-[#D52518] text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {loading ? "Ordering..." : "Place Order"} <CheckCircle2 size={20} strokeWidth={4} />
