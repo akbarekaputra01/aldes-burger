@@ -161,13 +161,13 @@ function Cart() {
       <main className="min-h-screen w-full flex items-center justify-center bg-[#F3E8CC] p-4 font-sans">
         <section className="w-full max-w-[500px] bg-white border-[6px] border-black rounded-[2.5rem] p-8 text-center shadow-[12px_12px_0_0_#000]">
           <ShoppingBag className="mx-auto h-16 w-16 text-black mb-4 stroke-[2.5]" />
-          <h2 className="text-3xl font-black text-black uppercase tracking-tighter">KERANJANG KOSONG!</h2>
-          <p className="mt-2 text-gray-500 font-bold text-sm uppercase">Dapur masih dingin, yuk isi pesananmu! 🍔</p>
+          <h2 className="text-3xl font-black text-black uppercase tracking-tighter">EMPTY CART!</h2>
+          <p className="mt-2 text-gray-500 font-bold text-sm uppercase">EMPTY CART, EMPTY TUMMY. FIX IT FAST! 🍔</p>
           <button
             onClick={() => navigate('/menu')}
             className="w-full mt-6 bg-[#D52518] text-[#FFC926] py-4 rounded-2xl border-[5px] border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_2px_0_0_#000] transition-all flex justify-center items-center gap-2"
           >
-            CARI MENU MAKANAN <ArrowRight strokeWidth={4} size={22}/>
+            GRAB YOUR MENU <ArrowRight strokeWidth={4} size={22}/>
           </button>
         </section>
       </main>
