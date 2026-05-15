@@ -11,32 +11,36 @@ const statusClass = {
 function AdminDashboard() {
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
-    // Mengambil data pesanan asli dari database
     api.get('/admin/orders')
       .then(({ data }) => setOrders(data))
       .catch(() => setOrders([]))
       .finally(() => setIsLoading(false))
   }, [])
 
-  // Kalkulasi data otomatis berdasarkan isi database
   const totalOrders = orders.length;
   const pendingCount = orders.filter(o => o.status === 'pending').length;
   const cookingCount = orders.filter(o => o.status === 'cooking').length;
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
+  
+  const totalRevenue = orders
+    .filter(o => o.status === 'done')
+    .reduce((sum, o) => sum + Number(o.amount || 0), 0);
 
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: 'IDR', 
+    maximumFractionDigits: 0 
+  }).format(val);
 
-  const summaryCards = [
-    { label: 'Total Orders', value: totalOrders, icon: ChartColumnBig },
-    { label: 'Pending', value: pendingCount, icon: Clock3 },
-    { label: 'Cooking', value: cookingCount, icon: Flame },
-    { label: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Wallet },
-  ]
+  const filteredOrders = orders.filter((order) => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'revenue') return order.status === 'done';
+    return order.status === statusFilter;
+  });
 
-  // Ambil 5 pesanan terbaru untuk ditampilkan di tabel
-  const latestOrders = orders.slice(0, 5);
+  const latestOrders = filteredOrders.slice(0, 5);
 
   if (isLoading) {
     return (
@@ -50,57 +54,116 @@ function AdminDashboard() {
     <main className="min-h-screen bg-aldesCream p-4 sm:p-6 lg:p-8">
       <section className="mx-auto max-w-7xl space-y-6">
         
-        {/* KARTU RINGKASAN */}
+        {/* GRID KARTU */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map((card) => {
-            const Icon = card.icon
-            return (
-              <article key={card.label} className="rounded-3xl bg-white p-5 shadow-sm transition-transform hover:-translate-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-500">{card.label}</p>
-                  <div className="rounded-xl bg-red-50 p-2 text-red-600"><Icon className="h-4 w-4" /></div>
-                </div>
-                <p className="mt-3 text-3xl font-black text-gray-900">{card.value}</p>
-              </article>
-            )
-          })}
+          
+          {/* TOTAL ORDERS */}
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`text-left rounded-3xl p-5 shadow-sm transition-all duration-300 transform hover:-translate-y-1 active:scale-95 ${
+              statusFilter === 'all' ? 'bg-red-600 text-white ring-4 ring-red-200' : 'bg-white hover:bg-red-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${statusFilter === 'all' ? 'text-red-100' : 'text-gray-500'}`}>Total Orders</p>
+              <div className={`rounded-xl p-2 ${statusFilter === 'all' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
+                <ChartColumnBig className="h-5 w-5" />
+              </div>
+            </div>
+            <p className={`mt-3 text-3xl font-black ${statusFilter === 'all' ? 'text-white' : 'text-gray-900'}`}>{totalOrders}</p>
+          </button>
+
+          {/* PENDING */}
+          <button
+            onClick={() => setStatusFilter('pending')}
+            className={`text-left rounded-3xl p-5 shadow-sm transition-all duration-300 transform hover:-translate-y-1 active:scale-95 ${
+              statusFilter === 'pending' ? 'bg-red-600 text-white ring-4 ring-red-200' : 'bg-white hover:bg-red-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${statusFilter === 'pending' ? 'text-red-100' : 'text-gray-500'}`}>Pending</p>
+              <div className={`rounded-xl p-2 ${statusFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
+                <Clock3 className="h-5 w-5" />
+              </div>
+            </div>
+            <p className={`mt-3 text-3xl font-black ${statusFilter === 'pending' ? 'text-white' : 'text-gray-900'}`}>{pendingCount}</p>
+          </button>
+
+          {/* COOKING */}
+          <button
+            onClick={() => setStatusFilter('cooking')}
+            className={`text-left rounded-3xl p-5 shadow-sm transition-all duration-300 transform hover:-translate-y-1 active:scale-95 ${
+              statusFilter === 'cooking' ? 'bg-red-600 text-white ring-4 ring-red-200' : 'bg-white hover:bg-red-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${statusFilter === 'cooking' ? 'text-red-100' : 'text-gray-500'}`}>Cooking</p>
+              <div className={`rounded-xl p-2 ${statusFilter === 'cooking' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
+                <Flame className="h-5 w-5" />
+              </div>
+            </div>
+            <p className={`mt-3 text-3xl font-black ${statusFilter === 'cooking' ? 'text-white' : 'text-gray-900'}`}>{cookingCount}</p>
+          </button>
+
+          {/* TOTAL REVENUE */}
+          <button
+            onClick={() => setStatusFilter('revenue')}
+            className={`text-left rounded-3xl p-5 shadow-sm transition-all duration-300 transform hover:-translate-y-1 active:scale-95 ${
+              statusFilter === 'revenue' ? 'bg-red-600 text-white ring-4 ring-red-200' : 'bg-white hover:bg-red-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${statusFilter === 'revenue' ? 'text-red-100' : 'text-gray-500'}`}>Total Revenue (Done)</p>
+              <div className={`rounded-xl p-2 ${statusFilter === 'revenue' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
+                <Wallet className="h-5 w-5" />
+              </div>
+            </div>
+            <p className={`mt-3 text-2xl font-black ${statusFilter === 'revenue' ? 'text-white' : 'text-gray-900'}`}>
+              {formatCurrency(totalRevenue)}
+            </p>
+          </button>
+
         </div>
 
-        {/* TABEL PESANAN TERBARU */}
-        <article className="rounded-3xl bg-white shadow-sm">
-          <div className="border-b border-red-100 px-5 py-4">
-            <h3 className="text-lg font-bold text-gray-900">Latest Orders</h3>
+        {/* TABEL PESANAN */}
+        <article className="rounded-3xl bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-red-100 px-5 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-900">
+              Showing: <span className="text-red-600 capitalize">
+                {statusFilter === 'revenue' ? 'Completed (Done)' : statusFilter}
+              </span> Orders
+            </h3>
           </div>
+          
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="text-gray-500">
+              <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] tracking-widest font-bold">
+                <tr>
                   <th className="px-5 py-3">Order ID</th>
                   <th className="px-5 py-3">Customer</th>
                   <th className="px-5 py-3">Items</th>
                   <th className="px-5 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {latestOrders.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-5 py-8 text-center text-gray-500">Belum ada pesanan masuk.</td>
+                    <td colSpan="4" className="px-5 py-12 text-center text-gray-400 italic">
+                      No orders found for this category.
+                    </td>
                   </tr>
                 ) : (
                   latestOrders.map((order) => {
-                    // Gabungkan nama-nama menu yang dipesan menjadi satu teks
                     const itemNames = order.details?.map(d => `${d.quantity}x ${d.snapshot_name}`).join(', ') || '-';
-                    
                     return (
-                      <tr key={order.id} className="border-t border-red-50 hover:bg-red-50/30">
-                        <td className="px-5 py-3 font-semibold text-gray-900">
-                           {/* Potong ID UUID yang panjang agar tabel rapi */}
-                           <span className="truncate w-24 block" title={order.id}>{order.id.split('-')[0]}...</span>
+                      <tr key={order.id} className="hover:bg-red-50/20 transition-colors">
+                        <td className="px-5 py-4 font-mono text-gray-500 text-xs">
+                           #{order.id.split('-')[0]}
                         </td>
-                        <td className="px-5 py-3 text-gray-700">{order.user?.name || 'Guest'}</td>
-                        <td className="px-5 py-3 text-gray-700 max-w-xs truncate" title={itemNames}>{itemNames}</td>
-                        <td className="px-5 py-3">
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${statusClass[order.status] || statusClass.pending}`}>
+                        <td className="px-5 py-4 font-bold text-gray-800">{order.user?.name || 'Guest'}</td>
+                        <td className="px-5 py-4 text-gray-600 max-w-xs truncate" title={itemNames}>{itemNames}</td>
+                        <td className="px-5 py-4">
+                          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm ${statusClass[order.status] || statusClass.pending}`}>
                             {order.status}
                           </span>
                         </td>
@@ -112,7 +175,6 @@ function AdminDashboard() {
             </table>
           </div>
         </article>
-        
       </section>
     </main>
   )
