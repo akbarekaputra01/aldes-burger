@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { Minus, Plus, Trash2 } from 'lucide-react'
+import { Minus, Plus, Trash2, ReceiptText, ShoppingBag, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-// --- IMPORT ASSETS (BURGER) ---
+// --- IMPORT ASSETS ---
 import imgBeefPatty from '../assets/beef_patty.png'
 import imgBottomBurger from '../assets/bottom_burger.png'
 import imgCheese from '../assets/cheese.png'
@@ -12,8 +12,6 @@ import imgLettuce from '../assets/lettuce.png'
 import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
-
-// --- IMPORT ASSETS (MENUS) ---
 import imgFrenchFries from '../assets/menus png/french_fries.png'
 import imgNugget from '../assets/menus png/nugget.png'
 import imgOnionRing from '../assets/menus png/onion_ring.png'
@@ -72,7 +70,7 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
   const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
 
   return (
-    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
+    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-white border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
       <div 
         className="absolute bottom-2 w-full flex justify-center items-end transition-transform duration-300"
         style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
@@ -85,10 +83,10 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
           return (
             <div 
               key={index}
-              className="absolute left-1/2 -translate-x-1/2 w-20"
+              className="absolute left-1/2 -translate-x-1/2 w-14 md:w-16"
               style={{ bottom: `${pos + getVisualOffset(name)}px`, zIndex: index }}
             >
-              {img && <img src={img} alt={name} className="w-full h-auto drop-shadow-sm" />}
+              {img && <img src={img} alt={name} className="w-full h-auto" />}
             </div>
           )
         })}
@@ -109,11 +107,11 @@ const MenuMiniPreview = ({ name }) => {
   
   const img = getMenuImage(name);
   return (
-    <div className="relative w-24 h-28 bg-aldesCream/50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center p-2">
+    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-white border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
       {img ? (
-        <img src={img} alt={name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+        <img src={img} alt={name} className="max-w-full max-h-full object-contain" />
       ) : (
-        <div className="text-xs text-gray-400 text-center">No Image</div>
+        <div className="text-[10px] font-black text-black text-center uppercase">No Img</div>
       )}
     </div>
   );
@@ -160,15 +158,16 @@ function Cart() {
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
-      <main className="bg-aldesCream min-h-screen pb-32 px-4 py-8">
-        <section className="mx-auto max-w-3xl rounded-xl bg-white p-8 text-center shadow">
-          <h2 className="text-2xl font-bold text-aldesRed">Your cart is empty</h2>
-          <p className="mt-2 text-gray-600">Looks like you have not added any items yet.</p>
+      <main className="min-h-screen w-full flex items-center justify-center bg-[#F3E8CC] p-4 font-sans">
+        <section className="w-full max-w-[500px] bg-white border-[6px] border-black rounded-[2.5rem] p-8 text-center shadow-[12px_12px_0_0_#000]">
+          <ShoppingBag className="mx-auto h-16 w-16 text-black mb-4 stroke-[2.5]" />
+          <h2 className="text-3xl font-black text-black uppercase tracking-tighter">KERANJANG KOSONG!</h2>
+          <p className="mt-2 text-gray-500 font-bold text-sm uppercase">Dapur masih dingin, yuk isi pesananmu! 🍔</p>
           <button
             onClick={() => navigate('/menu')}
-            className="mt-6 rounded-xl bg-aldesRed px-6 py-3 font-semibold text-white transition hover:brightness-110"
+            className="w-full mt-6 bg-[#D52518] text-[#FFC926] py-4 rounded-2xl border-[5px] border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_2px_0_0_#000] transition-all flex justify-center items-center gap-2"
           >
-            Browse Menu
+            CARI MENU MAKANAN <ArrowRight strokeWidth={4} size={22}/>
           </button>
         </section>
       </main>
@@ -180,121 +179,146 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <div className="bg-aldesCream flex flex-col min-h-full">
-      <div className="px-4 py-6 flex-grow">
-        <div className="mx-auto w-full max-w-4xl">
-          
-          <div className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-3">
-            <button onClick={toggleSelectAll} className="flex-shrink-0">
-              {selectedIds.length === cart.length && cart.length > 0 ? (
-                <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="w-6 h-6 border-2 border-gray-300 rounded-full bg-white" />
-              )}
-            </button>
-            <span className="font-bold text-gray-900 text-base">Select All ({cart.length})</span>
-          </div>
-
-          <section className="mb-6">
-            {cart.map((item) => {
-              const hasIngredients = Array.isArray(item.ingredients) && item.ingredients.length > 0;
-              const isSelected = selectedIds.includes(item.id);
-              
-              return (
-                <article key={item.id} className="bg-white rounded-xl shadow p-4 mb-4 flex items-center gap-4">
-                  <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0">
-                    {isSelected ? (
-                      <div className="w-6 h-6 bg-aldesRed rounded-full flex items-center justify-center transition-all">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 border-2 border-gray-300 rounded-full bg-white" />
-                    )}
-                  </button>
-
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {hasIngredients ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
-                    
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
-                      
-                      <div className="mt-1">
-                        {item.modifiers?.length > 0 ? (
-                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
-                            Ingredients: {item.modifiers.map(m => {
-                              const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                              const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
-                              return `${cleanAction} ${rawName}`.trim();
-                            }).join(', ')}
-                          </p>
-                        ) : hasIngredients ? (
-                          <p className="text-[10px] text-gray-500 line-clamp-1 italic">
-                            Ingredients: {item.ingredients.join(', ')}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <p className="mt-2 text-sm font-bold text-aldesRed">{formatCurrency(getItemPrice(item))}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 bg-aldesCream/50 p-1 rounded-lg">
-                      <button onClick={() => handleDecrease(item)} className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed active:scale-90 transition-transform"><Minus className="h-3 w-3" /></button>
-                      <span className="w-5 text-center text-sm font-bold text-gray-800">{item.qty ?? 1}</span>
-                      <button onClick={() => handleIncrease(item)} className="flex h-7 w-7 items-center justify-center rounded-md bg-white border border-aldesRed text-aldesRed active:scale-90 transition-transform"><Plus className="h-3 w-3" /></button>
-                    </div>
-                    <button onClick={() => removeFromCart(item.id)} className="ml-2 text-gray-400 hover:text-aldesRed transition-colors"><Trash2 className="h-5 w-5" /></button>
-                  </div>
-                </article>
-              );
-            })}
-
-            <button 
-              onClick={() => navigate('/menu')}
-              className="w-full mt-2 py-2 bg-white border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-[15px] font-bold flex items-center justify-center gap-2 hover:border-aldesRed hover:text-aldesRed transition-colors active:scale-[0.98]"
-            >
-              <Plus className="h-5 w-5" />
-              Add more orders
-            </button>
-          </section>
+    <main className="min-h-screen w-full bg-[#F3E8CC] p-2 md:p-6 font-sans flex justify-center items-start">
+      <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
+        
+        {/* Badge Samping */}
+        <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-[#D52518] border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
+          <span className="font-black text-[#FFC926] text-lg md:text-2xl uppercase italic tracking-tighter">CART</span>
         </div>
-      </div>
 
-      <section className="sticky bottom-0 w-full bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.08)] p-4 z-40 border-t border-gray-100">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-gray-500 uppercase font-bold italic tracking-wider">
-              Total Payment ({selectedIds.length} items)
-            </p>
-            <p className="text-2xl font-black text-aldesRed leading-tight">
-              {formatCurrency(grandTotal)}
-            </p>
+        {/* Header Title */}
+        <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
+          <h2 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none flex items-center gap-3">
+            <ReceiptText size={40} className="text-black stroke-[3]" />
+            MY ORDERS
+          </h2>
+          <p className="text-gray-400 font-bold text-[10px] md:text-xs uppercase mt-2">Check and manage your items before checkout! ✨</p>
+        </div>
+
+        {/* Pilih Semua Box */}
+        <div className="bg-[#F3E8CC]/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
+          <button onClick={toggleSelectAll} className="flex-shrink-0 active:scale-90 transition-transform">
+            {selectedIds.length === cart.length && cart.length > 0 ? (
+              <div className="w-8 h-8 bg-[#D52518] border-4 border-black rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFC926" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            ) : (
+              <div className="w-8 h-8 border-4 border-black rounded-xl bg-white" />
+            )}
+          </button>
+          <span className="font-black text-black text-base md:text-lg uppercase tracking-wider">SELECT ALL ({cart.length} ITEMS)</span>
+        </div>
+
+        {/* Daftar Item */}
+        <div className="space-y-5">
+          {cart.map((item) => {
+            const hasIngredients = Array.isArray(item.ingredients) && item.ingredients.length > 0;
+            const isSelected = selectedIds.includes(item.id);
+            
+            return (
+              <article key={item.id} className="bg-white border-4 border-black rounded-2xl p-4 flex items-center gap-4 relative shadow-[6px_6px_0_0_#000]">
+                
+                <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0 active:scale-90 transition-transform z-10">
+                  {isSelected ? (
+                    <div className="w-7 h-7 bg-[#D52518] border-4 border-black rounded-lg flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#FFC926" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 border-4 border-black rounded-lg bg-white" />
+                  )}
+                </button>
+
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  {hasIngredients ? <BurgerMiniPreview ingredients={item.ingredients} /> : <MenuMiniPreview name={item.name} />}
+                  
+                  <div className="min-w-0 flex-1 text-left">
+                    <h3 className="text-lg md:text-xl font-black text-black uppercase tracking-tight truncate pr-2">{item.name}</h3>
+                    <div className="mt-1">
+                      {item.modifiers?.length > 0 ? (
+                        <p className="text-[11px] font-bold text-gray-500 line-clamp-1 italic">
+                          Ingredients: {item.modifiers.map(m => {
+                            const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
+                            const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
+                            return `${cleanAction} ${rawName}`.trim();
+                          }).join(', ')}
+                        </p>
+                      ) : hasIngredients ? (
+                        <p className="text-[11px] font-bold text-gray-500 line-clamp-1 italic">
+                          Ingredients: {item.ingredients.join(', ')}
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-lg font-black text-[#D52518] tracking-tight">{formatCurrency(getItemPrice(item))}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end justify-between gap-4 self-stretch py-1">
+                  <button onClick={() => removeFromCart(item.id)} className="text-black hover:text-[#D52518] transition-colors active:scale-90">
+                    <Trash2 size={24} className="stroke-[2.5]" />
+                  </button>
+                  
+                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
+                    <button onClick={() => handleDecrease(item)} className="flex h-7 w-7 items-center justify-center bg-white text-black font-black border-2 border-black rounded-md active:scale-75 transition-transform">
+                      <Minus size={14} strokeWidth={4} />
+                    </button>
+                    <span className="w-8 text-center text-sm font-black text-black">{item.qty ?? 1}</span>
+                    <button onClick={() => handleIncrease(item)} className="flex h-7 w-7 items-center justify-center bg-[#FFC926] text-black font-black border-2 border-black rounded-md active:scale-75 transition-transform">
+                      <Plus size={14} strokeWidth={4} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* --- ADD MORE ORDERS BUTTON (HOVER MERAH/KUNING) --- */}
+        <button 
+          onClick={() => navigate('/menu')}
+          className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-black text-base uppercase tracking-wider flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000] hover:bg-[#D52518] hover:text-[#FFC926] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_#000]"
+        >
+          <Plus size={20} strokeWidth={4} className="transition-colors" />
+          ADD MORE ORDERS
+        </button>
+
+        {/* --- PAYMENT & CHECKOUT --- */}
+        <div className="mt-6 pt-5 border-t-[5px] border-dashed border-black space-y-3 font-black text-sm uppercase tracking-wide text-black text-left">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400 font-bold text-[11px] md:text-xs">TOTAL ITEMS SELECTED ({selectedIds.length})</span>
+            <span className="text-sm md:text-base">{formatCurrency(grandTotal)}</span>
           </div>
+          
+          <div className="flex justify-between border-t-4 border-black pt-4 text-lg md:text-xl font-black text-black items-center">
+            <span className="tracking-tighter">TOTAL PAYMENT</span>
+            <span className="text-xl md:text-2xl font-black text-[#D52518] bg-[#FFC926] border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
+              {formatCurrency(grandTotal)}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6">
           <button
             disabled={selectedIds.length === 0}
-            // UPDATE: Mengirimkan data item yang dipilih ke halaman checkout
             onClick={() => {
               const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
               navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
             }}
-            className={`px-10 py-3.5 rounded-2xl font-black text-lg transition-all ${
+            className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-xl md:text-2xl uppercase flex justify-center items-center gap-2 transition-all ${
               selectedIds.length > 0 
-              ? 'bg-aldesRed text-white shadow-lg shadow-red-100 active:scale-95' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'bg-[#D52518] text-[#FFC926] shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000]' 
+              : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
             }`}
           >
-            Checkout
+            PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24}/>
           </button>
         </div>
       </section>
-    </div>
+    </main>
   )
 }
 
