@@ -14,24 +14,24 @@ class MenuSeeder extends Seeder
     {
         $menu = [
             [
-                'name' => 'Beef Burger - Double Patty',
-                'description' => 'Double beef patty burger.',
-                'price' => 55000,
+                'name' => 'Beef Burger',
+                'description' => 'Juicy beef patty with fresh veggies and our special sauce.',
+                'price' => 32000,
                 'category_id' => 1,
                 'stock' => 100,
                 'is_custom' => false,
             ],
             [
-                'name' => 'Spicy Crispy Chicken Burger',
-                'description' => 'Spicy crispy chicken burger.',
-                'price' => 45000,
+                'name' => 'Chicken Burger',
+                'description' => 'Crispy spiced chicken with fresh veggies and creamy sauce.',
+                'price' => 28000,
                 'category_id' => 1,
                 'stock' => 100,
                 'is_custom' => false,
             ],
             [
                 'name' => 'Make Your Own Burger',
-                'description' => 'Build your own burger exactly the way you want it.',
+                'description' => 'Pick your ingredients and build your perfect burger.',
                 'price' => 0,
                 'category_id' => 1,
                 'stock' => 999,
@@ -40,7 +40,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'French Fries',
                 'description' => 'Crispy potato fries.',
-                'price' => 25000,
+                'price' => 15000,
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
@@ -48,7 +48,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Nuggets',
                 'description' => 'Crispy chicken nuggets.',
-                'price' => 30000,
+                'price' => 20000,
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
@@ -56,7 +56,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Onion Rings',
                 'description' => 'Crunchy onion rings.',
-                'price' => 28000,
+                'price' => 15000,
                 'category_id' => 2,
                 'stock' => 100,
                 'is_custom' => false,
@@ -64,7 +64,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Soft Drink',
                 'description' => 'Refreshing soft drink.',
-                'price' => 15000,
+                'price' => 10000,
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
@@ -72,7 +72,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Tea',
                 'description' => 'Freshly brewed tea.',
-                'price' => 12000,
+                'price' => 8000,
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
@@ -80,7 +80,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Water',
                 'description' => 'Mineral water.',
-                'price' => 10000,
+                'price' => 5000,
                 'category_id' => 3,
                 'stock' => 100,
                 'is_custom' => false,
