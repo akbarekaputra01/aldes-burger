@@ -18,8 +18,7 @@ return new class extends Migration
             $table->text('destination_address');
             $table->foreignId('user_id')->constrained();
             $table->integer('amount');
-            $table->enum('status', ['pending', 'cooking', 'done'])->default('pending');
-            $table->timestamps();
+            $table->enum('status', ['pending', 'cooking', 'done', 'cancelled'])->default('pending');            $table->timestamps();
         });
     }
 

@@ -25,6 +25,7 @@ class CheckoutController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // 1. TAMBAHKAN VALIDASI INGREDIENTS
         $payload = $request->validate([
             'address_id' => ['required', 'integer', 'exists:addresses,id'],
             'payment_method' => ['required', 'string', 'max:100'],
@@ -34,6 +35,7 @@ class CheckoutController extends Controller
             'items.*.modifiers' => ['nullable', 'array'],
             'items.*.modifiers.*.ingredient_id' => ['required', 'integer', 'exists:ingredients,id'],
             'items.*.modifiers.*.action' => ['required', 'in:add,remove'],
+            'items.*.ingredients' => ['nullable', 'array'], // FIX: Menerima urutan bahan dari react
         ]);
 
         $user = $request->user();
@@ -49,7 +51,6 @@ class CheckoutController extends Controller
                 $menu = Menu::query()->findOrFail($item['menu_id']);
 
                 $addModifierPrice = 0;
-                $snapshotModifiers = null;
                 $added = [];
                 $removed = [];
 
@@ -64,13 +65,6 @@ class CheckoutController extends Controller
                     }
                 }
 
-                if ($added !== [] || $removed !== []) {
-                    $snapshotModifiers = array_filter([
-                        'add'    => $added ?: null,
-                        'remove' => $removed ?: null,
-                    ]);
-                }
-
                 $snapshotPrice = $menu->price + $addModifierPrice;
                 $quantity = (int) $item['quantity'];
 
@@ -82,6 +76,19 @@ class CheckoutController extends Controller
                     foreach ($added as $name) $parts[] = 'ADD ' . $name;
                     foreach ($removed as $name) $parts[] = 'REMOVE ' . $name;
                     $snapshotName .= ' [' . implode(', ', $parts) . ']';
+                }
+
+                // 2. LOGIKA BARU PENYIMPANAN SNAPSHOT UNTUK KDS DAPUR
+                $snapshotModifiers = null;
+                if (!empty($item['ingredients'])) {
+                    // Jika frontend React mengirim urutan burger lengkap, simpan sebagai Array Json
+                    $snapshotModifiers = $item['ingredients'];
+                } elseif ($added !== [] || $removed !== []) {
+                    // Fallback jika pesanan bukan burger / hanya edit modifier
+                    $snapshotModifiers = array_filter([
+                        'add'    => $added ?: null,
+                        'remove' => $removed ?: null,
+                    ]);
                 }
 
                 $details[] = [
