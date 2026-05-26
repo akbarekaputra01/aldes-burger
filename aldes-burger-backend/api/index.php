@@ -1,5 +1,15 @@
 <?php
 
+// Handle preflight OPTIONS requests directly at the entrypoint
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+    header('Access-Control-Max-Age: 86400');
+    header('HTTP/1.1 200 OK');
+    exit(0);
+}
+
 // Vercel is read-only, so we must redirect all writable paths to /tmp
 $storagePaths = [
     '/tmp/storage/framework/views',
