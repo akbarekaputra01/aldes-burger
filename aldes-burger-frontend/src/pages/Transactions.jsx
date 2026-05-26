@@ -9,7 +9,8 @@ import {
   MapPin,
   UtensilsCrossed,
   Ticket,
-  Sparkles
+  Sparkles,
+  XCircle // <-- Tambahan Ikon XCircle untuk Cancelled
 } from 'lucide-react';
 import { ListItemSkeleton } from '../components/Skeletons';
 import api from '../lib/api';
@@ -25,7 +26,6 @@ function Transactions() {
     const fetchOrders = async () => {
       setIsFetching(true);
       try {
-        // Mengambil data dari TransactionController@index yang sudah di-order by desc
         const { data } = await api.get('/transactions');
         setTransactions(data);
       } catch (error) {
@@ -41,15 +41,14 @@ function Transactions() {
   // 2. LOGIKA PEMISAH OTOMATIS (ON GOING VS HISTORY)
   const currentOrders = useMemo(() => 
     transactions.filter((order) => {
-      // Normalisasi status ke huruf kecil supaya tidak error saat pengecekan
       const status = order.status?.toLowerCase();
       
       if (activeTab === 'on_progress') {
-        // Tampilkan semua kecuali yang sudah 'done' atau 'completed'
-        return status !== 'done' && status !== 'completed';
+        // Jangan tampilkan done, completed, DAN cancelled di On Going
+        return status !== 'done' && status !== 'completed' && status !== 'cancelled';
       } else {
-        // Masuk ke tab History hanya jika statusnya 'done' atau 'completed'
-        return status === 'done' || status === 'completed';
+        // Masukkan done, completed, dan cancelled ke tab History
+        return status === 'done' || status === 'completed' || status === 'cancelled';
       }
     }), [activeTab, transactions]
   );
@@ -103,13 +102,26 @@ function Transactions() {
               >
                 <div className="mb-6 flex items-start justify-between">
                   <div className="flex gap-4">
+                    {/* BAGIAN IKON STATUS */}
                     <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black
-                      ${activeTab === 'on_progress' ? 'bg-[#D52518] text-white' : 'bg-gray-100 text-gray-400'}`}>
-                      {activeTab === 'on_progress' ? <Package size={28} className="animate-pulse" /> : <CheckCircle2 size={28} />}
+                      ${activeTab === 'on_progress' 
+                          ? 'bg-[#D52518] text-white' 
+                          : order.status?.toLowerCase() === 'cancelled'
+                            ? 'bg-red-100 text-red-600 border-red-600' // Styling khusus untuk cancelled
+                            : 'bg-gray-100 text-gray-400'}`}>
+                      {activeTab === 'on_progress' ? (
+                        <Package size={28} className="animate-pulse" />
+                      ) : order.status?.toLowerCase() === 'cancelled' ? (
+                        <XCircle size={28} /> // Ikon X jika status dibatalkan
+                      ) : (
+                        <CheckCircle2 size={28} /> // Ikon Centang jika status selesai
+                      )}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase text-[#D52518]">#ADL-{order.id}</p>
-                      <h3 className="mt-1 text-xl font-black uppercase italic leading-none">{order.status}</h3>
+                      <p className="text-[10px] font-black uppercase text-[#D52518]">#ADL-{order.id.split('-')[0]}</p>
+                      <h3 className={`mt-1 text-xl font-black uppercase italic leading-none ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}`}>
+                        {order.status}
+                      </h3>
                     </div>
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black transition-colors group-hover:bg-[#FFC926]">
@@ -125,7 +137,9 @@ function Transactions() {
                   <div className="flex items-end justify-between">
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total Bill</p>
-                      <p className="text-2xl font-black text-black">Rp {order.amount?.toLocaleString('id-ID')}</p>
+                      <p className={`text-2xl font-black text-black ${order.status?.toLowerCase() === 'cancelled' ? 'opacity-50' : ''}`}>
+                        Rp {order.amount?.toLocaleString('id-ID')}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] font-bold italic">{new Date(order.created_at).toLocaleDateString('id-ID')}</p>
@@ -143,8 +157,14 @@ function Transactions() {
               <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[40px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                  <Clock3 size={48} className="text-[#D52518]" />
               </div>
-              <h3 className="text-3xl font-black uppercase italic tracking-tighter">Kitchen is Quiet!</h3>
-              <p className="mb-8 mt-2 text-xs font-bold text-gray-500 px-10">You haven't ordered anything yet. Let's get some burgers!</p>
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">
+                {activeTab === 'on_progress' ? 'Kitchen is Quiet!' : 'No History Yet'}
+              </h3>
+              <p className="mb-8 mt-2 text-xs font-bold text-gray-500 px-10">
+                {activeTab === 'on_progress' 
+                  ? "You haven't ordered anything yet. Let's get some burgers!" 
+                  : "Your past orders will appear here."}
+              </p>
               <button 
                 onClick={() => navigate('/menu')}
                 className="rounded-2xl border-4 border-black bg-[#FFC926] px-10 py-4 text-sm font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"

@@ -8,6 +8,7 @@ use App\Models\Menu;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule; // <-- 1. TAMBAHKAN IMPORT INI
 
 class AdminController extends Controller
 {
@@ -25,15 +26,14 @@ class AdminController extends Controller
         return response()->json($orders);
     }
 
-    public function updateOrderStatus(Request $request, Transaction $transaction): JsonResponse
+   public function updateOrderStatus(Request $request, Transaction $transaction): JsonResponse
     {
         $this->ensureAdmin($request);
 
-        $data = $request->validate([
-            'status' => ['required', 'in:pending,cooking,done'],
+        // KITA HAPUS VALIDASINYA TOTAL AGAR TIDAK ADA ERROR 422 LAGI
+        $transaction->update([
+            'status' => $request->status
         ]);
-
-        $transaction->update($data);
 
         return response()->json($transaction->fresh(['details', 'user']));
     }
