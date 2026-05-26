@@ -1,13 +1,19 @@
 {
     "version": 2,
-    "outputDirectory": "public/build",
-    "installCommand": "composer install && npm install",
-    "buildCommand": "npm run build",
-    "functions": {
-        "api/index.php": {
-            "runtime": "vercel-php@0.7.3"
+    "public": true,
+    "builds": [
+        {
+            "src": "api/index.php",
+            "use": "vercel-php@0.7.3"
+        },
+        {
+            "src": "package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "public/build"
+            }
         }
-    },
+    ],
     "routes": [
         {
             "src": "/build/(.*)",
