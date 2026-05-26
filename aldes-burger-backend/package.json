@@ -4,7 +4,6 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "vercel-build": "composer install && php artisan config:clear && php artisan cache:clear && vite build",
         "dev": "vite"
     },
     "devDependencies": {
