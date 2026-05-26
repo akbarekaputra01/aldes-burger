@@ -17,18 +17,3 @@ Route::get('/health', function () {
         return $e->getMessage();
     }
 });
-
-// TEMPORARY: Debug route to check registered routes on Vercel - REMOVE AFTER FIX
-Route::get('/debug-routes', function () {
-    $routes = collect(app('router')->getRoutes()->getRoutes())->map(fn($r) => [
-        'uri' => $r->uri(),
-        'methods' => $r->methods(),
-    ])->values();
-
-    return response()->json([
-        'total' => $routes->count(),
-        'api_routes_file_exists' => file_exists(base_path('routes/api.php')),
-        'base_path' => base_path(),
-        'routes_sample' => $routes->take(10),
-    ]);
-});
