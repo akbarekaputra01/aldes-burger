@@ -7,8 +7,13 @@ Route::get('/', function () {
 });
 
 Route::get('/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'message' => 'Laravel backend running'
-    ]);
+    try {
+        return [
+            'status' => 'ok',
+            'env' => env('APP_ENV'),
+            'app_key' => env('APP_KEY') ? 'exists' : 'missing',
+        ];
+    } catch (\Throwable $e) {
+        return $e->getMessage();
+    }
 });
