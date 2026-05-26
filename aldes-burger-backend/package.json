@@ -5,7 +5,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "vercel-build": "mkdir -p build"
+        "vercel-build": "mkdir -p build && echo 'ok' > build/index.html"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
