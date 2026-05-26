@@ -1,4 +1,15 @@
-import { Eye, EyeOff, Loader2, Sparkles, ArrowRight, Lock, User } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Sparkles,
+  ArrowRight,
+  Lock,
+  Mail,
+  Zap,
+  AlertCircle
+} from 'lucide-react';
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
@@ -7,127 +18,342 @@ import MascotBurger from '../assets/mascot-burger.png';
 
 function Auth() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ login_identity: '', password: '' });
+
+  const [form, setForm] = useState({
+    email: '',
+    password: ''
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
+
+    if (!email) {
+      setError('Please enter your registered email address.');
+      return;
+    }
+
+    if (!email.endsWith('@gmail.com')) {
+      setError('Please use a valid Gmail address ending with @gmail.com.');
+      return;
+    }
+
+    if (!password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
-         
+
     try {
-      // Deteksi apakah input berupa angka (nomor telepon)
-      const isPhoneNumber = /^[0-9+]+$/.test(form.login_identity);
-      
-      // Siapkan payload secara dinamis
       const payload = {
-        password: form.password
+        email,
+        password
       };
 
-      if (isPhoneNumber) {
-        payload.phone = form.login_identity; // Kirim sebagai 'phone'
-      } else {
-        payload.email = form.login_identity; // Kirim sebagai 'email'
-      }
-
       const { data } = await api.post('/login', payload);
+
       setAuthSession(data);
       navigate(data.user?.role === 'admin' ? '/admin' : '/menu');
     } catch (err) {
-      const message = err.response?.data?.message || 'Login Gagal!';
-      setError(message.toUpperCase());
+      const status = err.response?.status;
+      const apiMessage = err.response?.data?.message;
+
+      if (status === 404) {
+        setError('This email is not registered. Please check your email or create a new account.');
+      } else if (status === 401 || status === 422) {
+        setError('The password does not match the registered email.');
+      } else {
+        setError(apiMessage || 'Login failed. Please check your registered email and password.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#F3E8CC] overflow-x-hidden font-sans">
-      <section className="w-full md:w-[40%] bg-[#D52518] relative flex flex-col justify-center items-center p-8 md:p-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
-        <div className="relative z-10 text-center">
-          <div className="bg-white border-[6px] border-black p-4 rounded-[3rem] inline-block mb-6 shadow-[15px_15px_0_0_#000] rotate-3 animate-bounce-slow">
-            <img src={MascotBurger} alt="Mascot" className="w-32 h-32 md:w-56 md:h-56 object-contain" />
-          </div>
-          <h1 className="text-5xl lg:text-7xl font-black text-[#FFC926] uppercase italic tracking-tighter leading-none mb-4 drop-shadow-[6px_6px_0_#000]">ALDES<br/>BURGER</h1>
-          <p className="text-[#F3E8CC] font-black text-sm uppercase tracking-[0.3em] bg-black px-6 py-2 rounded-full inline-block">EST. 2026</p>
-        </div>
-      </section>
+    <main className="min-h-screen w-full overflow-hidden bg-[#F3E8CC] font-sans selection:bg-[#FFC926] selection:text-black relative">
       
-      <section className="flex-1 flex items-center justify-center p-4 md:p-10">
-        <div className="animate-flip-in w-full max-w-[500px] bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 shadow-[12px_12px_0_0_#000] md:shadow-[18px_18px_0_0_#000] relative">
-          <div className="absolute -top-6 -right-4 md:-top-10 md:-right-8 bg-[#D52518] border-[4px] border-black px-5 py-2.5 md:px-7 md:py-3.5 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
-            <span className="font-black text-[#FFC926] text-lg md:text-2xl uppercase italic tracking-tighter">LOG IN</span>
-          </div>
+      {/* Background Burger Pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.06]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
+              <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g opacity="1">
+                  <path d="M32 54C32 43.5066 40.5066 35 51 35H69C79.4934 35 88 43.5066 88 54V56H32V54Z" stroke="#D52518" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M28 60H92" stroke="#D52518" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M31 64H89" stroke="#D52518" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M36 71H84" stroke="#D52518" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M34 76V77C34 83.0751 38.9249 88 45 88H75C81.0751 88 86 83.0751 86 77V76" stroke="#D52518" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="46" cy="47" r="1.7" fill="#FFC926"/>
+                  <circle cx="56" cy="43" r="1.7" fill="#FFC926"/>
+                  <circle cx="66" cy="46" r="1.7" fill="#FFC926"/>
+                  <circle cx="76" cy="44" r="1.7" fill="#FFC926"/>
+                </g>
+              </svg>
+            `)}")`,
+            backgroundSize: '120px 120px',
+            backgroundPosition: '0 0'
+          }}
+        />
+      </div>
+
+      {/* Background Dots */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.07]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(#D52518 1.1px, transparent 1.1px)`,
+            backgroundSize: '24px 24px'
+          }}
+        />
+      </div>
+
+      {/* Decorative Blobs */}
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#D52518] rounded-full blur-3xl opacity-20" />
+      <div className="absolute bottom-[-120px] right-[-120px] w-96 h-96 bg-[#FFC926] rounded-full blur-3xl opacity-35" />
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-4 md:px-8 md:py-5 perspective-wrapper">
+        <div className="auth-flip-card w-full max-w-5xl min-h-[520px] grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] bg-white/80 backdrop-blur-xl border-[4px] border-black rounded-[2rem] md:rounded-[2.6rem] overflow-hidden shadow-[10px_10px_0_0_#000]">
           
-          <div className="mb-8 flex justify-between items-start">
-            <div className="text-left">
-              <h2 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none">WELCOME BACK!</h2>
-              <p className="text-gray-400 font-bold text-[10px] md:text-xs uppercase mt-2">Ready for another bite? 🍔</p>
+          {/* LEFT BRAND SECTION */}
+          <section className="relative bg-[#D52518] px-7 py-7 md:px-9 md:py-8 flex flex-col justify-between overflow-hidden">
+            
+            {/* Decorative Circle Lines */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute top-8 -left-16 w-64 h-64 border-[24px] border-[#FFC926] rounded-full" />
+              <div className="absolute bottom-[-90px] right-[-80px] w-72 h-72 border-[24px] border-white rounded-full" />
             </div>
-            <Sparkles className="text-[#FFC926] fill-[#FFC926] animate-pulse mt-4" size={32} />
-          </div>
-          
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border-[3px] border-red-600 text-red-700 font-black rounded-2xl animate-shake text-xs flex items-center gap-2">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2 text-left">
-              <label className="text-xs font-black text-[#D52518] uppercase ml-2 tracking-wider">Email or Phone</label>
-              <div className="flex items-center bg-[#F3E8CC]/20 border-4 border-black rounded-2xl px-4 py-4 focus-within:bg-white transition-all">
-                <User size={20} className="mr-3 text-black" />
-                <input 
-                  type="text"
-                  value={form.login_identity}
-                  onChange={(e) => setForm({...form, login_identity: e.target.value})} 
-                  className="bg-transparent w-full outline-none font-bold text-base text-black" 
-                  placeholder="name@mail.com / 0812..." 
-                  required 
-                />
+
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 bg-black text-[#FFC926] px-4 py-2 rounded-full border-2 border-[#FFC926] font-black text-xs uppercase tracking-wider shadow-[4px_4px_0_0_#FFC926]">
+                <Zap size={15} fill="#FFC926" />
+                Aldes Burger
               </div>
             </div>
-            
-            <div className="space-y-2 text-left">
-              <label className="text-xs font-black text-[#D52518] uppercase ml-2 tracking-wider">Password</label>
-              <div className="flex items-center bg-white border-4 border-black rounded-2xl px-4 py-4 shadow-[4px_4px_0_0_#000]">
-                <Lock size={20} className="mr-3 text-black" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  value={form.password}
-                  onChange={(e) => setForm({...form, password: e.target.value})} 
-                  className="bg-transparent w-full outline-none font-bold text-base text-black" 
-                  placeholder="Password" 
-                  required 
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-black">
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+
+            <div className="relative z-10 flex flex-col items-center text-center my-4">
+              
+              {/* Mascot Card */}
+              <div className="relative mb-7">
+                <div className="absolute inset-0 bg-black rounded-[1.8rem] translate-x-3 translate-y-3" />
+
+                <div className="relative w-44 h-44 md:w-52 md:h-52 bg-[#F3E8CC] border-[4px] border-black rounded-[1.8rem] flex items-center justify-center shadow-inner overflow-hidden">
+                  <div className="absolute top-4 left-4 bg-[#FFC926] border-[3px] border-black rounded-full w-11 h-11" />
+                  <div className="absolute bottom-5 right-5 bg-white border-[3px] border-black rounded-full w-9 h-9" />
+
+                  <Sparkles className="absolute top-7 right-7 text-[#D52518] fill-[#D52518]" size={24} />
+
+                  <img
+                    src={MascotBurger}
+                    alt="Aldes Burger Mascot"
+                    className="relative z-10 w-[82%] h-[82%] object-contain drop-shadow-[0_12px_10px_rgba(0,0,0,0.22)]"
+                  />
+                </div>
+
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2 rounded-full border-[3px] border-[#FFC926] font-black text-[10px] uppercase whitespace-nowrap rotate-[-2deg]">
+                  Fresh. Juicy. Crispy.
+                </div>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-[#FFC926] drop-shadow-[4px_4px_0_#000]">
+                Welcome
+                <br />
+                <span className="text-white">Back!</span>
+              </h1>
+
+              <p className="mt-4 max-w-sm text-white font-bold text-sm md:text-[15px] leading-relaxed">
+                Log in with your registered email to continue your order and enjoy Aldes Burger specials.
+              </p>
+            </div>
+
+            <div className="relative z-10 grid grid-cols-3 gap-3 text-center">
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fast</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">Login</p>
+              </div>
+
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Hot</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">Deals</p>
+              </div>
+
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fresh</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">Taste</p>
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT FORM SECTION */}
+          <section className="relative px-5 py-7 md:px-10 md:py-8 lg:px-12 flex items-center">
+            <div className="w-full max-w-[520px] mx-auto">
+              
+              <div className="mb-6">
+                <div className="inline-flex items-center gap-2 bg-[#FFC926] border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
+                  <Sparkles size={15} className="fill-black" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    Member Login
+                  </span>
+                </div>
+
+                <h2 className="text-4xl md:text-[46px] font-black text-black uppercase tracking-tighter leading-none">
+                  Log In
+                  <span className="text-[#D52518]">.</span>
+                </h2>
+
+                <p className="mt-3 text-sm md:text-[15px] text-gray-500 font-semibold">
+                  Enter your registered Gmail address and password to access your account.
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-5 bg-[#D52518]/10 border-[3px] border-[#D52518] p-3.5 rounded-2xl flex items-start gap-3">
+                  <div className="bg-[#D52518] text-white rounded-full p-1 shrink-0">
+                    <AlertCircle size={17} />
+                  </div>
+                  <p className="text-sm font-black text-[#D52518]">{error}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                
+                {/* Email */}
+                <div className="group">
+                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    Registered Email
+                  </label>
+
+                  <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                    <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
+                    <input
+                      type="email"
+                      value={form.email}
+                      className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
+                      placeholder="mail@gmail.com"
+                      required
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="group">
+                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    Password
+                  </label>
+
+                  <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                    <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={form.password}
+                      className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal"
+                      placeholder="Enter your password"
+                      required
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-[#D52518] text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+
+                  <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={23} />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        Log In
+                        <ArrowRight strokeWidth={4} size={23} />
+                      </>
+                    )}
+                  </span>
                 </button>
+              </form>
+
+              <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
+                <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
+                  New to Aldes Burger?{' '}
+                  <Link
+                    to="/signup"
+                    className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4"
+                  >
+                    Create account
+                  </Link>
+                </p>
               </div>
             </div>
-            
-            <button type="submit" disabled={isLoading} className="w-full bg-[#D52518] text-[#FFC926] py-5 rounded-2xl border-[5px] border-black font-black text-2xl uppercase shadow-[0_8px_0_0_#000] active:translate-y-1 active:shadow-[0_4px_0_0_#000] transition-all flex justify-center items-center gap-3">
-              {isLoading ? <Loader2 className="animate-spin" /> : <>START COOKING! <ArrowRight strokeWidth={4} size={28}/></>}
-            </button>
-          </form>
-          
-          <p className="mt-10 text-center font-black text-xs text-gray-400 uppercase tracking-widest leading-none">
-            New to the kitchen? <Link to="/signup" className="text-[#D52518] underline decoration-[#FFC926] decoration-[5px] underline-offset-4 hover:text-black transition-colors">SIGN UP</Link>
-          </p>
+          </section>
         </div>
-      </section>
+      </div>
 
       <style>{`
-        @keyframes flip-in { 0% { transform: rotateY(-90deg); opacity: 0; } 100% { transform: rotateY(0deg); opacity: 1; } }
-        .animate-flip-in { animation: flip-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes bounce-slow { 0%, 100% { transform: translateY(0) rotate(3deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
-        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+        .perspective-wrapper {
+          perspective: 1800px;
+        }
+
+        .auth-flip-card {
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
+          transform-origin: center center;
+          animation: authFlipIn 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+          will-change: transform, opacity, filter;
+        }
+
+        @keyframes authFlipIn {
+          0% {
+            opacity: 0;
+            filter: blur(4px);
+            transform: rotateY(-8deg) translateY(18px) scale(0.985);
+          }
+
+          55% {
+            opacity: 1;
+            filter: blur(0);
+            transform: rotateY(2deg) translateY(0) scale(1.005);
+          }
+
+          100% {
+            opacity: 1;
+            filter: blur(0);
+            transform: rotateY(0deg) translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .auth-flip-card {
+            animation: none;
+            filter: none;
+          }
+        }
       `}</style>
     </main>
   );
