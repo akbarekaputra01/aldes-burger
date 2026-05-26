@@ -17,6 +17,8 @@ class AdminController extends Controller
         abort_unless($request->user()?->role === 'admin', 403);
     }
 
+    // ─── Orders ─────────────────────────────────────────────────────────────
+
     public function orders(Request $request): JsonResponse
     {
         $this->ensureAdmin($request);
@@ -38,11 +40,42 @@ class AdminController extends Controller
         return response()->json($transaction->fresh(['details', 'user']));
     }
 
+    // ─── Menu ────────────────────────────────────────────────────────────────
+
+    /**
+     * Return all menus with their ingredients (including pivot quantity) and
+     * a computed_stock derived from how many portions can be made from the
+     * current inventory.
+     *
+     * Formula per menu:
+     *   computed_stock = min over all ingredients of floor(ingredient.stock / pivot.quantity)
+     *
+     * Menus with no ingredients (e.g. DIY Burger) keep their own stock field.
+     */
     public function menu(Request $request): JsonResponse
     {
         $this->ensureAdmin($request);
 
-        return response()->json(Menu::query()->with('ingredients')->orderBy('name')->get());
+        $menus = Menu::query()
+            ->with(['ingredients' => fn ($q) => $q->withPivot('quantity')])
+            ->orderBy('name')
+            ->get();
+
+        $menus->each(function (Menu $menu) {
+            if ($menu->ingredients->isEmpty()) {
+                // DIY / custom burger – no recipe constraints
+                $menu->computed_stock = $menu->stock;
+            } else {
+                $computed = $menu->ingredients->min(function (Ingredient $ingredient) {
+                    $quantity = $ingredient->pivot->quantity ?: 1;
+                    return (int) floor($ingredient->stock / $quantity);
+                });
+
+                $menu->computed_stock = $computed ?? 0;
+            }
+        });
+
+        return response()->json($menus);
     }
 
     public function storeMenu(Request $request): JsonResponse
@@ -50,12 +83,12 @@ class AdminController extends Controller
         $this->ensureAdmin($request);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name'        => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'price' => ['required', 'integer', 'min:0'],
+            'price'       => ['required', 'integer', 'min:0'],
             'category_id' => ['required', 'integer'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'is_custom' => ['required', 'boolean'],
+            'stock'       => ['required', 'integer', 'min:0'],
+            'is_custom'   => ['required', 'boolean'],
         ]);
 
         $menu = Menu::query()->create($data);
@@ -63,22 +96,64 @@ class AdminController extends Controller
         return response()->json($menu, 201);
     }
 
+    /**
+     * Update a menu's fields and/or its recipe (ingredient list with quantities).
+     *
+     * Accepts:
+     *   - Standard menu fields (price, name, description, stock, etc.)
+     *   - ingredients: array of { id, quantity } objects  ← preferred
+     *   - ingredient_ids: array of ingredient IDs (quantity defaults to 1)  ← legacy
+     */
     public function updateMenu(Request $request, Menu $menu): JsonResponse
     {
         $this->ensureAdmin($request);
 
         $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'string'],
-            'price' => ['sometimes', 'integer', 'min:0'],
-            'category_id' => ['sometimes', 'integer'],
-            'stock' => ['sometimes', 'integer', 'min:0'],
-            'is_custom' => ['sometimes', 'boolean'],
+            'name'              => ['sometimes', 'string', 'max:255'],
+            'description'       => ['sometimes', 'string'],
+            'price'             => ['sometimes', 'integer', 'min:0'],
+            'category_id'       => ['sometimes', 'integer'],
+            'stock'             => ['sometimes', 'integer', 'min:0'],
+            'is_custom'         => ['sometimes', 'boolean'],
+            // New rich format: [{id: X, quantity: Y}, ...]
+            'ingredients'       => ['sometimes', 'array'],
+            'ingredients.*.id'  => ['required_with:ingredients', 'integer', 'exists:ingredients,id'],
+            'ingredients.*.quantity' => ['sometimes', 'integer', 'min:1'],
+            // Legacy format: [id1, id2, ...]
+            'ingredient_ids'    => ['sometimes', 'array'],
+            'ingredient_ids.*'  => ['integer', 'exists:ingredients,id'],
         ]);
 
-        $menu->update($data);
+        // Update scalar fields
+        $scalarFields = array_intersect_key($data, array_flip([
+            'name', 'description', 'price', 'category_id', 'stock', 'is_custom',
+        ]));
 
-        return response()->json($menu->fresh('ingredients'));
+        if (! empty($scalarFields)) {
+            $menu->update($scalarFields);
+        }
+
+        // Sync ingredients if provided
+        if (isset($data['ingredients'])) {
+            // Rich format: [{id, quantity}, ...]
+            $sync = collect($data['ingredients'])->mapWithKeys(function ($item) {
+                return [$item['id'] => ['quantity' => $item['quantity'] ?? 1]];
+            })->all();
+
+            $menu->ingredients()->sync($sync);
+
+        } elseif (isset($data['ingredient_ids'])) {
+            // Legacy format: quantity defaults to 1
+            $sync = collect($data['ingredient_ids'])->mapWithKeys(function ($id) {
+                return [$id => ['quantity' => 1]];
+            })->all();
+
+            $menu->ingredients()->sync($sync);
+        }
+
+        return response()->json(
+            $menu->fresh(['ingredients' => fn ($q) => $q->withPivot('quantity')])
+        );
     }
 
     public function destroyMenu(Request $request, Menu $menu): JsonResponse
@@ -90,11 +165,35 @@ class AdminController extends Controller
         return response()->json(['message' => 'Menu deleted.']);
     }
 
+    // ─── Inventory ───────────────────────────────────────────────────────────
+
+    /**
+     * Return all ingredients with their current stock and which menus use them,
+     * so the admin can understand the downstream impact of stock changes.
+     */
     public function inventory(Request $request): JsonResponse
     {
         $this->ensureAdmin($request);
 
-        return response()->json(Ingredient::query()->orderBy('name')->get());
+        $ingredients = Ingredient::query()
+            ->with(['menu' => fn ($q) => $q->select('menus.id', 'name')->withPivot('quantity')])
+            ->orderBy('name')
+            ->get()
+            ->map(function (Ingredient $ingredient) {
+                return [
+                    'id'        => $ingredient->id,
+                    'name'      => $ingredient->name,
+                    'price'     => $ingredient->price,
+                    'stock'     => $ingredient->stock,
+                    'menus'     => $ingredient->menu->map(fn ($m) => [
+                        'id'       => $m->id,
+                        'name'     => $m->name,
+                        'quantity' => $m->pivot->quantity,
+                    ])->values(),
+                ];
+            });
+
+        return response()->json($ingredients);
     }
 
     public function updateInventory(Request $request, Ingredient $ingredient): JsonResponse
@@ -108,6 +207,19 @@ class AdminController extends Controller
 
         $ingredient->update($data);
 
-        return response()->json($ingredient);
+        // Return updated ingredient with menu impact info
+        $ingredient->load(['menu' => fn ($q) => $q->select('menus.id', 'name')->withPivot('quantity')]);
+
+        return response()->json([
+            'id'    => $ingredient->id,
+            'name'  => $ingredient->name,
+            'price' => $ingredient->price,
+            'stock' => $ingredient->stock,
+            'menus' => $ingredient->menu->map(fn ($m) => [
+                'id'       => $m->id,
+                'name'     => $m->name,
+                'quantity' => $m->pivot->quantity,
+            ])->values(),
+        ]);
     }
 }
