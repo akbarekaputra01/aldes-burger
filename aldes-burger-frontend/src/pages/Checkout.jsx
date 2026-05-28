@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // UPDATE: Tambah useLocation
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../lib/api';
 import {
   ArrowLeft,
@@ -134,12 +134,10 @@ const MenuMiniPreview = ({ name }) => {
 
 function Checkout() {
   const navigate = useNavigate();
-  const location = useLocation(); // UPDATE: Tangkap lokasi
+  const location = useLocation();
   
-  // UPDATE: Gunakan item yang dikirim dari Cart, jika tidak ada default ke array kosong
   const checkoutItems = location.state?.checkoutItems || [];
   
-  // UPDATE: Gunakan removeFromCart alih-alih clearCart agar sisa keranjang tetap ada
   const { removeFromCart, cartCount } = useCart();
   
   const [loading, setLoading] = useState(false);
@@ -169,6 +167,13 @@ function Checkout() {
             phone: defaultAddr.phone_number || "08xxxx",
             detail: defaultAddr.address || "Alamat belum diatur"
           });
+        } else {
+          setSelectedAddress({
+            id: null,
+            name: "No Address Found",
+            phone: "-",
+            detail: "Belum ada alamat, silakan tambahkan di halaman profil."
+          });
         }
       } catch (error) {
         console.error("Sinkronisasi gagal:", error);
@@ -179,13 +184,19 @@ function Checkout() {
     return () => { if (globalNav) globalNav.style.display = 'block'; };
   }, []);
 
-  // UPDATE: Hitung subtotal berdasarkan checkoutItems
   const subtotal = checkoutItems.reduce((sum, item) => sum + ((item.unit_price ?? 0) * (item.qty ?? 1)), 0);
   const deliveryFee = 0; 
   const total = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
     if (checkoutItems.length === 0) return;
+
+    // VALIDASI: Pastikan user memiliki alamat yang valid sebelum menembak API
+    if (!selectedAddress.id) {
+      alert("Silakan tambahkan atau pilih alamat pengiriman terlebih dahulu melalui halaman Profile.");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -194,24 +205,26 @@ function Checkout() {
         payment_method: paymentMethod,
         address: selectedAddress.detail,
         address_id: selectedAddress.id,
-        // UPDATE: Payload data dari checkoutItems
+        // PERBAIKAN PAYLOAD: Menyesuaikan dengan kebutuhan endpoint /transactions
         items: checkoutItems.map(item => ({ 
-          id: item.menu_id,
-          qty: item.qty,
+          id: item.menu_id || item.id, // TransactionController membutuhkan field 'id'
+          qty: item.qty,               // TransactionController membutuhkan field 'qty'
           price: item.unit_price, 
-          name: item.name 
+          name: item.name,
+          ingredients: item.ingredients 
         }))
       };
 
       await api.post('/transactions', payload);
       
-      // UPDATE: Hapus HANYA item yang baru saja dibeli dari keranjang
+      // Hapus item dari keranjang setelah berhasil
       checkoutItems.forEach(item => removeFromCart(item.id));
       
       navigate('/payment-status?status=success'); 
     } catch (error) {
       console.error("Detail Error:", error.response?.data);
-      alert("Gagal memproses pesanan.");
+      // Tampilkan error dari backend (misal dari validasi Laravel) agar lebih mudah di-debug
+      alert(error.response?.data?.message || "Gagal memproses pesanan.");
     } finally {
       setLoading(false);
     }
@@ -258,13 +271,17 @@ function Checkout() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="font-black text-lg uppercase">{selectedAddress.name}</span>
-                  <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-[#FFC926]">Default</span>
+                  {selectedAddress.id && (
+                    <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-[#FFC926]">Default</span>
+                  )}
                 </div>
                 <p className="text-[11px] font-bold text-gray-500 uppercase leading-relaxed max-w-2xl">
                   {selectedAddress.phone} | {selectedAddress.detail}
                 </p>
               </div>
-              <Link to="/profile" className="text-[#D52518] font-black text-[10px] uppercase underline underline-offset-4 decoration-2">Select Address</Link>
+              <Link to="/profile" className="text-[#D52518] font-black text-[10px] uppercase underline underline-offset-4 decoration-2">
+                {selectedAddress.id ? "Change Address" : "Add Address"}
+              </Link>
             </div>
           </div>
         </section>
@@ -302,7 +319,6 @@ function Checkout() {
                 <ShoppingBag size={22} strokeWidth={3} /> Order Summary
               </h2>
               <div className="space-y-4">
-                {/* UPDATE: Render berdasarkan checkoutItems */}
                 {checkoutItems.map((item) => {
                   const isBurger = Array.isArray(item.ingredients) && item.ingredients.length > 0;
                   return (
@@ -356,7 +372,7 @@ function Checkout() {
               
               <button 
                 onClick={handlePlaceOrder} 
-                disabled={checkoutItems.length === 0 || loading} 
+                disabled={checkoutItems.length === 0 || loading || !selectedAddress.id} 
                 className="w-full py-4 rounded-xl bg-[#D52518] text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {loading ? "Ordering..." : "Place Order"} <CheckCircle2 size={20} strokeWidth={4} />
