@@ -21,7 +21,6 @@ import img7 from '../assets/menus/7.png'
 import img8 from '../assets/menus/8.png'
 import img9 from '../assets/menus/9.png'
 
-// Mapping gambar berdasarkan ID menu dari database
 const menuImages = {
   1: img1,
   3: img2,
@@ -49,16 +48,17 @@ const sectionDefinitions = [
 const sideKeywords = ['fries', 'side', 'nugget', 'onion ring', 'salad']
 const drinkKeywords = ['drink', 'cola', 'coke', 'tea', 'coffee', 'juice', 'soda', 'water']
 
-// Helper untuk mengurutkan tumpukan burger dari bawah ke atas
+// UPDATE: Urutan Tumpukan dengan Ketchup, Mayo, dan Sauce
 const getStackOrder = (name) => {
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
   if (n.includes('lettuce') || n.includes('selada')) return 2
   if (n.includes('tomato') || n.includes('tomat')) return 3
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion')) return 4
-  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 5
-  if (n.includes('cheese') || n.includes('keju')) return 6
-  if (n.includes('top') || n.includes('atas')) return 7
+  if (n.includes('ketchup') || n.includes('mayo') || n.includes('sauce') || n.includes('saos')) return 5
+  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 6
+  if (n.includes('cheese') || n.includes('keju')) return 7
+  if (n.includes('top') || n.includes('atas')) return 8
   return 99
 }
 
@@ -99,9 +99,7 @@ function Menu() {
   const [activeActionId, setActiveActionId] = useState(null)
   const [tempQty, setTempQty] = useState(1)
   
-  // STATE BARU: Untuk menyimpan pesan sukses
   const [toastMessage, setToastMessage] = useState(null)
-  
   const activeCardRef = useRef(null)
 
   useEffect(() => {
@@ -155,7 +153,6 @@ function Menu() {
   const handleInitialClick = (item) => {
     const sectionKey = resolveSectionKey(item)
 
-    // PERBAIKAN: Semua menu yang ada di kategori Burgers akan langsung dilempar ke Kitchen
     if (sectionKey === 'burgers') {
       navigate('/kitchen', {
         state: {
@@ -181,16 +178,23 @@ function Menu() {
     let itemIngredients = []
     if (sectionKey === 'burgers') {
       if (item.ingredients && item.ingredients.length > 0) {
+        
+        // FIX: Menggunakan flatMap untuk mengatasi data pivot bernilai 0 dari Tinker
         itemIngredients = item.ingredients
-          .map(i => i.name)
+          .flatMap(i => {
+            const pivotQty = Math.max(1, Number(i.pivot?.quantity || 1));
+            return Array(pivotQty).fill(i.name);
+          })
           .sort((a, b) => getStackOrder(a) - getStackOrder(b));
+          
       } else {
         const isChicken = item.name.toLowerCase().includes('chicken')
         itemIngredients = [
           'Bottom Bun', 
           'Lettuce', 
           'Tomato', 
-          'Pickles', 
+          'Pickles',
+          'Special Sauce', 
           isChicken ? 'Chicken Patty' : 'Beef Patty', 
           'Cheese', 
           'Top Bun'
@@ -213,12 +217,8 @@ function Menu() {
       is_customized: false,
     })
     
-    // Tutup opsi kuantitas
     setActiveActionId(null)
-
-    // PERBAIKAN: Tampilkan pesan sukses (Toast)
     setToastMessage(`Successfully added ${qty}x ${item.name}`)
-    // Sembunyikan otomatis setelah 3 detik
     setTimeout(() => {
       setToastMessage(null)
     }, 3000)
@@ -297,7 +297,6 @@ function Menu() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 bg-aldesCream px-4 py-6 sm:px-6 lg:px-8 relative">
       
-      {/* KODE BARU: Komponen Toast Notification (z-index maksimal agar tidak tertutup) */}
       {toastMessage && (
         <div className="fixed top-20 right-5 z-[999] flex items-center gap-2 rounded-full bg-green-500 px-6 py-3 text-sm font-bold text-white shadow-2xl transition-all">
           <CheckCircle className="h-5 w-5" />
@@ -406,7 +405,6 @@ function Menu() {
                     <p className="mt-2 text-sm text-aldesRed/80 flex-1">{item.description}</p>
                     <p className="mt-3 text-base font-semibold text-aldesRed">{currencyFormatter.format(item.price ?? 0)}</p>
                     
-                    {/* PERBAIKAN: Hanya render opsi kuantitas untuk Sides dan Drinks */}
                     {activeActionId === item.id ? (
                       <div className="mt-4 flex items-center justify-between gap-2 h-10">
                         <div className="flex h-full items-center rounded-2xl bg-aldesCream px-1">

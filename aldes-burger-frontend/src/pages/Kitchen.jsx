@@ -33,6 +33,9 @@ const getIngredientImage = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return imgLettuce
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return imgPickles
   if (n.includes('tomato') || n.includes('tomat')) return imgTomato
+  
+  // Catatan: Jika gambar sauce tidak ada, ia otomatis akan mereturn null
+  // dan React akan menampilkan kotak kuning bertuliskan nama sauce tersebut.
   return null
 }
 
@@ -48,16 +51,17 @@ const isTopBunItem = (name) => {
   return n.includes('top') || n.includes('atas') || (n.includes('bun') && !n.includes('bottom') && !n.includes('bawah'))
 }
 
-// Helper Urutan Susunan Burger (Bawah ke Atas)
+// UPDATE: Helper Urutan Susunan Burger (Bawah ke Atas) ditambah Ketchup, Mayo, dll
 const getStackOrder = (name) => {
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
   if (n.includes('lettuce') || n.includes('selada')) return 2
   if (n.includes('tomato') || n.includes('tomat')) return 3
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion')) return 4
-  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 5
-  if (n.includes('cheese') || n.includes('keju')) return 6
-  if (n.includes('top') || n.includes('atas')) return 7
+  if (n.includes('ketchup') || n.includes('mayo') || n.includes('sauce') || n.includes('saos')) return 5
+  if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 6
+  if (n.includes('cheese') || n.includes('keju')) return 7
+  if (n.includes('top') || n.includes('atas')) return 8
   return 99
 }
 
@@ -66,6 +70,7 @@ const getIngredientPriority = (name) => {
   return getStackOrder(name);
 }
 
+// UPDATE: Ketebalan gambar saus diatur tipis saja
 const getIngredientThickness = (name) => {
   if (!name) return 10
   const n = name.toLowerCase()
@@ -76,6 +81,7 @@ const getIngredientThickness = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return 4 
   if (n.includes('cheese') || n.includes('keju')) return 2 
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 2
+  if (n.includes('ketchup') || n.includes('mayo') || n.includes('sauce') || n.includes('saos')) return 4
   return 10
 }
 
@@ -90,7 +96,9 @@ const getVisualOffset = (name) => {
 
 const toIngredientInstances = (menuIngredients = []) =>
   menuIngredients.flatMap((ingredient) => {
-    const quantity = ingredient.pivot?.quantity ?? 1
+    // FIX: Mengatasi pivot.quantity bernilai 0
+    const quantity = Math.max(1, Number(ingredient.pivot?.quantity || 1))
+    
     return Array.from({ length: quantity }).map((_, index) => ({
       instance_id: makeUid(),
       ingredient_id: ingredient.id,
@@ -170,7 +178,7 @@ function Kitchen() {
       // FALLBACK RECIPE
       if (menuIngredients.length === 0) {
         const isChicken = selectedMenu.name.toLowerCase().includes('chicken')
-        const recipeKeywords = ['bottom bun', 'lettuce', 'tomato', 'pickle', isChicken ? 'chicken' : 'beef', 'cheese', 'top bun']
+        const recipeKeywords = ['bottom bun', 'lettuce', 'tomato', 'pickle', 'sauce', isChicken ? 'chicken' : 'beef', 'cheese', 'top bun']
         
         menuIngredients = recipeKeywords.map(keyword => {
           const found = ingredients.find(i => i.name.toLowerCase().includes(keyword))
@@ -489,7 +497,7 @@ function Kitchen() {
                     return (
                       <div 
                         key={layer.instance_id} 
-                        draggable={!!selectedMenu?.is_custom} // PERBAIKAN: !! mengubah angka menjadi boolean murni
+                        draggable={!!selectedMenu?.is_custom} 
                         onDragStart={(e) => {
                           if (!selectedMenu?.is_custom) { e.preventDefault(); return; }
                           e.stopPropagation();
@@ -609,10 +617,11 @@ function Kitchen() {
                                   ${isDragTarget ? 'scale-[1.03] drop-shadow-[0_20px_20px_rgba(234,179,8,0.8)] brightness-110 opacity-90' : ''}`}
                               />
                             ) : (
+                              // FALLBACK JIKA GAMBAR TIDAK DITEMUKAN (Termasuk Saus)
                               <div 
-                                className={`${imgWidthClass} h-12 bg-aldesYellow rounded-full border-4 border-aldesRed flex items-center justify-center text-base font-black text-aldesRed shadow-md relative z-10 transition-all duration-300
-                                  ${isHovered ? 'scale-[1.03] drop-shadow-lg brightness-105' : ''}
-                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-lg brightness-110 opacity-90 border-dashed' : ''}`}
+                                className={`${imgWidthClass} h-[18px] mt-4 bg-aldesYellow rounded-full border-4 border-aldesRed flex items-center justify-center text-[10px] font-black text-aldesRed shadow-[0_5px_10px_rgba(0,0,0,0.3)] relative z-10 transition-all duration-300
+                                  ${isHovered ? 'scale-[1.03] drop-shadow-xl brightness-105' : ''}
+                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-xl brightness-110 opacity-90 border-dashed' : ''}`}
                               >
                                 {layer.ingredient_name}
                               </div>
@@ -629,13 +638,11 @@ function Kitchen() {
               <h2 className="text-xl font-black text-aldesRed mb-4">Pantry</h2>
               
               {!selectedMenu?.is_custom ? (
-                // UI UNTUK MENU SIGNATURE: Tampilkan Checklist
                 <>
                   <p className="text-xs text-gray-500 mb-3">Sesuaikan resep Signature (Hapus centang untuk mengurangi bahan)</p>
                   <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
                     {signatureIngredients.map((sigIng) => {
                       const isIncluded = burgerStack.some(l => l.ingredient_id === sigIng.ingredient_id);
-                      // Kunci roti agar tidak bisa diuncheck
                       const isBaseBun = isBottomBunItem(sigIng.ingredient_name) || isTopBunItem(sigIng.ingredient_name);
                       
                       return (
@@ -670,7 +677,6 @@ function Kitchen() {
                   </div>
                 </>
               ) : (
-                // UI UNTUK MENU CUSTOM: Tampilkan bahan Draggable
                 <>
                   <p className="text-xs text-gray-500 mb-3">Tarik (Drag) gambar di bawah ke dalam area tumpukan burger!</p>
                   <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
@@ -760,7 +766,7 @@ function Kitchen() {
                       return (
                         <div 
                           key={layer.instance_id}
-                          draggable={!!selectedMenu?.is_custom} // PERBAIKAN BUG DRAG-AND-DROP DI SINI
+                          draggable={!!selectedMenu?.is_custom} 
                           onDragStart={(e) => {
                             if (!selectedMenu?.is_custom) { e.preventDefault(); return; }
                             e.stopPropagation();
@@ -784,7 +790,9 @@ function Kitchen() {
                             {getIngredientImage(layer.ingredient_name) ? (
                               <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-7 w-7 object-contain drop-shadow-sm pointer-events-none flex-shrink-0" />
                             ) : (
-                              <div className="h-7 w-7 bg-aldesCream rounded-full flex-shrink-0 pointer-events-none" />
+                              <div className="h-7 w-7 bg-aldesYellow border-2 border-aldesRed rounded-full flex-shrink-0 pointer-events-none flex items-center justify-center">
+                                <span className="text-[8px] font-black text-aldesRed uppercase px-1 truncate">SAUCE</span>
+                              </div>
                             )}
                             <span className={`font-bold truncate pointer-events-none flex-1 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-700'}`}>
                               {layer.ingredient_name}
