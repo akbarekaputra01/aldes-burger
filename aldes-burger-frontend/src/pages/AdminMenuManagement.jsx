@@ -206,7 +206,7 @@ function AdminMenuManagement() {
                       )}
                       {/* computed_stock from backend */}
                       <StockBadge stock={item.computed_stock} />
-                      {item.is_custom && (
+                      {!!item.is_custom && (
                         <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
                           DIY / Custom
                         </span>

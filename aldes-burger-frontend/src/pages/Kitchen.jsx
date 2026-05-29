@@ -18,7 +18,7 @@ import imgKitchenBg from '../assets/kitchen.png'
 
 const makeUid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
-// Helper Gambar
+// Ingredient image helper
 const getIngredientImage = (name) => {
   if (!name) return null
   const n = name.toLowerCase()
@@ -48,7 +48,7 @@ const isTopBunItem = (name) => {
   return n.includes('top') || n.includes('atas') || (n.includes('bun') && !n.includes('bottom') && !n.includes('bawah'))
 }
 
-// Helper Urutan Susunan Burger (Bawah ke Atas)
+// Burger layer order helper (bottom to top)
 const getStackOrder = (name) => {
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
@@ -157,7 +157,7 @@ function Kitchen() {
     loadData()
   }, [])
 
-  // Inisialisasi Stack ketika Menu & Ingredients siap
+  // Initialize burger stack when menu & ingredients are ready
   useEffect(() => {
     if (!selectedMenu || ingredients.length === 0) return;
 
@@ -167,7 +167,7 @@ function Kitchen() {
     } else {
       let menuIngredients = selectedMenu.ingredients ?? []
 
-      // FALLBACK RECIPE
+      // Fallback recipe if no ingredients from API
       if (menuIngredients.length === 0) {
         const isChicken = selectedMenu.name.toLowerCase().includes('chicken')
         const recipeKeywords = ['bottom bun', 'lettuce', 'tomato', 'pickle', isChicken ? 'chicken' : 'beef', 'cheese', 'top bun']
@@ -186,7 +186,7 @@ function Kitchen() {
     setQty(1)
   }, [selectedMenu, ingredients])
 
-  // Mendapatkan bahan-bahan unik dari resep Signature untuk Checklist Pantry
+  // Get unique ingredients from Signature recipe for the Pantry checklist
   const signatureIngredients = useMemo(() => {
     if (!selectedMenu || selectedMenu.is_custom) return [];
     const uniqueIds = new Set();
@@ -197,7 +197,7 @@ function Kitchen() {
     });
   }, [baselineStack, selectedMenu]);
 
-  // Fungsi toggle Checklist untuk menu Signature
+  // Toggle ingredient checklist for Signature menus
   const toggleSignatureIngredient = (ingredientId, isCurrentlyIncluded) => {
     if (isCurrentlyIncluded) {
       setBurgerStack(prev => prev.filter(item => item.ingredient_id !== ingredientId));
@@ -276,6 +276,7 @@ function Kitchen() {
     })
   }
 
+  // Reorder burger layers — buns are always locked at bottom/top
   const handleReorder = (dragId, dropId) => {
     if (dragId === dropId) return;
 
@@ -285,10 +286,19 @@ function Kitchen() {
 
       if (dragIdx < 0 || dropIdx < 0) return prev;
 
+      // Prevent moving bun layers
+      const dragItem = prev[dragIdx];
+      if (isBottomBunItem(dragItem.ingredient_name) || isTopBunItem(dragItem.ingredient_name)) return prev;
+
+      // Prevent dropping onto bun positions
+      const dropItem = prev[dropIdx];
+      if (isBottomBunItem(dropItem.ingredient_name) || isTopBunItem(dropItem.ingredient_name)) return prev;
+
       const next = [...prev];
       const [moved] = next.splice(dragIdx, 1);
       next.splice(dropIdx, 0, moved);
 
+      // Safety: buns must stay at first/last positions
       if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
       const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
       if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev;
@@ -455,7 +465,7 @@ function Kitchen() {
         <article className="rounded-3xl bg-white p-6 shadow-md lg:p-8">
           <p className="inline-flex rounded-full bg-aldesYellow px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black">Digital Kitchen</p>
           <h1 className="mt-3 text-2xl font-black text-aldesRed">{selectedMenu?.name ?? 'Build your burger'}</h1>
-          <p className="mt-2 text-sm text-aldesRed/80">Tarik bahan dari Pantry, dan seret dari daftar Order Summary untuk mengatur posisi!</p>
+          <p className="mt-2 text-sm text-aldesRed/80">Drag ingredients from the Pantry, or reorder layers in the Stack List below (buns stay locked in place)!</p>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
 
@@ -489,9 +499,9 @@ function Kitchen() {
                     return (
                       <div
                         key={layer.instance_id}
-                        draggable={!!selectedMenu?.is_custom} // PERBAIKAN: !! mengubah angka menjadi boolean murni
+                        draggable={!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)}
                         onDragStart={(e) => {
-                          if (!selectedMenu?.is_custom) { e.preventDefault(); return; }
+                          if (isBottomBunItem(layer.ingredient_name) || isTopBunItem(layer.ingredient_name)) { e.preventDefault(); return; }
                           e.stopPropagation();
                           setDraggingData({ type: 'stack', instance_id: layer.instance_id });
                           const imgEl = e.currentTarget.querySelector('img');
@@ -504,11 +514,11 @@ function Kitchen() {
                         onMouseLeave={() => setHoveredLayerId(null)}
                         title={layer.ingredient_name}
                         className={`group pointer-events-auto w-14 h-14 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border-2 flex items-center justify-center flex-shrink-0 transition-all relative
-                          ${selectedMenu?.is_custom ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
+                          ${(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
                           ${isHovered ? 'border-aldesRed scale-105 shadow-aldesRed/20 z-10' : 'border-aldesCream/80 hover:border-aldesYellow'}
                           ${isDragTarget ? 'border-aldesYellow bg-aldesYellow/30 scale-105' : ''}`}
                       >
-                        {!!selectedMenu?.is_custom && (
+                        {!!selectedMenu?.is_custom && !isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -531,7 +541,7 @@ function Kitchen() {
                   })}
                 </div>
 
-                {/* TOMBOL CLEAR ALL */}
+                {/* Clear All button */}
                 {burgerStack.length > 0 && !!selectedMenu?.is_custom && (
                   <button
                     onClick={(e) => {
@@ -541,7 +551,7 @@ function Kitchen() {
                       setQty(1);
                     }}
                     className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-md text-red-500 rounded-xl px-4 py-2 shadow-md border border-red-100 flex items-center gap-2 text-xs font-bold hover:bg-red-50 hover:scale-105 active:scale-95 transition-all"
-                    title="Kosongkan Dapur"
+                    title="Clear all layers"
                   >
                     <Trash2 className="h-4 w-4" /> CLEAR ALL
                   </button>
@@ -555,15 +565,15 @@ function Kitchen() {
                     <Loader2 className="h-16 w-16 text-aldesRed animate-spin mb-4 drop-shadow-md" />
                     <div className="bg-white/80 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-red-100 flex flex-col items-center animate-pulse">
                       <span className="font-black text-lg text-aldesRed uppercase tracking-wide">Preparing Your Burger...</span>
-                      <span className="text-xs font-bold text-gray-500">Merapikan resep dari dapur</span>
+                      <span className="text-xs font-bold text-gray-500">Loading recipe from kitchen</span>
                     </div>
                   </div>
                 ) : burgerStack.length === 0 ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
                     <img src={imgBottomBurger} alt="placeholder" className="w-40 grayscale opacity-40 drop-shadow-xl animate-pulse" />
                     <div className="mt-6 bg-aldesRed text-white px-6 py-2.5 rounded-full shadow-lg flex flex-col items-center animate-bounce">
-                      <span className="font-black text-lg">Pondasi Kosong!</span>
-                      <span className="text-xs font-medium opacity-90">Tarik Bottom Bun ke sini terlebih dahulu</span>
+                      <span className="font-black text-lg">Empty Stack!</span>
+                      <span className="text-xs font-medium opacity-90">Drag the Bottom Bun here first</span>
                     </div>
                   </div>
                 ) : (
@@ -629,13 +639,13 @@ function Kitchen() {
               <h2 className="text-xl font-black text-aldesRed mb-4">Pantry</h2>
 
               {!selectedMenu?.is_custom ? (
-                // UI UNTUK MENU SIGNATURE: Tampilkan Checklist
+                // Signature menu UI: show ingredient checklist
                 <>
-                  <p className="text-xs text-gray-500 mb-3">Sesuaikan resep Signature (Hapus centang untuk mengurangi bahan)</p>
+                  <p className="text-xs text-gray-500 mb-3">Customize the Signature recipe (uncheck to remove an ingredient)</p>
                   <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
                     {signatureIngredients.map((sigIng) => {
                       const isIncluded = burgerStack.some(l => l.ingredient_id === sigIng.ingredient_id);
-                      // Kunci roti agar tidak bisa diuncheck
+                      // Lock buns — they cannot be unchecked
                       const isBaseBun = isBottomBunItem(sigIng.ingredient_name) || isTopBunItem(sigIng.ingredient_name);
 
                       return (
@@ -662,7 +672,7 @@ function Kitchen() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`truncate font-bold text-sm ${!isIncluded ? 'text-gray-500' : 'text-aldesRed'}`}>{sigIng.ingredient_name}</p>
-                            {isBaseBun && <p className="text-[10px] text-gray-400 mt-0.5">Pondasi Wajib</p>}
+                            {isBaseBun && <p className="text-[10px] text-gray-400 mt-0.5">Required Foundation</p>}
                           </div>
                         </label>
                       )
@@ -670,9 +680,9 @@ function Kitchen() {
                   </div>
                 </>
               ) : (
-                // UI UNTUK MENU CUSTOM: Tampilkan bahan Draggable
+                // Custom menu UI: show draggable ingredients
                 <>
-                  <p className="text-xs text-gray-500 mb-3">Tarik (Drag) gambar di bawah ke dalam area tumpukan burger!</p>
+                  <p className="text-xs text-gray-500 mb-3">Drag ingredients below into the burger stack area!</p>
                   <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
                     {isFetching ? (
                       Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
@@ -750,7 +760,7 @@ function Kitchen() {
 
               <div className="flex-1 space-y-2">
                 {burgerStack.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic text-center mt-4 pb-4">Burger masih kosong</p>
+                  <p className="text-sm text-gray-500 italic text-center mt-4 pb-4">Burger is empty</p>
                 ) : (
                   [...burgerStack].reverse().map((layer) => {
                     const isHovered = hoveredLayerId === layer.instance_id;
@@ -760,9 +770,9 @@ function Kitchen() {
                     return (
                       <div
                         key={layer.instance_id}
-                        draggable={!!selectedMenu?.is_custom} // PERBAIKAN BUG DRAG-AND-DROP DI SINI
+                        draggable={!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)}
                         onDragStart={(e) => {
-                          if (!selectedMenu?.is_custom) { e.preventDefault(); return; }
+                          if (isBottomBunItem(layer.ingredient_name) || isTopBunItem(layer.ingredient_name)) { e.preventDefault(); return; }
                           e.stopPropagation();
                           setDraggingData({ type: 'stack', instance_id: layer.instance_id })
                         }}
@@ -772,12 +782,12 @@ function Kitchen() {
                         onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
                         onMouseLeave={() => setHoveredLayerId(null)}
                         className={`flex items-center justify-between text-sm p-2 rounded-xl border transition-all 
-                            ${selectedMenu?.is_custom ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
+                            ${(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
                             ${isDragTarget ? 'border-aldesYellow border-2 shadow-md bg-aldesYellow/10 scale-[1.02]' :
                             isHovered ? 'border-aldesRed bg-red-50/50 shadow-md scale-[1.01] z-10 relative' : 'bg-white border-aldesCream/50 shadow-sm'}`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
-                          {!!selectedMenu?.is_custom && (
+                          {(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) && (
                             <GripVertical className={`h-4 w-4 flex-shrink-0 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-400'}`} />
                           )}
 
@@ -796,7 +806,7 @@ function Kitchen() {
                             <span className="text-xs font-semibold text-gray-400 pointer-events-none">+{layerPrice.toLocaleString('id-ID')}</span>
                           )}
 
-                          {!!selectedMenu?.is_custom && (
+                          {!!selectedMenu?.is_custom && !isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name) && (
                             <button onClick={() => setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id))} className="text-red-400 hover:text-white hover:bg-red-500 transition-colors p-1.5 rounded-lg ml-1">
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -836,7 +846,7 @@ function Kitchen() {
               >
                 {!canCheckout ? (
                   <span className="text-sm font-bold uppercase text-center px-4">
-                    {!isBottomBunValid ? "Butuh Bottom Bun!" : "Butuh Top Bun!"}
+                    {!isBottomBunValid ? "Needs Bottom Bun!" : "Needs Top Bun!"}
                   </span>
                 ) : (
                   <>
@@ -860,7 +870,7 @@ function Kitchen() {
               </button>
 
               <p className="text-[10px] text-center text-gray-400 font-medium px-2 italic">
-                Gunakan tombol di atas jika ingin memesan variasi burger kustom lainnya tanpa pindah halaman.
+                Use the button above to save this variation and build another without leaving the page.
               </p>
             </div>
 

@@ -121,19 +121,19 @@ function AdminInventory() {
                       <StockBadge stock={item.stock} />
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      Rp {Number(item.price).toLocaleString('id-ID')}
+                      {item.price > 0 ? `Rp ${Number(item.price).toLocaleString('id-ID')}` : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       {item.menus?.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {item.menus.map((m) => (
+                          {item.menus.map((m, idx) => (
                             <span
-                              key={m.id}
-                              className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-gray-800"
-                              title={`×${m.quantity} per portion`}
+                              key={`${m.id}-${idx}`}
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${m.is_custom ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-gray-800'}`}
+                              title={m.is_custom ? 'Used in custom burgers' : `×${m.quantity} per portion`}
                             >
-                              {m.name}
-                              {m.quantity > 1 && (
+                              {m.is_custom && '🍔 '}{m.name}
+                              {(!m.is_custom && m.quantity > 1) && (
                                 <span className="ml-1 font-bold text-yellow-700">×{m.quantity}</span>
                               )}
                             </span>
@@ -194,12 +194,12 @@ function AdminInventory() {
               </button>
             </div>
 
-            {/* Impact info */}
-            {editTarget.menus?.length > 0 && (
+            {/* Impact info — only for recipe-based (non-custom) menus */}
+            {editTarget.menus?.filter(m => !m.is_custom).length > 0 && (
               <div className="mb-5 rounded-2xl bg-yellow-50 px-4 py-3">
                 <p className="text-xs font-bold text-yellow-700">⚡ Impacts computed stock of:</p>
                 <ul className="mt-1.5 space-y-1">
-                  {editTarget.menus.map((m) => (
+                  {editTarget.menus.filter(m => !m.is_custom).map((m) => (
                     <li key={m.id} className="text-xs text-yellow-800">
                       • <span className="font-semibold">{m.name}</span>{' '}
                       <span className="text-yellow-600">(uses ×{m.quantity} per portion)</span>
@@ -210,6 +210,11 @@ function AdminInventory() {
                     </li>
                   ))}
                 </ul>
+                {editTarget.menus.some(m => m.is_custom) && (
+                  <p className="mt-2 text-xs text-purple-600 font-medium">
+                    🍔 Also used in custom burgers (variable amounts)
+                  </p>
+                )}
               </div>
             )}
 

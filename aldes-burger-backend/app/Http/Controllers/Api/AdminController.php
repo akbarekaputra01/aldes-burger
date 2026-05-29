@@ -61,10 +61,20 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
 
-        $menus->each(function (Menu $menu) {
+        // All ingredients needed to compute custom burger availability
+        $allIngredients = Ingredient::query()->select('id', 'stock')->get();
+
+        $menus->each(function (Menu $menu) use ($allIngredients) {
             if ($menu->ingredients->isEmpty()) {
-                // DIY / custom burger – no recipe constraints
-                $menu->computed_stock = $menu->stock;
+                if ($menu->is_custom) {
+                    // DIY / Custom burger — limited by whichever ingredient has lowest stock
+                    $menu->computed_stock = $allIngredients->isEmpty()
+                        ? 0
+                        : (int) $allIngredients->min('stock');
+                } else {
+                    // Regular menu with no recipe assigned yet — show 0 until a recipe is set
+                    $menu->computed_stock = 0;
+                }
             } else {
                 $computed = $menu->ingredients->min(function (Ingredient $ingredient) {
                     $quantity = $ingredient->pivot->quantity ?: 1;
@@ -175,21 +185,40 @@ class AdminController extends Controller
     {
         $this->ensureAdmin($request);
 
+        // Fetch all custom-burger menus so we can add them to every ingredient's 'menus' list
+        $customMenus = Menu::query()
+            ->where('is_custom', true)
+            ->select('id', 'name')
+            ->get()
+            ->map(fn ($m) => [
+                'id'       => $m->id,
+                'name'     => $m->name,
+                'quantity' => 1,
+                'is_custom' => true,
+            ])
+            ->all();
+
         $ingredients = Ingredient::query()
             ->with(['menu' => fn ($q) => $q->select('menus.id', 'name')->withPivot('quantity')])
             ->orderBy('name')
             ->get()
-            ->map(function (Ingredient $ingredient) {
+            ->map(function (Ingredient $ingredient) use ($customMenus) {
+                // Recipe-based menus that explicitly reference this ingredient
+                $recipeMenus = $ingredient->menu->map(fn ($m) => [
+                    'id'       => $m->id,
+                    'name'     => $m->name,
+                    'quantity' => $m->pivot->quantity,
+                ])->values()->all();
+
+                // Merge: custom burgers are appended (they use all ingredients)
+                $allMenus = array_merge($recipeMenus, $customMenus);
+
                 return [
-                    'id'        => $ingredient->id,
-                    'name'      => $ingredient->name,
-                    'price'     => $ingredient->price,
-                    'stock'     => $ingredient->stock,
-                    'menus'     => $ingredient->menu->map(fn ($m) => [
-                        'id'       => $m->id,
-                        'name'     => $m->name,
-                        'quantity' => $m->pivot->quantity,
-                    ])->values(),
+                    'id'    => $ingredient->id,
+                    'name'  => $ingredient->name,
+                    'price' => $ingredient->price,
+                    'stock' => $ingredient->stock,
+                    'menus' => $allMenus,
                 ];
             });
 
