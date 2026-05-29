@@ -45,11 +45,8 @@ function Profile() {
   const sortedAddresses = useMemo(() => {
     if (!addresses || addresses.length === 0) return [];
     return [...addresses].sort((a, b) => {
-      // Jika a adalah default dan b bukan, a naik ke atas (-1)
       if (a.is_default && !b.is_default) return -1;
-      // Jika b adalah default dan a bukan, b naik ke atas (1)
       if (!a.is_default && b.is_default) return 1;
-      // Jika sama, pertahankan urutan
       return 0;
     });
   }, [addresses]);
@@ -143,110 +140,116 @@ function Profile() {
     return (
       <main className="min-h-screen bg-aldesCream flex items-center justify-center p-4">
         <Loader2 className="w-10 h-10 text-aldesRed animate-spin" />
-        <AddressBookModal open={isAddressModalOpen} initialAddress={editingAddress} userPhone={user?.phone} onClose={() => setIsAddressModalOpen(false)} onSaved={async () => { const { data } = await api.get('/addresses'); setAddresses(data) }} />
-    </main>
+      </main>
     )
   }
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
       
-      {/* Custom Scrollbar untuk area Address Book */}
+      {/* Custom Scrollbar bergaya Brutalism */}
       <style>{`
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #fca5a5; border-radius: 20px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #ef4444; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #fef3c7; border-left: 2px solid black; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #ef4444; border: 2px solid black; border-radius: 0px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #dc2626; }
       `}</style>
 
-      <div className="mx-auto w-full max-w-5xl">
-        <h1 className="mb-8 text-3xl font-black text-gray-900 tracking-tight">
-          Hello, <span className="text-aldesRed">{user?.name?.split(' ')[0] ?? 'Guest'}!</span>
-        </h1>
+      <div className="mx-auto w-full max-w-6xl flex flex-col gap-8">
+        
+        {/* HEADER SECTION */}
+        <div className="mb-2 flex flex-col items-start gap-2">
+          <p className="inline-flex items-center rounded-xl bg-aldesYellow px-4 py-1.5 text-sm font-black uppercase tracking-widest text-black border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            My Profile
+          </p>
+          <h1 className="text-4xl sm:text-5xl font-black text-aldesRed tracking-tight uppercase" style={{ WebkitTextStroke: '1.5px black' }}>
+            Hello, {user?.name?.split(' ')[0] ?? 'Guest'}!
+          </h1>
+        </div>
 
         {error && (
-          <div className="mb-6 rounded-2xl bg-red-50 p-4 text-red-600 flex items-center gap-3 border border-red-100 shadow-sm animate-in fade-in">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm font-semibold">{error}</p>
+          <div className="rounded-2xl bg-aldesCream p-4 text-black flex items-center gap-3 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+            <AlertCircle className="h-6 w-6 flex-shrink-0 text-aldesRed" />
+            <p className="text-base font-black uppercase">{error}</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* ========================================================= */}
           {/* KOLOM KIRI: PROFIL & KEAMANAN */}
           {/* ========================================================= */}
-          <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="lg:col-span-5 flex flex-col gap-8">
             
-            {/* SECTION: USER INFO (Lebih Jelas & Terstruktur) */}
-            <article className="rounded-3xl bg-white p-6 lg:p-8 shadow-sm border border-gray-100">
-              <div className="flex flex-col items-center text-center pb-6 border-b border-gray-100">
-                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-aldesCream text-3xl font-black text-aldesRed shadow-sm">
+            {/* CARD: USER INFO */}
+            <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex flex-col items-center text-center pb-6 border-b-4 border-black">
+                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-aldesYellow border-4 border-black text-4xl font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   {initials}
                 </div>
-                <h2 className="text-2xl font-black text-gray-900 w-full truncate">{user?.name ?? 'Guest User'}</h2>
-                <p className="mt-1 text-sm font-medium text-gray-500">Aldes Burger Member</p>
+                <h2 className="text-2xl font-black text-black w-full truncate uppercase">{user?.name ?? 'Guest User'}</h2>
+                <p className="mt-1 text-sm font-bold text-aldesRed uppercase tracking-wider bg-aldesCream px-3 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Member</p>
               </div>
 
               <div className="mt-6 space-y-5">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-500 transition-colors group-hover:bg-aldesCream group-hover:text-aldesRed">
-                    <Mail className="h-5 w-5" />
+                <div className="flex items-center gap-4 rounded-2xl border-4 border-black p-3 bg-aldesCream shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-black bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <Mail className="h-6 w-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</p>
-                    <p className="truncate text-base font-semibold text-gray-900 mt-0.5">{user?.email ?? '-'}</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">Email</p>
+                    <p className="truncate text-base font-bold text-black mt-0.5">{user?.email ?? '-'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-500 transition-colors group-hover:bg-aldesCream group-hover:text-aldesRed">
-                    <Phone className="h-5 w-5" />
+                <div className="flex items-center gap-4 rounded-2xl border-4 border-black p-3 bg-aldesCream shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-black bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <Phone className="h-6 w-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Phone Number</p>
-                    <p className="truncate text-base font-semibold text-gray-900 mt-0.5">
-                      {user?.phone?.trim() ? user.phone : <span className="italic text-gray-400 font-medium">Belum diatur</span>}
+                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">Phone</p>
+                    <p className="truncate text-base font-bold text-black mt-0.5">
+                      {user?.phone?.trim() ? user.phone : <span className="italic text-gray-500 font-bold">Unset</span>}
                     </p>
                   </div>
                 </div>
               </div>
             </article>
 
-            {/* SECTION: KEAMANAN AKUN */}
-            <article className="rounded-3xl bg-white p-6 lg:p-8 shadow-sm border border-gray-100">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="p-2 bg-gray-50 rounded-xl text-gray-600">
-                  <Key className="h-4 w-4" />
+            {/* CARD: KEAMANAN AKUN */}
+            <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="mb-6 flex items-center gap-3 border-b-4 border-black pb-4">
+                <div className="p-2 bg-aldesYellow rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">
+                  <Key className="h-6 w-6" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">Security</h2>
+                <h2 className="text-2xl font-black text-black uppercase">Security</h2>
               </div>
 
               {!isChangingPassword ? (
                 <button
                   type="button"
                   onClick={() => setIsChangingPassword(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-50 py-3.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-aldesCream hover:text-aldesRed"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-4 border-black bg-aldesYellow py-4 text-sm font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none uppercase"
                 >
-                  <Lock className="h-4 w-4" />
-                  Change Password
+                  <Lock className="h-5 w-5" />
+                  CHANGE PASSWORD
                 </button>
               ) : (
-                <form onSubmit={handlePasswordSubmit} className="space-y-4 animate-in fade-in">
+                <form onSubmit={handlePasswordSubmit} className="space-y-5">
                   {pwdStatus.error && (
-                    <div className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex items-start gap-2 rounded-xl bg-white border-4 border-black p-3 text-sm font-black text-aldesRed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
                       <span>{pwdStatus.error}</span>
                     </div>
                   )}
                   {pwdStatus.success && (
-                    <div className="flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-sm font-medium text-emerald-600">
-                      <Key className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex items-start gap-2 rounded-xl bg-aldesYellow border-4 border-black p-3 text-sm font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <Key className="mt-0.5 h-5 w-5 shrink-0" />
                       <span>{pwdStatus.success}</span>
                     </div>
                   )}
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -254,7 +257,7 @@ function Profile() {
                         required
                         value={passwordForm.current_password}
                         onChange={(e) => setPasswordForm(p => ({...p, current_password: e.target.value}))}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 pr-12 text-sm font-medium text-gray-900 outline-none transition-all focus:border-aldesRed focus:bg-white"
+                        className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
                       />
                     </div>
                     <div className="relative">
@@ -264,7 +267,7 @@ function Profile() {
                         required
                         value={passwordForm.password}
                         onChange={(e) => setPasswordForm(p => ({...p, password: e.target.value}))}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 pr-12 text-sm font-medium text-gray-900 outline-none transition-all focus:border-aldesRed focus:bg-white"
+                        className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
                       />
                     </div>
                     <div className="relative">
@@ -274,26 +277,26 @@ function Profile() {
                         required
                         value={passwordForm.password_confirmation}
                         onChange={(e) => setPasswordForm(p => ({...p, password_confirmation: e.target.value}))}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 pr-12 text-sm font-medium text-gray-900 outline-none transition-all focus:border-aldesRed focus:bg-white"
+                        className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-aldesRed"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg border-2 border-transparent p-1 transition-colors hover:bg-aldesYellow hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black"
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-3 pt-2">
                     <button
                       type="submit"
                       disabled={pwdStatus.loading}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-aldesRed py-3.5 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-4 border-black bg-aldesRed py-3.5 text-base font-black tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
                     >
-                      {pwdStatus.loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save
+                      {pwdStatus.loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-5 w-5" />}
+                      SAVE
                     </button>
                     <button
                       type="button"
@@ -303,29 +306,29 @@ function Profile() {
                         setPasswordForm({ current_password: '', password: '', password_confirmation: '' })
                         setShowPassword(false)
                       }}
-                      className="rounded-2xl bg-gray-50 px-4 py-3.5 font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                      className="flex items-center justify-center rounded-2xl border-4 border-black bg-white px-5 py-3.5 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
                       title="Cancel"
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-6 w-6" />
                     </button>
                   </div>
                 </form>
               )}
             </article>
 
-            {/* SECTION: LOGOUT BUTTON */}
+            {/* BUTTON: LOGOUT */}
             <button
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="flex w-full items-center justify-center gap-2 rounded-3xl bg-white py-4 text-sm font-bold text-gray-500 shadow-sm border border-gray-100 transition-colors hover:bg-red-50 hover:text-aldesRed hover:border-red-100 disabled:opacity-70"
+              className="flex w-full items-center justify-center gap-2 rounded-3xl border-4 border-black bg-white py-4 text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:bg-red-50 hover:text-aldesRed hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-70"
             >
               {isLoggingOut ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 <>
-                  <LogOut className="h-4 w-4" />
-                  Log Out Account
+                  <LogOut className="h-6 w-6" />
+                  LOG OUT ACCOUNT
                 </>
               )}
             </button>
@@ -335,57 +338,58 @@ function Profile() {
           {/* KOLOM KANAN: ALAMAT TERSIMPAN */}
           {/* ========================================================= */}
           <div className="lg:col-span-7">
-            <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 shadow-sm border border-gray-100">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-aldesCream/50 rounded-xl text-aldesRed">
-                    <MapPin className="h-4 w-4" />
+            <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full min-h-[600px]">
+              
+              <div className="mb-6 flex items-center justify-between border-b-4 border-black pb-5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-aldesRed rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-white">
+                    <MapPin className="h-6 w-6" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Address Book</h2>
+                  <h2 className="text-2xl font-black text-black uppercase">Address Book</h2>
                 </div>
-                <span className="rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-500">
+                <span className="rounded-xl bg-aldesYellow border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5 text-xs font-black text-black uppercase">
                   {addresses.length} Saved
                 </span>
               </div>
 
-              {/* Area List Alamat dengan Max-Height dan Scroll */}
-              <div className="max-h-[460px] overflow-y-auto custom-scroll pr-2 space-y-3">
+              {/* Area List Alamat dengan Scroll (DIPERBAIKI MAX-HEIGHT NYA) */}
+              <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5 max-h-[400px]">
                 {sortedAddresses.length === 0 ? (
-                  <div className="flex min-h-[250px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50 p-6 text-center mr-2">
-                    <MapPin className="mb-3 h-10 w-10 text-gray-300" />
-                    <p className="text-base font-bold text-gray-700">No Address Yet</p>
-                    <p className="mt-1 text-sm text-gray-500">Add a delivery address to make ordering faster.</p>
+                  <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-4 border-dashed border-black bg-aldesCream p-6 text-center">
+                    <MapPin className="mb-4 h-14 w-14 text-black drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />
+                    <p className="text-xl font-black text-black uppercase">No Address Yet</p>
+                    <p className="mt-2 text-sm font-bold text-gray-700">Add a delivery address to make ordering faster.</p>
                   </div>
                 ) : (
                   sortedAddresses.map((address) => (
                     <div
                       key={address.id}
-                      className={`group relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl p-5 transition-all hover:bg-gray-50 sm:flex-row sm:items-start ${
-                        address.is_default ? 'bg-red-50/30 border border-red-100' : 'bg-white border border-gray-100'
-                      }`}
+                      className={`group relative flex flex-col justify-between gap-4 rounded-2xl border-4 border-black p-5 transition-all sm:flex-row sm:items-start ${
+                        address.is_default ? 'bg-aldesYellow' : 'bg-aldesCream'
+                      } shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}
                     >
-                      {/* Highlight border untuk alamat default */}
-                      <div className={`absolute left-0 top-0 h-full w-1.5 ${address.is_default ? 'bg-aldesRed' : 'bg-transparent'}`}></div>
-                      
-                      <div className="flex min-w-0 flex-col gap-1.5 pl-2">
+                      <div className="flex flex-1 w-full min-w-0 flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-base font-bold text-gray-900 truncate">{address.recipient_name || 'Recipient'}</span>
+                          <span className="text-lg font-black text-black truncate uppercase">{address.recipient_name || 'Recipient'}</span>
                           {address.label && (
-                            <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600 border border-gray-200">
+                            <span className="rounded-lg bg-white border-2 border-black px-2 py-0.5 text-[10px] font-black text-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                               {address.label}
                             </span>
                           )}
                           {address.is_default && (
-                            <span className="rounded-md bg-aldesRed px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                            <span className="rounded-lg bg-aldesRed border-2 border-black px-2 py-0.5 text-[10px] font-black text-white uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                               Default
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-gray-500">{address.phone_number || '-'}</span>
-                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{formatAddress(address)}</p>
+                        <span className="text-sm font-bold text-aldesRed bg-white self-start px-2 py-0.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">{address.phone_number || '-'}</span>
+                        
+                        <p className="mt-2 w-full text-sm font-bold text-black leading-relaxed bg-white p-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          {formatAddress(address)}
+                        </p>
                       </div>
                       
-                      <div className="flex items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto mt-2 sm:mt-0">
                         {!address.is_default && (
                           <button 
                             type="button" 
@@ -393,31 +397,31 @@ function Profile() {
                               await api.put(`/addresses/${address.id}`, { ...address, is_default: true }); 
                               setAddresses((prev)=>prev.map((it)=>({ ...it, is_default: it.id===address.id }))) 
                             }} 
-                            className="rounded-xl p-2.5 text-gray-400 bg-white shadow-sm border border-gray-100 transition-colors hover:text-aldesRed" 
+                            className="rounded-xl p-3 border-2 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none" 
                             title="Set as Default"
                           >
-                            <MapPin className="h-4 w-4" />
+                            <MapPin className="h-5 w-5" />
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={() => { setEditingAddress(address); setIsAddressModalOpen(true) }}
-                          className="rounded-xl p-2.5 text-gray-400 bg-white shadow-sm border border-gray-100 transition-colors hover:text-blue-500"
+                          className="rounded-xl p-3 border-2 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
                           title="Edit Address"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-5 w-5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteAddress(address.id)}
                           disabled={isDeletingId === address.id}
-                          className="rounded-xl p-2.5 text-gray-400 bg-white shadow-sm border border-gray-100 transition-colors hover:text-red-500 disabled:opacity-50"
+                          className="rounded-xl p-3 border-2 border-black bg-aldesRed text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
                           title="Delete Address"
                         >
                           {isDeletingId === address.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin" />
                           ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           )}
                         </button>
                       </div>
@@ -429,17 +433,27 @@ function Profile() {
               <button
                 type="button"
                 onClick={() => { setEditingAddress(null); setIsAddressModalOpen(true) }}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 bg-white py-3.5 text-sm font-bold text-gray-500 transition-all hover:border-aldesRed hover:text-aldesRed hover:bg-aldesCream/30 active:scale-[0.98]"
+                className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border-4 border-black bg-aldesYellow py-4 text-base font-black tracking-widest text-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none uppercase"
               >
-                <Plus className="h-5 w-5" />
-                Add New Address
+                <Plus className="h-6 w-6 stroke-[3px]" />
+                ADD NEW ADDRESS
               </button>
             </article>
           </div>
 
         </div>
       </div>
-      <AddressBookModal open={isAddressModalOpen} initialAddress={editingAddress} userPhone={user?.phone} onClose={() => setIsAddressModalOpen(false)} onSaved={async () => { const { data } = await api.get('/addresses'); setAddresses(data) }} />
+      
+      <AddressBookModal 
+        open={isAddressModalOpen} 
+        initialAddress={editingAddress} 
+        userPhone={user?.phone} 
+        onClose={() => setIsAddressModalOpen(false)} 
+        onSaved={async () => { 
+          const { data } = await api.get('/addresses'); 
+          setAddresses(data) 
+        }} 
+      />
     </main>
   )
 }
