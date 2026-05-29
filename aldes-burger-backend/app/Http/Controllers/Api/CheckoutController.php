@@ -30,7 +30,7 @@ class CheckoutController extends Controller
             'address_id' => ['required', 'integer', 'exists:addresses,id'],
             'payment_method' => ['required', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.menu_id' => ['required', 'integer', 'exists:menu,id'],
+            'items.*.menu_id' => ['required', 'integer', 'exists:menus,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.modifiers' => ['nullable', 'array'],
             'items.*.modifiers.*.ingredient_id' => ['required', 'integer', 'exists:ingredients,id'],
@@ -48,7 +48,7 @@ class CheckoutController extends Controller
             $details = [];
 
             foreach ($payload['items'] as $item) {
-                $menu = Menu::query()->findOrFail($item['menu_id']);
+                $menu = Menu::query()->with(['ingredients' => fn ($q) => $q->withPivot('quantity')])->findOrFail($item['menu_id']);
 
                 $addModifierPrice = 0;
                 $added = [];
@@ -78,13 +78,11 @@ class CheckoutController extends Controller
                     $snapshotName .= ' [' . implode(', ', $parts) . ']';
                 }
 
-                // 2. LOGIKA BARU PENYIMPANAN SNAPSHOT UNTUK KDS DAPUR
+                // Build snapshot modifiers for kitchen display
                 $snapshotModifiers = null;
                 if (!empty($item['ingredients'])) {
-                    // Jika frontend React mengirim urutan burger lengkap, simpan sebagai Array Json
                     $snapshotModifiers = $item['ingredients'];
                 } elseif ($added !== [] || $removed !== []) {
-                    // Fallback jika pesanan bukan burger / hanya edit modifier
                     $snapshotModifiers = array_filter([
                         'add'    => $added ?: null,
                         'remove' => $removed ?: null,
@@ -97,24 +95,65 @@ class CheckoutController extends Controller
                     'snapshot_name'      => $snapshotName,
                     'snapshot_price'     => $snapshotPrice,
                     'snapshot_modifiers' => $snapshotModifiers ? json_encode($snapshotModifiers) : null,
+                    // Keep reference to menu & modifiers for stock deduction below
+                    '_menu'              => $menu,
+                    '_modifiers'         => $item['modifiers'] ?? [],
+                    '_ingredients_stack' => $item['ingredients'] ?? [],
+                    '_quantity'          => $quantity,
                 ];
             }
 
             $transaction = Transaction::query()->create([
-                'id' => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999),
-                'payment_id' => $payment->id,
-                'address_id' => $address->id,
+                'id'                  => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999),
+                'payment_id'          => $payment->id,
+                'address_id'          => $address->id,
                 'destination_address' => $address->address,
-                'user_id' => $user->id,
-                'amount' => $totalAmount,
-                'status' => 'pending',
+                'user_id'             => $user->id,
+                'amount'              => $totalAmount,
+                'status'              => 'pending',
             ]);
 
             foreach ($details as $detail) {
                 TransactionDetail::query()->create([
-                    'transaction_id' => $transaction->id,
-                    ...$detail,
+                    'transaction_id'     => $transaction->id,
+                    'menu_id'            => $detail['menu_id'],
+                    'quantity'           => $detail['quantity'],
+                    'snapshot_name'      => $detail['snapshot_name'],
+                    'snapshot_price'     => $detail['snapshot_price'],
+                    'snapshot_modifiers' => $detail['snapshot_modifiers'],
                 ]);
+
+                // ── Deduct ingredient stock ────────────────────────────────
+                /** @var Menu $menu */
+                $menu = $detail['_menu'];
+                $qty  = $detail['_quantity'];
+
+                if ($menu->ingredients->isNotEmpty()) {
+                    // Signature / recipe-based menu: deduct per recipe quantity × order qty
+                    foreach ($menu->ingredients as $ingredient) {
+                        $needed = ($ingredient->pivot->quantity ?? 1) * $qty;
+                        $ingredient->decrement('stock', $needed);
+                    }
+
+                    // Also apply extra adds from modifiers
+                    foreach ($detail['_modifiers'] as $mod) {
+                        if ($mod['action'] === 'add') {
+                            Ingredient::query()->where('id', $mod['ingredient_id'])->decrement('stock', $qty);
+                        }
+                    }
+                } else {
+                    // Custom burger: deduct 1 unit per ingredient in the stack × order qty
+                    // Count occurrences of each ingredient name in the stack
+                    $stackCounts = [];
+                    foreach ($detail['_ingredients_stack'] as $ingName) {
+                        $stackCounts[$ingName] = ($stackCounts[$ingName] ?? 0) + 1;
+                    }
+                    foreach ($stackCounts as $ingName => $count) {
+                        Ingredient::query()
+                            ->where('name', $ingName)
+                            ->decrement('stock', $count * $qty);
+                    }
+                }
             }
 
             return $transaction->load(['details', 'payment']);

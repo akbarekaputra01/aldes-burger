@@ -239,18 +239,28 @@ function Cart() {
                   <div className="min-w-0 flex-1 text-left">
                     <h3 className="text-lg md:text-xl font-black text-black uppercase tracking-tight truncate pr-2">{item.name}</h3>
                     <div className="mt-1">
-                      {item.modifiers?.length > 0 ? (
-                        <p className="text-[11px] font-bold text-gray-500 line-clamp-1 italic">
-                          Ingredients: {item.modifiers.map(m => {
-                            const rawName = m.ingredient_name || getIngredientNameById(item, m.ingredient_id);
-                            const cleanAction = m.action?.toLowerCase() === 'add' ? '' : m.action;
-                            return `${cleanAction} ${rawName}`.trim();
-                          }).join(', ')}
-                        </p>
-                      ) : hasIngredients ? (
-                        <p className="text-[11px] font-bold text-gray-500 line-clamp-1 italic">
-                          Ingredients: {item.ingredients.join(', ')}
-                        </p>
+                      {hasIngredients ? (
+                        // Show the full burger stack as a readable pill list
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.ingredients.map((name, i) => (
+                            <span key={i} className="text-[10px] font-bold bg-[#F3E8CC] text-black px-2 py-0.5 rounded-full border border-black/10">
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : item.modifiers?.length > 0 ? (
+                        // Show added/removed modifiers in plain english
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {item.modifiers.filter(m => m.action === 'add' || m.action === 'remove').map((m, i) => {
+                            const name = m.ingredient_name || m.ingredient_id;
+                            const isAdd = m.action === 'add';
+                            return (
+                              <span key={i} className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isAdd ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                {isAdd ? '+' : '–'} {name}
+                              </span>
+                            );
+                          })}
+                        </div>
                       ) : null}
                     </div>
                     <p className="mt-2 text-lg font-black text-[#D52518] tracking-tight">{formatCurrency(getItemPrice(item))}</p>

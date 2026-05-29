@@ -29,14 +29,14 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-aldesCream lg:grid lg:grid-cols-[260px_1fr]">
-      {/* Hapus flex-col dan justify-between di sini agar elemen tidak terlempar ke bawah */}
-      <aside className="bg-slate-900 p-4 text-white lg:min-h-screen lg:p-6">
+    <div className="h-screen bg-aldesCream lg:grid lg:grid-cols-[260px_1fr] overflow-hidden">
+      {/* Sticky sidebar */}
+      <aside className="bg-slate-900 text-white lg:h-screen lg:sticky lg:top-0 lg:overflow-y-auto p-4 lg:p-6 flex flex-col">
         <p className="text-xs uppercase tracking-[0.2em] text-red-200">Aldes Burger</p>
         <h1 className="mt-2 text-2xl font-black">Admin Panel</h1>
         <div className="checkerboard-strip mt-4 h-3 rounded-full" aria-hidden="true" />
         
-        <nav className="mt-6 flex flex-col gap-2">
+        <nav className="mt-6 flex flex-col gap-2 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.to
@@ -52,10 +52,10 @@ function AdminLayout() {
             )
           })}
 
-          {/* Garis pemisah tipis agar Logout sedikit berjarak tapi tetap menyatu */}
+          {/* Separator */}
           <div className="my-2 h-px w-full bg-white/10" />
 
-          {/* TOMBOL LOGOUT MENYATU DENGAN MENU LAIN */}
+          {/* Logout button */}
           <button
             type="button"
             onClick={handleLogout}
@@ -67,14 +67,16 @@ function AdminLayout() {
             ) : (
               <LogOut className="h-4 w-4" />
             )}
-            <span className="text-left flex-1">{isLoggingOut ? 'Sedang keluar...' : 'Logout'}</span>
+            <span className="text-left flex-1">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
           </button>
         </nav>
       </aside>
       
-      <section className="min-w-0 flex flex-col">
-        <header className="border-b border-red-100 bg-red-600 px-5 py-4 text-white sm:px-8">
-          <h2 className="text-lg font-bold">Kitchen Operations & Business Insights</h2>
+      {/* Main content area — scrollable */}
+      <section className="min-w-0 flex flex-col h-screen overflow-hidden">
+        {/* Sticky top header */}
+        <header className="sticky top-0 z-10 shrink-0 border-b border-red-100 bg-red-600 px-5 py-4 text-white sm:px-8">
+          <h2 className="text-lg font-bold">Kitchen Operations &amp; Business Insights</h2>
         </header>
         <div className="flex-1 overflow-y-auto">
           <Outlet />
