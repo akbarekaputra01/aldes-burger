@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Loader2, X, ChevronDown, Check } from 'lucide-react'
+import { ArrowLeft, Loader2, X, ChevronDown, Check, MapPin, Navigation } from 'lucide-react'
 import api from '../lib/api'
 import { applySuggestionToForm, canSubmitAddress } from '../pages/addressbook/formLogic'
 import { geocodeAddress, searchAddressSuggestions, reverseGeocode } from '../pages/addressbook/geocoding'
@@ -157,7 +157,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   useEffect(() => {
     const q = form.street_address?.trim()
-    // Only fetch suggestions if user is actively typing (pin_source === 'default')
     if (!q || q.length < 3 || form.pin_source !== 'default') return setSuggestions([])
     
     searchAddressSuggestions(q, { province: form.province, city: form.city, district: form.district, postalCode: form.postal_code })
@@ -339,53 +338,60 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     } finally { setIsSaving(false) }
   }
 
+  // --- NEO BRUTALISM STYLE HELPERS ---
+  const inputClassName = "w-full rounded-xl border-4 border-black bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold"
+  const labelClassName = "pointer-events-none absolute left-3 -top-3 bg-white px-2 text-xs font-black uppercase text-black border-2 border-black rounded-lg transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-transparent peer-placeholder-shown:border-transparent peer-focus:-top-3 peer-focus:text-xs peer-focus:text-aldesRed peer-focus:border-black peer-focus:border-2 peer-focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+
   if (!open) return null
   
   if (showMapLayer) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 sm:p-6">
-        <div className="flex h-[90vh] w-full max-w-4xl flex-col rounded bg-white overflow-hidden shadow-2xl">
-          <div className="flex items-center gap-3 border-b border-gray-200 p-4 sm:p-5">
-            <button type='button' onClick={() => setShowMapLayer(false)} className='text-gray-500 hover:text-gray-800 transition-colors'><ArrowLeft className='h-6 w-6' /></button>
+      <div className="fixed inset-0 flex items-center justify-center bg-black/70 p-4 sm:p-6 backdrop-blur-sm" style={{ zIndex: 99999 }}>
+        <div className="flex h-[90vh] w-full max-w-4xl flex-col rounded-3xl border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+          <div className="flex items-center gap-3 border-b-4 border-black bg-aldesYellow p-4 sm:p-5">
+            <button type='button' onClick={() => setShowMapLayer(false)} className='rounded-xl border-2 border-black bg-white p-2 hover:bg-aldesCream transition-transform active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'>
+              <ArrowLeft className='h-6 w-6 stroke-[3] text-black' />
+            </button>
             <div>
-              <h3 className='text-lg sm:text-xl font-medium text-gray-800'>Edit Location</h3>
-              <p className='text-xs sm:text-sm text-gray-500 line-clamp-1 mt-0.5'>{fullAddressQuery}</p>
+              <h3 className='text-xl sm:text-2xl font-black uppercase text-black'>Edit Pin Location</h3>
+              <p className='text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 mt-0.5'>{fullAddressQuery}</p>
             </div>
           </div>
           
-          <div className="relative flex-1 bg-gray-100">
+          <div className="relative flex-1 bg-gray-100 border-b-4 border-black">
              <div ref={mapElRef} className="h-full w-full" />
              
              {/* Center fixed marker */}
              <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1000] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                <div className="mb-2 whitespace-nowrap rounded bg-aldesRed px-3 py-2 text-center text-white shadow-md relative">
-                   <p className="text-sm font-bold">Your address is here</p>
-                   <p className="text-xs opacity-90 mt-0.5">Please check your map location is correct</p>
-                   <div className="absolute -bottom-1.5 left-1/2 h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-aldesRed"></div>
+                <div className="mb-2 whitespace-nowrap rounded-xl border-4 border-black bg-aldesRed px-4 py-2.5 text-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative">
+                   <p className="text-sm font-black uppercase">Your pin is here</p>
+                   <p className="text-[10px] font-bold opacity-90 mt-0.5">DRAG MAP TO ADJUST</p>
+                   <div className="absolute -bottom-[9px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-black"></div>
+                   <div className="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-aldesRed"></div>
                 </div>
-                <svg viewBox="0 0 24 24" className="h-12 w-12 drop-shadow-md -translate-y-1/2 text-aldesRed" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 24 24" className="h-12 w-12 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-1/2 text-aldesRed" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
              </div>
              
-             <div className="absolute right-4 top-4 z-[1000] flex flex-col gap-2 bg-white rounded shadow-md overflow-hidden">
-                <button type="button" className="p-2 hover:bg-gray-100 border-b border-gray-100 transition-colors" onClick={() => mapRef.current?.zoomIn()}><span className="text-xl leading-none block font-bold text-gray-600">+</span></button>
-                <button type="button" className="p-2 hover:bg-gray-100 transition-colors" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-bold text-gray-600">−</span></button>
+             <div className="absolute right-4 top-4 z-[1000] flex flex-col gap-2">
+                <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomIn()}><span className="text-xl leading-none block font-black text-black">+</span></button>
+                <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-black text-black">−</span></button>
              </div>
              
-             <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-2">
-                <button type="button" className="rounded-full bg-white p-3 shadow-md hover:bg-gray-50 text-aldesRed transition-colors" onClick={handleCurrentLocation} title="Use Current Location">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/><circle cx="12" cy="12" r="6"/></svg>
+             <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-3">
+                <button type="button" className="rounded-2xl border-4 border-black bg-aldesYellow p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-y-1 active:shadow-none transition-all text-black" onClick={handleCurrentLocation} title="Use Current Location">
+                  <Navigation className="h-6 w-6 stroke-[3]" />
                 </button>
-                <button type="button" className="rounded-full bg-white p-3 shadow-md hover:bg-gray-50 text-gray-600 transition-colors" onClick={() => mapRef.current?.panTo([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng])} title="Go to pin">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <button type="button" className="rounded-2xl border-4 border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all text-aldesRed" onClick={() => mapRef.current?.panTo([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng])} title="Go to pin">
+                   <MapPin className="h-6 w-6 stroke-[3]" />
                 </button>
              </div>
           </div>
 
-          <div className="flex justify-end gap-4 border-t border-gray-200 bg-white p-4 sm:p-5">
-            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded border border-gray-300 bg-white py-2 font-medium text-gray-700 hover:bg-gray-50 transition-colors uppercase text-sm">Cancel</button>
-            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded bg-aldesRed py-2 font-medium text-white hover:bg-red-800 transition-colors uppercase text-sm">Confirm</button>
+          <div className="flex justify-end gap-4 bg-aldesCream p-4 sm:p-5">
+            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all uppercase">Cancel</button>
+            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">Confirm</button>
           </div>
         </div>
       </div>
@@ -393,61 +399,63 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/45 p-4 sm:p-6 flex items-start justify-center">
-      <div className="mt-8 w-full max-w-2xl rounded shadow-lg bg-white">
-        <div className="p-6">
-          <form onSubmit={onSubmit} className="space-y-5 mt-2">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl sm:text-2xl font-normal text-gray-800">{isEdit ? 'Edit Address' : 'New Address'}</h3>
-              <button type='button' onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X className="h-6 w-6" /></button>
-            </div>
+    <div className="fixed inset-0 overflow-y-auto bg-black/60 p-4 sm:p-6 flex items-start justify-center backdrop-blur-sm" style={{ zIndex: 9999 }}>
+      
+      {/* PERBAIKAN: overflow-hidden dihapus dari sini agar dropdown yang panjang ke bawah tidak terpotong (clip) 
+      */}
+      <div className="mt-8 w-full max-w-2xl rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col">
+        
+        {/* MODAL HEADER */}
+        <div className="bg-aldesYellow border-b-4 border-black p-5 flex items-center justify-between rounded-t-2xl">
+          <h3 className="text-xl sm:text-2xl font-black uppercase text-black">{isEdit ? 'Edit Address' : 'New Address'}</h3>
+          <button type='button' onClick={onClose} className="rounded-xl border-2 border-black bg-white p-1 hover:bg-aldesCream transition-transform active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <X className="h-6 w-6 stroke-[3] text-black" />
+          </button>
+        </div>
+
+        <div className="p-6 bg-aldesCream rounded-b-2xl">
+          <form onSubmit={onSubmit} className="space-y-6">
             
-            <div className="relative z-[70] grid grid-cols-1 gap-5 sm:grid-cols-2 pt-1">
+            {/* 1. RECIPIENT INFO (z-50) */}
+            <div className="relative z-50 grid grid-cols-1 gap-5 sm:grid-cols-2 pt-2">
               <div className="relative">
                 <input 
                   id="recipient_name"
-                  className="peer w-full rounded border border-gray-300 bg-transparent px-3 py-3 text-sm text-gray-800 placeholder-transparent focus:border-aldesRed focus:outline-none focus:ring-1 focus:ring-aldesRed transition-shadow" 
+                  className={`${inputClassName} peer`}
                   placeholder="Full Name" 
                   value={form.recipient_name || ''} 
                   onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))} 
                 />
-                <label 
-                  htmlFor="recipient_name" 
-                  className="pointer-events-none absolute left-2.5 -top-2 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-aldesRed"
-                >
-                  Full Name
-                </label>
+                <label htmlFor="recipient_name" className={labelClassName}>Full Name</label>
               </div>
 
               <div className="relative">
                 <input 
                   id="phone_number"
-                  className="peer w-full rounded border border-gray-300 bg-transparent px-3 py-3 text-sm text-gray-800 placeholder-transparent focus:border-aldesRed focus:outline-none focus:ring-1 focus:ring-aldesRed transition-shadow" 
+                  className={`${inputClassName} peer`}
                   placeholder="Phone Number" 
                   value={form.phone_number || ''} 
                   onFocus={() => setShowPhoneReco(true)} 
                   onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))} 
                 />
-                <label 
-                  htmlFor="phone_number" 
-                  className="pointer-events-none absolute left-2.5 -top-2 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-aldesRed"
-                >
-                  Phone Number
-                </label>
+                <label htmlFor="phone_number" className={labelClassName}>Phone Number</label>
+                
+                {/* SUGGESTION PHONE NUMBER */}
                 {showPhoneReco && userPhone && (
-                  <div className="absolute z-10 mt-1 w-full rounded border border-gray-200 bg-white p-2 text-sm shadow-md">
+                  <div className="absolute w-full rounded-xl border-4 border-black bg-white p-3 text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mt-2" style={{ zIndex: 100 }}>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">{userPhone}</span>
-                      <button type="button" className="text-aldesRed font-medium" onClick={() => { setForm(p => ({ ...p, phone_number: userPhone })); setShowPhoneReco(false) }}>Use</button>
+                      <span className="font-bold text-black">{userPhone}</span>
+                      <button type="button" className="text-aldesRed font-black uppercase bg-red-50 px-3 py-1 rounded-lg border-2 border-black" onClick={() => { setForm(p => ({ ...p, phone_number: userPhone })); setShowPhoneReco(false) }}>USE</button>
                     </div>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="relative z-[60]" ref={regionSelectorRef}>
+            {/* 2. REGION SELECTOR (z-40) */}
+            <div className="relative z-40" ref={regionSelectorRef}>
               <div 
-                className={`w-full flex items-center justify-between rounded border bg-transparent px-3 py-3 text-sm cursor-pointer transition-shadow ${showRegionSelector ? 'border-aldesRed ring-1 ring-aldesRed' : 'border-gray-300'}`}
+                className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform ${showRegionSelector ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : 'border-black'}`}
                 onClick={() => {
                   setShowRegionSelector(!showRegionSelector)
                   if (!showRegionSelector) {
@@ -458,70 +466,71 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                   }
                 }}
               >
-                <span className={form.province ? 'text-gray-800' : 'text-gray-400 opacity-0'}>
+                <span className={form.province ? 'text-black uppercase' : 'text-gray-400 opacity-0'}>
                   {[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ') || 'Placeholder'}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-5 w-5 text-black stroke-[3] transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
               </div>
-              <label 
-                className={`pointer-events-none absolute left-2.5 bg-white px-1 transition-all ${
+              
+              <label className={`pointer-events-none absolute left-3 transition-all font-black uppercase rounded-lg px-2 border-2 ${
                   form.province || showRegionSelector 
-                    ? '-top-2 text-xs text-gray-500 ' + (showRegionSelector ? 'text-aldesRed' : '') 
-                    : 'top-3 text-sm text-gray-400'
+                    ? '-top-3 text-xs bg-white text-black border-black ' + (showRegionSelector ? 'shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : '') 
+                    : 'top-3.5 text-sm bg-transparent border-transparent text-gray-400'
                 }`}
               >
                 Province, City, District, Postal Code
               </label>
 
+              {/* DROPDOWN REGION: Hardcoded zIndex tinggi */}
               {showRegionSelector && (
-                <div className="absolute z-[2000] mt-1 w-full rounded border border-gray-200 bg-white shadow-xl overflow-hidden">
-                  <div className="flex border-b border-gray-200 text-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
-                    <button type="button" className={`px-4 py-3 font-medium transition-colors ${activeRegionTab === 'province' ? 'border-b-2 border-aldesRed text-aldesRed' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveRegionTab('province')}>
-                      {form.province || 'Province'}
+                <div className="absolute mt-2 w-full rounded-2xl border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden" style={{ zIndex: 100 }}>
+                  <div className="flex border-b-4 border-black text-sm overflow-x-auto whitespace-nowrap scrollbar-hide bg-gray-50">
+                    <button type="button" className={`px-4 py-3 font-black uppercase transition-colors ${activeRegionTab === 'province' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('province')}>
+                      {form.province || 'PROVINCE'}
                     </button>
                     {(form.province || activeRegionTab === 'city') && (
-                      <button type="button" className={`px-4 py-3 font-medium transition-colors ${activeRegionTab === 'city' ? 'border-b-2 border-aldesRed text-aldesRed' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveRegionTab('city')}>
-                        {form.city || 'City'}
+                      <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'city' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('city')}>
+                        {form.city || 'CITY'}
                       </button>
                     )}
                     {(form.city || activeRegionTab === 'district') && (
-                      <button type="button" className={`px-4 py-3 font-medium transition-colors ${activeRegionTab === 'district' ? 'border-b-2 border-aldesRed text-aldesRed' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveRegionTab('district')}>
-                        {form.district || 'District'}
+                      <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'district' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('district')}>
+                        {form.district || 'DISTRICT'}
                       </button>
                     )}
                     {(form.district || activeRegionTab === 'postal_code') && (
-                      <button type="button" className={`px-4 py-3 font-medium transition-colors ${activeRegionTab === 'postal_code' ? 'border-b-2 border-aldesRed text-aldesRed' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveRegionTab('postal_code')}>
-                        {form.postal_code || 'Postal Code'}
+                      <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'postal_code' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('postal_code')}>
+                        {form.postal_code || 'POSTAL'}
                       </button>
                     )}
                   </div>
                   
                   <div className="max-h-60 overflow-y-auto">
                     {activeRegionTab === 'province' && provinceOptions.map(p => (
-                      <div key={p.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700" onClick={() => { setForm(prev => ({ ...prev, province: p.name, city: '', district: '', postal_code: '' })); setActiveRegionTab('city') }}>
-                        <span className={form.province === p.name ? 'text-aldesRed font-medium' : ''}>{p.name}</span>
-                        {form.province === p.name && <Check className="h-4 w-4 text-aldesRed" />}
+                      <div key={p.id} className="flex items-center justify-between px-4 py-3 hover:bg-aldesCream border-b-2 border-gray-100 cursor-pointer text-sm font-bold text-gray-800 uppercase" onClick={() => { setForm(prev => ({ ...prev, province: p.name, city: '', district: '', postal_code: '' })); setActiveRegionTab('city') }}>
+                        <span className={form.province === p.name ? 'text-aldesRed font-black' : ''}>{p.name}</span>
+                        {form.province === p.name && <Check className="h-5 w-5 text-aldesRed stroke-[3]" />}
                       </div>
                     ))}
                     
                     {activeRegionTab === 'city' && cityOptions.map(c => (
-                      <div key={c.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700" onClick={() => { setForm(prev => ({ ...prev, city: c.name, district: '', postal_code: '' })); setActiveRegionTab('district') }}>
-                        <span className={form.city === c.name ? 'text-aldesRed font-medium' : ''}>{c.name}</span>
-                        {form.city === c.name && <Check className="h-4 w-4 text-aldesRed" />}
+                      <div key={c.id} className="flex items-center justify-between px-4 py-3 hover:bg-aldesCream border-b-2 border-gray-100 cursor-pointer text-sm font-bold text-gray-800 uppercase" onClick={() => { setForm(prev => ({ ...prev, city: c.name, district: '', postal_code: '' })); setActiveRegionTab('district') }}>
+                        <span className={form.city === c.name ? 'text-aldesRed font-black' : ''}>{c.name}</span>
+                        {form.city === c.name && <Check className="h-5 w-5 text-aldesRed stroke-[3]" />}
                       </div>
                     ))}
 
                     {activeRegionTab === 'district' && districtOptions.map(d => (
-                      <div key={d.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700" onClick={() => { setForm(prev => ({ ...prev, district: d.name, postal_code: '' })); setActiveRegionTab('postal_code') }}>
-                        <span className={form.district === d.name ? 'text-aldesRed font-medium' : ''}>{d.name}</span>
-                        {form.district === d.name && <Check className="h-4 w-4 text-aldesRed" />}
+                      <div key={d.id} className="flex items-center justify-between px-4 py-3 hover:bg-aldesCream border-b-2 border-gray-100 cursor-pointer text-sm font-bold text-gray-800 uppercase" onClick={() => { setForm(prev => ({ ...prev, district: d.name, postal_code: '' })); setActiveRegionTab('postal_code') }}>
+                        <span className={form.district === d.name ? 'text-aldesRed font-black' : ''}>{d.name}</span>
+                        {form.district === d.name && <Check className="h-5 w-5 text-aldesRed stroke-[3]" />}
                       </div>
                     ))}
 
                     {activeRegionTab === 'postal_code' && postalCodeOptions.map(pc => (
-                      <div key={pc.postalCode} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700" onClick={() => { setForm(prev => ({ ...prev, postal_code: pc.postalCode })); setShowRegionSelector(false) }}>
-                        <span className={form.postal_code === pc.postalCode ? 'text-aldesRed font-medium' : ''}>{pc.postalCode}</span>
-                        {form.postal_code === pc.postalCode && <Check className="h-4 w-4 text-aldesRed" />}
+                      <div key={pc.postalCode} className="flex items-center justify-between px-4 py-3 hover:bg-aldesCream border-b-2 border-gray-100 cursor-pointer text-sm font-bold text-gray-800 uppercase" onClick={() => { setForm(prev => ({ ...prev, postal_code: pc.postalCode })); setShowRegionSelector(false) }}>
+                        <span className={form.postal_code === pc.postalCode ? 'text-aldesRed font-black' : ''}>{pc.postalCode}</span>
+                        {form.postal_code === pc.postalCode && <Check className="h-5 w-5 text-aldesRed stroke-[3]" />}
                       </div>
                     ))}
                   </div>
@@ -529,55 +538,60 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               )}
             </div>
             
-            <div className="relative z-[50]">
+            {/* 3. STREET ADDRESS & SUGGESTION BOX (z-30) */}
+            <div className="relative z-30">
               <textarea 
                 id="street_address"
                 disabled={!isRegionFilled}
-                className={`peer w-full min-h-[60px] rounded border bg-transparent px-3 py-3 text-sm text-gray-800 placeholder-transparent focus:outline-none transition-shadow resize-y ${!isRegionFilled ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60 text-gray-400' : 'border-gray-300 focus:border-aldesRed focus:ring-1 focus:ring-aldesRed'}`} 
+                className={`peer w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black placeholder-transparent focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
                 placeholder="Street Name, Building, House No." 
                 value={form.street_address || ''} 
                 onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))} 
               />
               <label 
                 htmlFor="street_address" 
-                className={`pointer-events-none absolute left-2.5 -top-2 bg-white px-1 text-xs transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:-top-2 peer-focus:text-xs ${!isRegionFilled ? 'text-gray-400 peer-placeholder-shown:text-gray-400' : 'text-gray-500 peer-placeholder-shown:text-gray-400 peer-focus:text-aldesRed'}`}
+                className={`pointer-events-none absolute left-3 -top-3 px-2 text-xs font-black uppercase rounded-lg border-2 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:border-transparent peer-placeholder-shown:bg-transparent peer-focus:-top-3 peer-focus:text-xs peer-focus:border-black peer-focus:bg-white peer-focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${!isRegionFilled ? 'bg-gray-100 text-gray-400 border-gray-300 peer-placeholder-shown:text-gray-400' : 'bg-white text-black border-black peer-focus:text-aldesRed'}`}
               >
-                {isRegionFilled ? 'Street Name, Building, House No.' : 'Please select Region first'}
+                {isRegionFilled ? 'Street Name, Building, House No.' : 'Select Region first'}
               </label>
 
+              {/* DROPDOWN SARAN ALAMAT: Hardcoded zIndex tinggi */}
               {suggestions.length > 0 && (
-                <div className="absolute z-10 w-full max-h-48 overflow-auto rounded border border-gray-200 bg-white shadow-lg mt-1">
+                <div className="absolute w-full max-h-48 overflow-auto rounded-2xl border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mt-2" style={{ zIndex: 100 }}>
                   {suggestions.slice(0, 5).map(s => (
-                    <button type="button" key={s.id} className="block w-full border-b border-gray-100 px-4 py-2.5 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none text-gray-700" onClick={() => {
+                    <button type="button" key={s.id} className="block w-full border-b-2 border-gray-200 px-4 py-3 text-left hover:bg-aldesCream focus:bg-aldesCream focus:outline-none" onClick={() => {
                         setForm(p => applySuggestionToForm(p, s))
                         setSuggestions([])
                     }}>
-                      {s.formattedAddress || s.title}
+                      <div className="font-black text-black uppercase text-sm">{s.formattedAddress || s.title}</div>
+                      {s.formattedAddress && s.title !== s.formattedAddress && <div className="text-[10px] font-bold text-gray-500 uppercase mt-1">{s.title}</div>}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className={`w-full rounded p-3 pb-4 border relative z-40 ${hasStreet ? 'bg-aldesCream/40 border-aldesYellow/50' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <div className="flex gap-2">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <div className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${hasStreet ? 'bg-aldesYellow' : 'bg-gray-300'}`}>
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            {/* 4. MAP PREVIEW AREA (z-10) */}
+            <div className={`w-full rounded-2xl p-4 border-4 relative z-10 transition-colors ${hasStreet ? 'bg-aldesYellow border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]' : 'bg-white border-dashed border-gray-400'}`}>
+              <div className="mb-4 flex items-start justify-between gap-2">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded border-2 border-black ${hasStreet ? 'bg-white text-aldesRed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-gray-200 text-gray-400 border-transparent'}`}>
+                      <MapPin className="h-4 w-4 stroke-[3]" />
                     </div>
                   </div>
                   <div>
-                    <h4 className={`font-medium text-sm ${hasStreet ? 'text-aldesYellow' : 'text-gray-500'}`}>Place an accurate pin</h4>
-                    <p className="text-xs mt-0.5 leading-relaxed text-gray-500">We will deliver to your map location.</p>
+                    <h4 className={`font-black uppercase text-sm ${hasStreet ? 'text-black' : 'text-gray-500'}`}>Place an accurate pin</h4>
+                    <p className={`text-xs font-bold mt-0.5 uppercase ${hasStreet ? 'text-gray-800' : 'text-gray-400'}`}>We will deliver to your map location.</p>
                   </div>
                 </div>
-                <button type="button" onClick={handleCurrentLocation} className="flex-shrink-0 flex items-center gap-1.5 rounded bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-300 shadow-sm">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/><circle cx="12" cy="12" r="6"/></svg>
-                  Current Location
+                <button type="button" onClick={handleCurrentLocation} className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-white border-2 border-black px-3 py-2 text-xs font-black uppercase text-black hover:bg-aldesCream hover:-translate-y-0.5 active:translate-y-0 active:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+                  <Navigation className="h-4 w-4 stroke-[3]" />
+                  Current Loc
                 </button>
               </div>
-              <div className={`relative h-36 w-full overflow-hidden rounded border border-gray-200 bg-gray-100 ${hasStreet ? 'cursor-pointer group' : ''}`} onClick={() => { if(hasStreet) setShowMapLayer(true) }}>
+              
+              <div className={`relative h-44 w-full overflow-hidden rounded-xl border-4 border-black bg-white shadow-[inset_0px_0px_10px_rgba(0,0,0,0.1)] ${hasStreet ? 'cursor-pointer group' : ''}`} onClick={() => { if(hasStreet) setShowMapLayer(true) }} style={{ zIndex: 0 }}>
                 {hasStreet ? (
                   <div key="map-active" ref={previewMapElRef} className="h-full w-full pointer-events-none" />
                 ) : (
@@ -585,59 +599,56 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 )}
                 
                 {!hasStreet && (
-                  <div 
-                    className="absolute inset-0 flex flex-col items-center justify-center bg-[#f4f5f6]"
-                    style={{ backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="150" viewBox="0 0 400 150"><path d="M-50,50 Q100,20 200,80 T450,40" fill="none" stroke="%23ffffff" stroke-width="8"/><path d="M50,-20 Q80,100 150,180" fill="none" stroke="%23ffffff" stroke-width="6"/><path d="M250,-20 Q220,100 350,180" fill="none" stroke="%23ffffff" stroke-width="6"/><path d="M-20,120 Q150,150 250,90 T450,100" fill="none" stroke="%23ffffff" stroke-width="5"/></svg>')`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                  >
-                     <button type="button" disabled className="relative z-10 flex items-center gap-2 rounded bg-white px-4 py-2 text-sm font-medium text-gray-400 shadow border border-gray-100">
-                       <span className="text-lg leading-none font-light">+</span> Add Location
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
+                     <button type="button" disabled className="relative z-10 flex items-center gap-2 rounded-xl bg-white px-4 py-2 border-2 border-gray-300 text-sm font-black uppercase text-gray-400">
+                       <MapPin className="h-5 w-5 stroke-[2]" /> Add Location
                      </button>
                   </div>
                 )}
                 
                 {hasStreet && (
-                  <button type="button" className="absolute right-2 top-2 z-[1000] rounded bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow border border-gray-200 hover:bg-gray-50 transition-colors">
-                    View Map
+                  <button type="button" className="absolute right-3 bottom-3 z-[1000] rounded-lg border-2 border-black bg-aldesYellow px-3 py-1.5 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    View Full Map
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="relative">
+            {/* 5. DETAIL ADDRESS (z-0) */}
+            <div className="relative z-0">
               <textarea 
                 id="detail_address"
-                className="peer w-full min-h-[50px] rounded border border-gray-300 bg-transparent px-3 py-3 text-sm text-gray-800 placeholder-transparent focus:border-aldesRed focus:outline-none focus:ring-1 focus:ring-aldesRed transition-shadow resize-y" 
+                className={`${inputClassName} min-h-[50px] peer resize-y`}
                 placeholder="Other Details (e.g. Block / Unit No., Landmarks)" 
                 value={form.detail_address || ''} 
                 onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))} 
               />
-              <label 
-                htmlFor="detail_address" 
-                className="pointer-events-none absolute left-2.5 -top-2 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-aldesRed"
-              >
-                Other Details (e.g. Block / Unit No., Landmarks)
-              </label>
+              <label htmlFor="detail_address" className={labelClassName}>Other Details</label>
             </div>
             
-            <div className="pt-2">
-              <span className="block text-sm text-gray-600 mb-2">Label As:</span>
+            <div className="pt-2 border-t-2 border-gray-200">
+              <span className="block text-sm font-black uppercase text-black mb-3">Label As:</span>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Home' }))} className={`rounded border px-4 py-1.5 text-sm transition-colors ${form.label === 'Home' ? 'border-aldesRed text-aldesRed bg-aldesCream' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}>Home</button>
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Work' }))} className={`rounded border px-4 py-1.5 text-sm transition-colors ${form.label === 'Work' ? 'border-aldesRed text-aldesRed bg-aldesCream' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}>Work</button>
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Other' }))} className={`rounded border px-4 py-1.5 text-sm transition-colors ${form.label === 'Other' ? 'border-aldesRed text-aldesRed bg-aldesCream' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}>Other</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Home' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Home' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Home</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Work' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Work' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Work</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Other' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Other' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Other</button>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 sm:gap-6 text-sm text-gray-600">
-              <label className="flex items-center gap-2 cursor-pointer group"><input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-aldesRed focus:ring-aldesRed cursor-pointer" checked={!!form.is_default} onChange={e => setForm(p => ({ ...p, is_default: e.target.checked }))} /> <span className="group-hover:text-gray-800 transition-colors">Set as Default Address</span></label>
+            <div className="pt-2 text-sm text-black">
+              <label className="flex items-center gap-3 cursor-pointer group w-max">
+                <input type="checkbox" className="h-5 w-5 accent-aldesRed border-2 border-black rounded cursor-pointer" checked={!!form.is_default} onChange={e => setForm(p => ({ ...p, is_default: e.target.checked }))} /> 
+                <span className="font-black uppercase group-hover:text-aldesRed transition-colors">Set as Default Address</span>
+              </label>
             </div>
             
-            {error && <p className="text-sm text-aldesRed font-medium">{error}</p>}
+            {error && <div className="rounded-xl border-2 border-black bg-white p-3 text-sm font-black uppercase text-aldesRed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{error}</div>}
             
-            <div className="flex justify-end gap-4 pt-4">
-              <button type="button" onClick={onClose} className="min-w-[120px] rounded py-2 font-medium text-gray-600 hover:text-gray-800 transition-colors text-sm uppercase border border-white">Cancel</button>
-              <button disabled={isSaving} className="min-w-[140px] rounded bg-aldesRed py-2 font-medium text-white shadow-sm hover:bg-red-800 transition-colors text-sm flex justify-center items-center uppercase">
-                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Submit'}
+            {/* SUBMIT BUTTONS */}
+            <div className="flex justify-end gap-4 pt-6 border-t-4 border-black">
+              <button type="button" onClick={onClose} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 transition-transform active:translate-y-1 active:shadow-none">Cancel</button>
+              <button disabled={isSaving} className="min-w-[140px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 transition-transform active:translate-y-1 active:shadow-none flex justify-center items-center disabled:opacity-50">
+                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'SAVE ADDRESS'}
               </button>
             </div>
           </form>

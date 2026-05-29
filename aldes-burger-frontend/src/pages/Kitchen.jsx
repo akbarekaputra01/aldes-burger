@@ -15,6 +15,9 @@ import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
 import imgKitchenBg from '../assets/kitchen.png'
+import imgMayonaise from '../assets/mayonaise.png'
+import imgKetchup from '../assets/ketchup.png'
+import imgSecretSauce from '../assets/secret_sauce.png'
 
 const makeUid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
@@ -33,6 +36,12 @@ const getIngredientImage = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return imgLettuce
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return imgPickles
   if (n.includes('tomato') || n.includes('tomat')) return imgTomato
+  
+  // Tambahan untuk saus:
+  if (n.includes('mayo')) return imgMayonaise
+  if (n.includes('ketchup') || n.includes('saus tomat')) return imgKetchup
+  if (n.includes('secret') || n.includes('rahasia')) return imgSecretSauce
+  
   return null
 }
 
@@ -57,6 +66,10 @@ const getStackOrder = (name) => {
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion')) return 4
   if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 5
   if (n.includes('cheese') || n.includes('keju')) return 6
+  
+  // Tambahan urutan untuk saus (tepat di bawah roti atas):
+  if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) return 6.5
+  
   if (n.includes('top') || n.includes('atas')) return 7
   return 99
 }
@@ -76,6 +89,10 @@ const getIngredientThickness = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return 4
   if (n.includes('cheese') || n.includes('keju')) return 2
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 2
+  
+  // Tambahan ketebalan untuk saus:
+  if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) return 3
+  
   return 10
 }
 
@@ -84,6 +101,9 @@ const getVisualOffset = (name) => {
   const n = name.toLowerCase()
   if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) {
     return 16
+  }
+  if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) {
+    return 12 
   }
   return 0
 }
@@ -129,8 +149,7 @@ function Kitchen() {
     if (incomingMenu?.id) return menu.find((m) => m.id === incomingMenu.id) ?? incomingMenu
     return menu.find((m) => m.id === menuId) ?? menu.find((m) => m.is_custom) ?? menu[0]
   }, [incomingMenu, menuId, menu])
-
-  useEffect(() => {
+useEffect(() => {
     const loadData = async () => {
       setIsFetching(true)
       try {
@@ -139,8 +158,19 @@ function Kitchen() {
 
         const uniqueIngredients = [];
         const seenNames = new Set();
+        
+        // 1. Tambahkan daftar kata kunci item yang TIDAK BOLEH masuk dapur burger
+        const nonBurgerItems = ['water','drink', 'mineral', 'fries', 'nugget', 'soda', 'tea', 'ring', 'cola'];
+
         ingredientsRes.data.forEach((item) => {
-          if (!seenNames.has(item.name)) {
+          // 2. Ubah nama ke huruf kecil untuk pengecekan
+          const itemName = item.name.toLowerCase();
+          
+          // 3. Cek apakah nama item mengandung salah satu kata larangan di atas
+          const isExcluded = nonBurgerItems.some(keyword => itemName.includes(keyword));
+
+          // 4. Hanya masukkan ke Pantry jika namanya belum ada DAN bukan item terlarang
+          if (!seenNames.has(item.name) && !isExcluded) {
             seenNames.add(item.name);
             uniqueIngredients.push(item);
           }
@@ -587,10 +617,12 @@ function Kitchen() {
                       imgWidthClass = 'w-[190px]';
                     } else if (n.includes('cheese') || n.includes('keju')) {
                       imgWidthClass = 'w-[180px]';
+                    } else if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) {
+                      // Lebar khusus untuk saus agar lelehannya proporsional
+                      imgWidthClass = 'w-[160px]'; 
                     } else {
                       imgWidthClass = 'w-[180px]';
-                    }
-
+                  }
                     const isHovered = hoveredLayerId === layer.instance_id;
                     const isDragTarget = dragOverItemId === layer.instance_id;
 
