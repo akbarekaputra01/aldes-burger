@@ -1,13 +1,13 @@
-import { AlertTriangle, Minus, Pencil, Plus, PlusCircle, Trash2, Utensils, X } from 'lucide-react'
+import { AlertTriangle, Minus, Pencil, Plus, PlusCircle, Trash2, Utensils, X, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
 
-/* ─── helpers ─────────────────────────────────────────────────────────────── */
-
+// --- helpers ---
 function StockBadge({ stock }) {
   if (stock === null || stock === undefined) return null
   const low = stock <= 5
   const mid = stock <= 20
+
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
@@ -24,11 +24,11 @@ function StockBadge({ stock }) {
   )
 }
 
-/* ─── component ───────────────────────────────────────────────────────────── */
-
+// --- component ---
 function AdminMenuManagement() {
   const [menu, setMenu] = useState([])
   const [allIngredients, setAllIngredients] = useState([])
+  const [isLoading, setIsLoading] = useState(true) // STATE BARU: Untuk loading animation
 
   // Edit price modal
   const [selectedMenu, setSelectedMenu] = useState(null)
@@ -43,8 +43,7 @@ function AdminMenuManagement() {
   // Delete ingredient confirmation
   const [deleteIngredientTarget, setDeleteIngredientTarget] = useState(null)
 
-  /* ── data loading ── */
-
+  // --- data loading ---
   const loadMenu = () =>
     api
       .get('/admin/menus')
@@ -58,12 +57,13 @@ function AdminMenuManagement() {
       .catch(() => {})
 
   useEffect(() => {
-    loadMenu()
-    loadIngredients()
+    setIsLoading(true)
+    Promise.all([loadMenu(), loadIngredients()]).finally(() => {
+      setIsLoading(false)
+    })
   }, [])
 
-  /* ── edit price ── */
-
+  // --- edit price ---
   const openEditPriceModal = (menu) => {
     setSelectedMenu(menu)
     setNewPrice(menu.price)
@@ -78,13 +78,13 @@ function AdminMenuManagement() {
     e.preventDefault()
     const nextPrice = Number(newPrice)
     if (Number.isNaN(nextPrice)) return
+
     await api.put(`/admin/menus/${selectedMenu.id}`, { price: nextPrice })
     closeEditPriceModal()
     loadMenu()
   }
 
-  /* ── recipe modal ── */
-
+  // --- recipe modal ---
   const openRecipeModal = (menu) => {
     setRecipeMenu(menu)
     // Normalise: pivot.quantity may come from API as ingredient.pivot.quantity
@@ -109,10 +109,12 @@ function AdminMenuManagement() {
 
   const addIngredientToRecipe = () => {
     if (!selectedIngredientId) return
+
     const ingredient = allIngredients.find(
       (item) => String(item.id) === String(selectedIngredientId),
     )
     if (!ingredient) return
+
     if (recipeIngredients.some((item) => item.id === ingredient.id)) return
 
     setRecipeIngredients([
@@ -155,7 +157,19 @@ function AdminMenuManagement() {
     (ing) => !recipeIngredients.some((r) => r.id === ing.id),
   )
 
-  /* ─── render ──────────────────────────────────────────────────────────── */
+  // --- render ---
+
+  // Tampilkan loading animation saat pertama kali dimuat
+  if (isLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-aldesCream">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-10 w-10 animate-spin text-red-600" />
+          <p className="text-sm font-bold text-gray-500">Memuat Menu Management...</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
@@ -197,7 +211,6 @@ function AdminMenuManagement() {
                   <div>
                     <h2 className="text-lg font-bold text-gray-900">{item.name}</h2>
                     <p className="mt-0.5 text-sm text-gray-500">{item.description}</p>
-
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {item.price > 0 && (
                         <span className="rounded-full bg-yellow-50 px-3 py-1 text-sm font-bold text-gray-800">
@@ -214,7 +227,6 @@ function AdminMenuManagement() {
                     </div>
                   </div>
                 </div>
-
                 <div className="flex flex-wrap gap-2 sm:shrink-0">
                   <button
                     type="button"
@@ -224,7 +236,6 @@ function AdminMenuManagement() {
                     <Pencil className="h-4 w-4" />
                     Edit Price
                   </button>
-
                   <button
                     type="button"
                     onClick={() => openRecipeModal(item)}
@@ -241,7 +252,6 @@ function AdminMenuManagement() {
                 <p className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
                   Ingredients
                 </p>
-
                 {item.ingredients?.length > 0 ? (
                   <ul className="flex flex-wrap gap-2">
                     {item.ingredients.map((ing) => (
@@ -252,7 +262,7 @@ function AdminMenuManagement() {
                         <span>{ing.name}</span>
                         {(ing.pivot?.quantity ?? ing.quantity ?? 1) > 1 && (
                           <span className="rounded-full bg-yellow-200 px-1.5 py-0.5 text-xs font-bold text-yellow-800">
-                            ×{ing.pivot?.quantity ?? ing.quantity}
+                            x{ing.pivot?.quantity ?? ing.quantity}
                           </span>
                         )}
                       </li>
@@ -278,7 +288,7 @@ function AdminMenuManagement() {
         )}
       </section>
 
-      {/* ── Edit Price Modal ─────────────────────────────────────────────── */}
+      {/* --- Edit Price Modal --- */}
       {selectedMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
@@ -299,7 +309,6 @@ function AdminMenuManagement() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-
             <form onSubmit={submitEditPrice}>
               <div className="mb-5">
                 <label htmlFor="price" className="mb-2 block text-sm font-bold text-gray-700">
@@ -320,7 +329,6 @@ function AdminMenuManagement() {
                   />
                 </div>
               </div>
-
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
@@ -341,10 +349,11 @@ function AdminMenuManagement() {
         </div>
       )}
 
-      {/* ── Manage Recipe Modal ──────────────────────────────────────────── */}
+      {/* --- Manage Recipe Modal --- */}
       {recipeMenu && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+          {/* PERBAIKAN: Menambahkan max-h-[90vh] dan overflow-y-auto pada kontainer utama modal */}
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
@@ -369,9 +378,9 @@ function AdminMenuManagement() {
               {/* Current ingredients */}
               <div className="mb-5">
                 <p className="mb-3 text-sm font-bold text-gray-700">Current Ingredients</p>
-
                 {recipeIngredients.length > 0 ? (
-                  <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                  /* PERBAIKAN: Membatasi tinggi daftar bahan agar modal tidak bocor ke bawah */
+                  <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50 p-3 max-h-56 overflow-y-auto">
                     {recipeIngredients.map((ing) => (
                       <div
                         key={ing.id}
@@ -379,7 +388,7 @@ function AdminMenuManagement() {
                       >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-gray-900">{ing.name}</p>
-                          <p className="text-xs text-gray-400">Stock: {ing.stock ?? '—'}</p>
+                          <p className="text-xs text-gray-400">Stock: {ing.stock ?? '0'}</p>
                         </div>
 
                         {/* Quantity stepper */}
@@ -402,7 +411,6 @@ function AdminMenuManagement() {
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-
                         <button
                           type="button"
                           onClick={() => openDeleteIngredientPopup(ing)}
@@ -509,7 +517,7 @@ function AdminMenuManagement() {
         </div>
       )}
 
-      {/* ── Delete Ingredient Confirmation ──────────────────────────────── */}
+      {/* --- Delete Ingredient Confirmation --- */}
       {deleteIngredientTarget && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl">
@@ -522,7 +530,6 @@ function AdminMenuManagement() {
               <span className="font-bold text-gray-800">{deleteIngredientTarget.name}</span>{' '}
               from this recipe?
             </p>
-
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
               <button
                 type="button"
