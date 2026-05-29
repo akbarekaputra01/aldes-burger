@@ -1,4 +1,4 @@
-import { ChartColumnBig, Clock3, Flame, Wallet, Loader2 } from 'lucide-react'
+import { ChartColumnBig, Clock3, Flame, Wallet, Loader2, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
 
@@ -6,6 +6,7 @@ const statusClass = {
   pending: 'bg-yellow-100 text-yellow-700',
   cooking: 'bg-orange-100 text-orange-700',
   done: 'bg-emerald-100 text-emerald-700',
+  cancelled: 'bg-red-100 text-red-700'
 }
 
 function AdminDashboard() {
@@ -23,6 +24,7 @@ function AdminDashboard() {
   const totalOrders = orders.length;
   const pendingCount = orders.filter(o => o.status === 'pending').length;
   const cookingCount = orders.filter(o => o.status === 'cooking').length;
+  const cancelledCount = orders.filter(o => o.status === 'cancelled').length;
   
   const totalRevenue = orders
     .filter(o => o.status === 'done')
@@ -37,10 +39,18 @@ function AdminDashboard() {
   const filteredOrders = orders.filter((order) => {
     if (statusFilter === 'all') return true;
     if (statusFilter === 'revenue') return order.status === 'done';
-    return order.status === statusFilter;
+    
+    const currentStatus = order.status?.toLowerCase() || '';
+    const targetFilter = statusFilter.toLowerCase();
+    
+    if (targetFilter === 'cancelled') {
+      return currentStatus === 'cancelled';
+    }
+    
+    return currentStatus === targetFilter;
   });
 
-  const latestOrders = filteredOrders.slice(0, 5);
+  const allFilteredOrders = filteredOrders;
 
   if (isLoading) {
     return (
@@ -54,8 +64,8 @@ function AdminDashboard() {
     <main className="min-h-screen bg-aldesCream p-4 sm:p-6 lg:p-8">
       <section className="mx-auto max-w-7xl space-y-6">
         
-        {/* GRID KARTU */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* GRID KARTU - Diubah jadi xl:grid-cols-5 agar muat 5 kartu sejajar */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           
           {/* TOTAL ORDERS */}
           <button
@@ -105,6 +115,22 @@ function AdminDashboard() {
             <p className={`mt-3 text-3xl font-black ${statusFilter === 'cooking' ? 'text-white' : 'text-gray-900'}`}>{cookingCount}</p>
           </button>
 
+          {/* CANCELLED */}
+          <button
+            onClick={() => setStatusFilter('cancelled')}
+            className={`text-left rounded-3xl p-5 shadow-sm transition-all duration-300 transform hover:-translate-y-1 active:scale-95 ${
+              statusFilter === 'cancelled' ? 'bg-red-600 text-white ring-4 ring-red-200' : 'bg-white hover:bg-red-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <p className={`text-sm font-medium ${statusFilter === 'cancelled' ? 'text-red-100' : 'text-gray-500'}`}>cancelled</p>
+              <div className={`rounded-xl p-2 ${statusFilter === 'cancelled' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
+                <Trash2 className="h-5 w-5" />
+              </div>
+            </div>
+            <p className={`mt-3 text-3xl font-black ${statusFilter === 'cancelled' ? 'text-white' : 'text-gray-900'}`}>{cancelledCount}</p>
+          </button>
+
           {/* TOTAL REVENUE */}
           <button
             onClick={() => setStatusFilter('revenue')}
@@ -113,7 +139,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'revenue' ? 'text-red-100' : 'text-gray-500'}`}>Total Revenue (Done)</p>
+              <p className={`text-sm font-medium ${statusFilter === 'revenue' ? 'text-red-100' : 'text-gray-500'}`}>Revenue (Done)</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'revenue' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <Wallet className="h-5 w-5" />
               </div>
@@ -124,7 +150,7 @@ function AdminDashboard() {
           </button>
 
         </div>
-
+        
         {/* TABEL PESANAN */}
         <article className="rounded-3xl bg-white shadow-sm overflow-hidden">
           <div className="border-b border-red-100 px-5 py-4 flex justify-between items-center">
@@ -146,24 +172,30 @@ function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {latestOrders.length === 0 ? (
+                {allFilteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-5 py-12 text-center text-gray-400 italic">
                       No orders found for this category.
                     </td>
                   </tr>
                 ) : (
-                  latestOrders.map((order) => {
+                  allFilteredOrders.map((order) => {
                     const itemNames = order.details?.map(d => `${d.quantity}x ${d.snapshot_name}`).join(', ') || '-';
+                    const currentStatus = order.status?.toLowerCase() || '';
+
                     return (
                       <tr key={order.id} className="hover:bg-red-50/20 transition-colors">
                         <td className="px-5 py-4 font-mono text-gray-500 text-xs">
-                           #{order.id.split('-')[0]}
+                          #{order.id.includes('-') ? order.id.split('-')[0] : order.id}
                         </td>
-                        <td className="px-5 py-4 font-bold text-gray-800">{order.user?.name || 'Guest'}</td>
-                        <td className="px-5 py-4 text-gray-600 max-w-xs truncate" title={itemNames}>{itemNames}</td>
+                        <td className="px-5 py-4 font-bold text-gray-800">
+                          {order.user?.name || 'Guest'}
+                        </td>
+                        <td className="px-5 py-4 text-gray-600 max-w-xs truncate" title={itemNames}>
+                          {itemNames}
+                        </td>
                         <td className="px-5 py-4">
-                          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm ${statusClass[order.status] || statusClass.pending}`}>
+                          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm ${statusClass[currentStatus] || statusClass.pending}`}>
                             {order.status}
                           </span>
                         </td>
