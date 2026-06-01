@@ -117,6 +117,9 @@ function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [isFetching, setIsFetching] = useState(true)
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
+  
+  // State untuk membatasi jumlah pesanan "Done" yang tampil (default 5)
+  const [doneLimit, setDoneLimit] = useState(5)
 
   const loadOrders = useCallback(async (showLoading = false) => {
     if (showLoading) setIsFetching(true)
@@ -139,7 +142,7 @@ function AdminOrders() {
     try {
       await api.patch(`/admin/orders/${id}/status`, { status: nextStatus[order.status] })
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus[o.status] } : o))
-    } catch (error) { console.error("Failed to update status:", error); alert("Gagal update status.") } finally { setUpdatingOrderId(null) }
+    } catch (error) { console.error("Failed to update status:", error); alert("Failed to update status.") } finally { setUpdatingOrderId(null) }
   }
 
   const cancelOrder = async (id) => {
@@ -148,7 +151,7 @@ function AdminOrders() {
     try {
       await api.patch(`/admin/orders/${id}/status`, { status: 'cancelled' })
       setOrders(prev => prev.filter(o => o.id !== id))
-    } catch (error) { console.error("Failed to cancel:", error); alert("Gagal cancel.") } finally { setUpdatingOrderId(null) }
+    } catch (error) { console.error("Failed to cancel:", error); alert("Failed to cancel order.") } finally { setUpdatingOrderId(null) }
   }
 
   const columns = ['pending', 'cooking', 'done']
@@ -162,18 +165,75 @@ function AdminOrders() {
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-red-600' : ''}`} /> {isFetching ? 'Refreshing...' : 'Refresh Board'}
           </button>
         </div>
+        
         <div className="grid gap-6 lg:grid-cols-3 items-start">
-          {columns.map((column) => (
-            <div key={column} className="rounded-[2rem] bg-white p-5 shadow-sm border-2 border-gray-100 min-h-[500px]">
-              <div className="flex items-center justify-between mb-5 border-b-2 border-gray-100 pb-3">
-                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">{column}</h2>
-                <span className="bg-gray-100 text-gray-600 font-bold px-3 py-1 rounded-full text-xs">{orders.filter((order) => order.status === column).length}</span>
+          {columns.map((column) => {
+            // 1. Filter pesanan berdasarkan status kolom saat ini
+            const columnOrders = orders.filter((order) => order.status === column);
+            
+            // 2. Jika kolom adalah 'done', batasi jumlah yang tampil berdasarkan doneLimit
+            const displayedOrders = column === 'done' 
+              ? columnOrders.slice(0, doneLimit) 
+              : columnOrders;
+
+            return (
+              <div key={column} className="rounded-[2rem] bg-white p-5 shadow-sm border-2 border-gray-100 min-h-[500px]">
+                <div className="flex items-center justify-between mb-5 border-b-2 border-gray-100 pb-3">
+                  <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">{column}</h2>
+                  <span className="bg-gray-100 text-gray-600 font-bold px-3 py-1 rounded-full text-xs">
+                    {/* Tetap tampilkan total aslinya di header kolom */}
+                    {columnOrders.length}
+                  </span>
+                </div>
+                
+                <div className="space-y-4">
+                  {isFetching && orders.length === 0 ? (
+                    <div className="animate-pulse flex flex-col gap-4">
+                      {[1, 2].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl w-full"></div>)}
+                    </div>
+                  ) : columnOrders.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="bg-gray-50 p-4 rounded-full mb-3"><ChefHat className="w-8 h-8 text-gray-300" /></div>
+                      <p className="text-gray-400 font-bold text-sm">No orders yet</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Render kartu pesanan yang sudah dibatasi */}
+                      {displayedOrders.map((order) => (
+                        <OrderCard 
+                          key={order.id} 
+                          order={order} 
+                          moveStatus={moveStatus} 
+                          cancelOrder={cancelOrder} 
+                          isLoading={updatingOrderId === order.id} 
+                        />
+                      ))}
+
+                      {/* Tombol Load More khusus untuk kolom Done */}
+                      {column === 'done' && columnOrders.length > doneLimit && (
+                        <button 
+                          onClick={() => setDoneLimit(prev => prev + 5)}
+                          className="w-full mt-2 py-3 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-200 text-gray-600 font-bold rounded-xl text-sm transition-colors"
+                        >
+                          Show More ({columnOrders.length - doneLimit} remaining)
+                        </button>
+                      )}
+
+                      {/* Tombol Reset (Sembunyikan) jika sudah terlanjur membuka banyak */}
+                      {column === 'done' && doneLimit > 5 && (
+                        <button 
+                          onClick={() => setDoneLimit(5)}
+                          className="w-full py-2 text-gray-400 hover:text-gray-600 font-semibold text-xs transition-colors"
+                        >
+                          Show Less
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="space-y-4">
-                {isFetching && orders.length === 0 ? <div className="animate-pulse flex flex-col gap-4">{[1, 2].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl w-full"></div>)}</div> : orders.filter((order) => order.status === column).length === 0 ? <div className="flex flex-col items-center justify-center py-12 text-center"><div className="bg-gray-50 p-4 rounded-full mb-3"><ChefHat className="w-8 h-8 text-gray-300" /></div><p className="text-gray-400 font-bold text-sm">No orders yet</p></div> : orders.filter((order) => order.status === column).map((order) => <OrderCard key={order.id} order={order} moveStatus={moveStatus} cancelOrder={cancelOrder} isLoading={updatingOrderId === order.id} />)}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
     </main>
