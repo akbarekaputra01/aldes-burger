@@ -368,13 +368,13 @@ function Menu() {
                 <article
                   key={item.id}
                   ref={activeActionId === item.id ? activeCardRef : null}
-                  className={`group overflow-hidden flex flex-col rounded-3xl bg-white shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:shadow-xl ${
+                  className={`group flex flex-col overflow-hidden rounded-xl border-2 border-black bg-white transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${
                     item.is_custom 
-                      ? 'border-2 border-aldesYellow hover:shadow-aldesYellow/20' 
-                      : 'border border-aldesCream hover:shadow-aldesRed/10'
+                      ? 'shadow-[4px_4px_0px_0px_#EAB308]' 
+                      : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
                   }`}
                 >
-                  <div className="relative overflow-hidden">
+                  <div className="relative overflow-hidden border-b-2 border-black bg-white">
                     {menuImages[item.id] ? (
                       <img 
                         src={menuImages[item.id]} 
@@ -382,14 +382,14 @@ function Menu() {
                         className="h-48 w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105" 
                       />
                     ) : (
-                      <div className="h-48 w-full bg-aldesCream flex items-center justify-center">
-                        <span className="text-aldesRed/50 font-semibold">Image Not Found</span>
+                      <div className="h-48 w-full bg-white flex items-center justify-center">
+                        <span className="text-black font-bold">Image Not Found</span>
                       </div>
                     )}
                   </div>
                   
                   <div className="p-4 flex flex-col flex-1">
-                    <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-2xl px-2 py-1 text-xs font-bold ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-aldesCream text-aldesRed'}`}>
+                    <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-2 py-1 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
                       {item.is_custom ? (
                         <><Flame className="h-3.5 w-3.5" /> Kitchen</>
                       ) : section.key === 'sides' ? (
@@ -401,25 +401,25 @@ function Menu() {
                       )}
                     </div>
                     
-                    <h3 className="text-lg font-bold text-aldesRed">{item.name}</h3>
-                    <p className="mt-2 text-sm text-aldesRed/80 flex-1">{item.description}</p>
-                    <p className="mt-3 text-base font-semibold text-aldesRed">{currencyFormatter.format(item.price ?? 0)}</p>
+                    <h3 className="text-lg font-black text-aldesRed uppercase tracking-tight">{item.name}</h3>
+                    <p className="mt-2 text-sm text-black font-medium flex-1">{item.description}</p>
+                    <p className="mt-3 text-lg font-black text-black">{currencyFormatter.format(item.price ?? 0)}</p>
                     
                     {activeActionId === item.id ? (
                       <div className="mt-4 flex items-center justify-between gap-2 h-10">
-                        <div className="flex h-full items-center rounded-2xl bg-aldesCream px-1">
+                        <div className="flex h-full items-center overflow-hidden rounded-lg border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                           <button
                             type="button"
                             onClick={() => setTempQty((p) => Math.max(1, p - 1))}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
+                            className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
-                          <span className="w-8 text-center font-bold text-aldesRed">{tempQty}</span>
+                          <span className="w-8 border-x-2 border-black text-center font-bold text-black">{tempQty}</span>
                           <button
                             type="button"
                             onClick={() => setTempQty((p) => p + 1)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-aldesRed transition hover:bg-white"
+                            className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
@@ -427,7 +427,7 @@ function Menu() {
                         <button
                           type="button"
                           onClick={() => handleDirectAddToCart(item, tempQty)}
-                          className="flex h-full flex-1 items-center justify-center gap-1 rounded-2xl bg-aldesYellow font-semibold text-black transition hover:brightness-95"
+                          className="flex h-full flex-1 items-center justify-center gap-1 rounded-lg border-2 border-black bg-aldesYellow font-bold uppercase text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400"
                         >
                           Confirm <ChevronRight className="h-4 w-4" />
                         </button>
@@ -436,9 +436,9 @@ function Menu() {
                       <button
                         type="button"
                         onClick={() => handleInitialClick(item)}
-                        className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-2xl px-4 font-semibold transition ${
+                        className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-lg border-2 border-black px-4 font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
                           item.is_custom
-                            ? 'bg-aldesYellow text-black hover:brightness-95'
+                            ? 'bg-aldesYellow text-black hover:bg-yellow-400'
                             : 'bg-aldesRed text-white hover:brightness-110'
                         }`}
                       >

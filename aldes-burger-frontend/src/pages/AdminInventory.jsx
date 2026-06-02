@@ -6,11 +6,10 @@ import {
   PencilLine,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api'
 
-/* ─── helpers ─────────────────────────────────────────────────────────────── */
-
+// helpers
 function StockBadge({ stock }) {
   const low = stock <= 5
   const mid = stock <= 20
@@ -31,8 +30,7 @@ function StockBadge({ stock }) {
   )
 }
 
-/* ─── component ───────────────────────────────────────────────────────────── */
-
+// component
 function AdminInventory() {
   const [inventory, setInventory] = useState([])
   const [isLoadingInventory, setIsLoadingInventory] = useState(true)
@@ -61,7 +59,7 @@ function AdminInventory() {
     loadInventory({ showLoading: true })
   }, [])
 
-  const showSuccessNotification = (message) => {
+ const showSuccessNotification = (message) => {
     setSuccessMessage(message)
 
     setTimeout(() => {
@@ -69,8 +67,7 @@ function AdminInventory() {
     }, 2500)
   }
 
-  /* ── open/close edit modal ── */
-
+  /* — open/close edit modal — */
   const openEdit = (item) => {
     setEditTarget(item)
     setEditStock(String(item.stock))
@@ -109,8 +106,23 @@ function AdminInventory() {
     }
   }
 
-  /* ─── render ──────────────────────────────────────────────────────────── */
+  // LOGIKA BARU: Menyaring data agar item berharga (> 0) di atas, dan yang berharga 0 / strip di bawah
+  const sortedInventory = useMemo(() => {
+    return [...inventory].sort((a, b) => {
+      const priceA = Number(a.price || 0)
+      const priceB = Number(b.price || 0)
 
+      // Jika A punya harga dan B tidak, A naik ke atas
+      if (priceA > 0 && priceB <= 0) return -1
+      // Jika B punya harga dan A tidak, B naik ke atas
+      if (priceA <= 0 && priceB > 0) return 1
+
+      // Jika keduanya sama-sama punya harga atau sama-sama strip, urutkan alfabetis berdasarkan nama
+      return a.name.localeCompare(b.name)
+    })
+  }, [inventory])
+
+  /* render */
   const lowStockCount = inventory.filter((i) => i.stock <= 5).length
 
   return (
@@ -152,7 +164,6 @@ function AdminInventory() {
                 automatically from inventory.
               </p>
             </div>
-
             <div className="flex gap-3">
               <div className="rounded-2xl bg-aldesCream px-4 py-3 text-center">
                 <p className="text-xs font-medium text-gray-500">
@@ -233,8 +244,9 @@ function AdminInventory() {
                   </tr>
                 )}
 
+                {/* DIUBAH: Memakai sortedInventory dan pengecekan loading */}
                 {!isLoadingInventory &&
-                  inventory.map((item) => (
+                  sortedInventory.map((item) => (
                     <tr
                       key={item.id}
                       className="border-t border-gray-50 transition hover:bg-orange-50/40"
@@ -301,7 +313,7 @@ function AdminInventory() {
                     </tr>
                   ))}
 
-                {!isLoadingInventory && inventory.length === 0 && (
+                {!isLoadingInventory && sortedInventory.length === 0 && (
                   <tr>
                     <td
                       colSpan={5}
@@ -317,7 +329,7 @@ function AdminInventory() {
         </div>
       </section>
 
-      {/* ── Edit Stock Modal ─────────────────────────────────────────────── */}
+      {/* Edit Stock Modal */}
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-6 shadow-xl">
@@ -422,7 +434,6 @@ function AdminInventory() {
                   required
                 />
               </div>
-
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"

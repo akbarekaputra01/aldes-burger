@@ -64,7 +64,7 @@ function Profile() {
       })
       .catch(() => {
         if (!isMounted) return
-        setError('Gagal memuat data profil. Silakan muat ulang halaman.')
+        setError('Failed to load profile data. Please refresh the page.')
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)
@@ -88,7 +88,7 @@ function Profile() {
       await api.delete(`/addresses/${addressId}`)
       setAddresses((prev) => prev.filter((address) => address.id !== addressId))
     } catch {
-      setError('Gagal menghapus alamat. Silakan coba lagi.')
+      setError('Failed to delete address. Please try again.')
     } finally {
       setIsDeletingId(null)
     }
@@ -99,14 +99,14 @@ function Profile() {
     setPwdStatus({ loading: true, error: '', success: '' })
     
     if (passwordForm.password !== passwordForm.password_confirmation) {
-      setPwdStatus({ loading: false, error: 'Konfirmasi password baru tidak cocok!', success: '' })
+      setPwdStatus({ loading: false, error: 'New password confirmation does not match!', success: '' })
       return
     }
     
     try {
       await api.put('/user/password', passwordForm)
       
-      setPwdStatus({ loading: false, error: '', success: 'Password berhasil diperbarui!' })
+      setPwdStatus({ loading: false, error: '', success: 'Password updated successfully!' })
       setPasswordForm({ current_password: '', password: '', password_confirmation: '' })
       
       setTimeout(() => {
@@ -117,7 +117,7 @@ function Profile() {
     } catch (err) {
       setPwdStatus({
         loading: false,
-        error: err.response?.data?.message || 'Gagal mengubah password. Pastikan password lama Anda benar.',
+        error: err.response?.data?.message || 'Failed to change password. Please ensure your current password is correct.',
         success: ''
       })
     }
