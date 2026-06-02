@@ -10,7 +10,7 @@ import {
   UtensilsCrossed,
   Ticket,
   Sparkles,
-  XCircle // <-- Tambahan Ikon XCircle untuk Cancelled
+  XCircle
 } from 'lucide-react';
 import { ListItemSkeleton } from '../components/Skeletons';
 import api from '../lib/api';
@@ -54,11 +54,11 @@ function Transactions() {
   );
 
   return (
-    <main className="min-h-screen w-full bg-[#F3E8CC] pb-24 pt-10 font-sans text-[#2D2D2D]">
+    <main className="min-h-screen w-full bg-aldesCream pb-24 pt-10 font-sans text-[#2D2D2D]">
       <div className="mx-auto max-w-xl px-6">
         
         <section className="py-10 text-center">
-          <div className="mb-4 inline-block rotate-[-2deg] rounded-full border-2 border-black bg-[#D52518] px-4 py-1 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="mb-4 inline-block rotate-[-2deg] rounded-full border-2 border-black bg-aldesRed px-4 py-1 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
               <Sparkles size={12} /> Status Update
             </p>
@@ -76,14 +76,14 @@ function Transactions() {
           <button 
             onClick={() => setActiveTab('on_progress')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
-              ${activeTab === 'on_progress' ? 'bg-[#FFC926] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
+              ${activeTab === 'on_progress' ? 'bg-aldesYellow border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
             <UtensilsCrossed size={16} strokeWidth={3} /> On Going
           </button>
           <button 
             onClick={() => setActiveTab('history')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
-              ${activeTab === 'history' ? 'bg-[#FFC926] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
+              ${activeTab === 'history' ? 'bg-aldesYellow border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
             <History size={16} strokeWidth={3} /> History
           </button>
@@ -105,7 +105,7 @@ function Transactions() {
                     {/* BAGIAN IKON STATUS */}
                     <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black
                       ${activeTab === 'on_progress' 
-                          ? 'bg-[#D52518] text-white' 
+                          ? 'bg-aldesRed text-white' 
                           : order.status?.toLowerCase() === 'cancelled'
                             ? 'bg-red-100 text-red-600 border-red-600' // Styling khusus untuk cancelled
                             : 'bg-gray-100 text-gray-400'}`}>
@@ -118,13 +118,13 @@ function Transactions() {
                       )}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase text-[#D52518]">#ADL-{order.id.split('-')[0]}</p>
+                      <p className="text-[10px] font-black uppercase text-aldesRed">#ADL-{order.id.split('-')[0]}</p>
                       <h3 className={`mt-1 text-xl font-black uppercase italic leading-none ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}`}>
                         {order.status}
                       </h3>
                     </div>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black transition-colors group-hover:bg-[#FFC926]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black transition-colors group-hover:bg-aldesYellow">
                     <ArrowUpRight size={20} strokeWidth={3} />
                   </div>
                 </div>
@@ -155,7 +155,7 @@ function Transactions() {
           ) : (
             <div className="flex flex-col items-center py-20 text-center">
               <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[40px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                 <Clock3 size={48} className="text-[#D52518]" />
+                 <Clock3 size={48} className="text-aldesRed" />
               </div>
               <h3 className="text-3xl font-black uppercase italic tracking-tighter">
                 {activeTab === 'on_progress' ? 'Kitchen is Quiet!' : 'No History Yet'}
@@ -167,7 +167,7 @@ function Transactions() {
               </p>
               <button 
                 onClick={() => navigate('/menu')}
-                className="rounded-2xl border-4 border-black bg-[#FFC926] px-10 py-4 text-sm font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
+                className="rounded-2xl border-4 border-black bg-aldesYellow px-10 py-4 text-sm font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
               >
                 Let's Cook Something!
               </button>

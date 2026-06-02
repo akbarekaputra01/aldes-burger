@@ -14,18 +14,18 @@ function PaymentStatus() {
   const isSuccess = status !== 'failed'
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F3E8CC] px-4 py-10 font-sans">
+    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10 font-sans">
       <section className="relative w-full max-w-lg rounded-[2.5rem] border-[6px] border-black bg-white p-8 md:p-12 text-center shadow-[12px_12px_0_0_#000] animate-in fade-in zoom-in duration-300">
         
         {/* Badge Status Melayang */}
-        <div className={`absolute -top-6 left-1/2 -translate-x-1/2 -rotate-2 border-[4px] border-black px-6 py-2 rounded-xl shadow-[4px_4px_0_0_#000] z-20 ${isSuccess ? 'bg-[#FFC926]' : 'bg-[#D52518]'}`}>
+        <div className={`absolute -top-6 left-1/2 -translate-x-1/2 -rotate-2 border-[4px] border-black px-6 py-2 rounded-xl shadow-[4px_4px_0_0_#000] z-20 ${isSuccess ? 'bg-aldesYellow' : 'bg-aldesRed'}`}>
           <span className={`font-black uppercase italic tracking-tighter text-lg ${isSuccess ? 'text-black' : 'text-white'}`}>
             {isSuccess ? 'ORDER CONFIRMED!' : 'PAYMENT ERROR!'}
           </span>
         </div>
 
         {isSuccess ? (
-          /* Bagian Sukses - GIF dengan Frame Neobrutalism */
+          /* Bagian Sukses */
           <div className="mx-auto mb-8 mt-4 flex w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl border-[5px] border-black bg-white p-2 shadow-[8px_8px_0_0_#000]">
             <img 
               src={imgBurgerCooking} 
@@ -35,8 +35,8 @@ function PaymentStatus() {
           </div>
         ) : (
           /* Bagian Gagal */
-          <div className="mx-auto mb-8 mt-4 inline-flex h-28 w-28 items-center justify-center rounded-full border-[5px] border-black bg-white text-[#D52518] shadow-[8px_8px_0_0_#000]">
-            <CircleX className="h-16 w-16 stroke-[3]" />
+          <div className="mx-auto mb-8 mt-4 inline-flex h-28 w-28 items-center justify-center rounded-full border-[5px] border-black bg-white text-aldesRed shadow-[8px_8px_0_0_#000]">
+            <CircleX className="h-16 w-16 stroke-3" />
           </div>
         )}
 
@@ -55,7 +55,7 @@ function PaymentStatus() {
           <button 
             type="button" 
             className={`flex w-full items-center justify-center gap-3 rounded-2xl border-[5px] border-black py-4 text-xl font-black uppercase transition-all active:translate-y-1 active:shadow-[0_4px_0_0_#000] shadow-[0_8px_0_0_#000] ${
-              isSuccess ? 'bg-[#D52518] text-[#FFC926]' : 'bg-[#FFC926] text-black'
+              isSuccess ? 'bg-aldesRed text-aldesYellow' : 'bg-aldesYellow text-black'
             }`} 
             onClick={() => navigate('/transactions')}
           >
@@ -83,7 +83,7 @@ function PaymentStatus() {
               className="flex w-full items-center justify-center gap-2 rounded-2xl border-[5px] border-black bg-white py-4 text-xl font-black uppercase text-black transition-all hover:bg-gray-50 active:translate-y-1 active:shadow-[0_4px_0_0_#000] shadow-[0_8px_0_0_#000]" 
               onClick={() => navigate('/menu')}
             >
-              <Home size={24} strokeWidth={4} className="text-[#D52518]" /> BACK TO HOME
+              <Home size={24} strokeWidth={4} className="text-aldesRed" /> BACK TO HOME
             </button>
           )}
         </div>
