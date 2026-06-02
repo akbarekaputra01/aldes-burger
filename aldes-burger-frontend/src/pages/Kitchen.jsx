@@ -36,12 +36,9 @@ const getIngredientImage = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return imgLettuce
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return imgPickles
   if (n.includes('tomato') || n.includes('tomat')) return imgTomato
-  
-  // Tambahan untuk saus:
   if (n.includes('mayo')) return imgMayonaise
   if (n.includes('ketchup') || n.includes('saus tomat')) return imgKetchup
   if (n.includes('secret') || n.includes('rahasia')) return imgSecretSauce
-  
   return null
 }
 
@@ -66,10 +63,7 @@ const getStackOrder = (name) => {
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion')) return 4
   if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) return 5
   if (n.includes('cheese') || n.includes('keju')) return 6
-  
-  // Tambahan urutan untuk saus (tepat di bawah roti atas):
   if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) return 6.5
-  
   if (n.includes('top') || n.includes('atas')) return 7
   return 99
 }
@@ -89,10 +83,7 @@ const getIngredientThickness = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return 4
   if (n.includes('cheese') || n.includes('keju')) return 2
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return 2
-  
-  // Tambahan ketebalan untuk saus:
   if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) return 3
-  
   return 10
 }
 
@@ -149,33 +140,25 @@ function Kitchen() {
     if (incomingMenu?.id) return menu.find((m) => m.id === incomingMenu.id) ?? incomingMenu
     return menu.find((m) => m.id === menuId) ?? menu.find((m) => m.is_custom) ?? menu[0]
   }, [incomingMenu, menuId, menu])
-useEffect(() => {
+
+  useEffect(() => {
     const loadData = async () => {
       setIsFetching(true)
       try {
         const [menuRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
         setMenu(menuRes.data)
-
         const uniqueIngredients = [];
         const seenNames = new Set();
         
-        // 1. Tambahkan daftar kata kunci item yang TIDAK BOLEH masuk dapur burger
         const nonBurgerItems = ['water','drink', 'mineral', 'fries', 'nugget', 'soda', 'tea', 'ring', 'cola'];
-
         ingredientsRes.data.forEach((item) => {
-          // 2. Ubah nama ke huruf kecil untuk pengecekan
           const itemName = item.name.toLowerCase();
-          
-          // 3. Cek apakah nama item mengandung salah satu kata larangan di atas
           const isExcluded = nonBurgerItems.some(keyword => itemName.includes(keyword));
-
-          // 4. Hanya masukkan ke Pantry jika namanya belum ada DAN bukan item terlarang
           if (!seenNames.has(item.name) && !isExcluded) {
             seenNames.add(item.name);
             uniqueIngredients.push(item);
           }
         });
-
         setIngredients(uniqueIngredients);
       } catch (error) {
         setMenu([])
@@ -187,27 +170,21 @@ useEffect(() => {
     loadData()
   }, [])
 
-  // Initialize burger stack when menu & ingredients are ready
   useEffect(() => {
     if (!selectedMenu || ingredients.length === 0) return;
-
     if (selectedMenu.is_custom) {
       setBaselineStack([])
       setBurgerStack([])
     } else {
       let menuIngredients = selectedMenu.ingredients ?? []
-
-      // Fallback recipe if no ingredients from API
       if (menuIngredients.length === 0) {
         const isChicken = selectedMenu.name.toLowerCase().includes('chicken')
         const recipeKeywords = ['bottom bun', 'lettuce', 'tomato', 'pickle', isChicken ? 'chicken' : 'beef', 'cheese', 'top bun']
-
         menuIngredients = recipeKeywords.map(keyword => {
           const found = ingredients.find(i => i.name.toLowerCase().includes(keyword))
           return found ? { ...found, pivot: { quantity: 1 } } : null
         }).filter(Boolean)
       }
-
       const initialStack = toIngredientInstances(menuIngredients)
         .sort((a, b) => getStackOrder(a.ingredient_name) - getStackOrder(b.ingredient_name))
       setBaselineStack(initialStack)
@@ -216,7 +193,6 @@ useEffect(() => {
     setQty(1)
   }, [selectedMenu, ingredients])
 
-  // Get unique ingredients from Signature recipe for the Pantry checklist
   const signatureIngredients = useMemo(() => {
     if (!selectedMenu || selectedMenu.is_custom) return [];
     const uniqueIds = new Set();
@@ -227,7 +203,6 @@ useEffect(() => {
     });
   }, [baselineStack, selectedMenu]);
 
-  // Toggle ingredient checklist for Signature menus
   const toggleSignatureIngredient = (ingredientId, isCurrentlyIncluded) => {
     if (isCurrentlyIncluded) {
       setBurgerStack(prev => prev.filter(item => item.ingredient_id !== ingredientId));
@@ -289,7 +264,6 @@ useEffect(() => {
       baseline_ref: null,
       animate_drop: animateDrop,
     }
-
     setBurgerStack((prev) => {
       const next = [...prev]
       if (isTopBunItem(ingredient.name)) {
@@ -306,21 +280,16 @@ useEffect(() => {
     })
   }
 
-  // Reorder burger layers — buns are always locked at bottom/top
   const handleReorder = (dragId, dropId) => {
     if (dragId === dropId) return;
-
     setBurgerStack(prev => {
       const dragIdx = prev.findIndex(item => item.instance_id === dragId);
       const dropIdx = prev.findIndex(item => item.instance_id === dropId);
-
       if (dragIdx < 0 || dropIdx < 0) return prev;
 
-      // Prevent moving bun layers
       const dragItem = prev[dragIdx];
       if (isBottomBunItem(dragItem.ingredient_name) || isTopBunItem(dragItem.ingredient_name)) return prev;
 
-      // Prevent dropping onto bun positions
       const dropItem = prev[dropIdx];
       if (isBottomBunItem(dropItem.ingredient_name) || isTopBunItem(dropItem.ingredient_name)) return prev;
 
@@ -328,7 +297,6 @@ useEffect(() => {
       const [moved] = next.splice(dragIdx, 1);
       next.splice(dropIdx, 0, moved);
 
-      // Safety: buns must stay at first/last positions
       if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
       const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
       if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev;
@@ -341,7 +309,6 @@ useEffect(() => {
     e.preventDefault();
     e.stopPropagation();
     setDragOverItemId(null);
-
     if (!draggingData) return;
 
     if (draggingData.type === 'pantry') {
@@ -349,9 +316,7 @@ useEffect(() => {
         setDraggingData(null);
         return;
       }
-
       if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) return;
-
       setBurgerStack(prev => {
         const targetIdx = prev.findIndex(l => l.instance_id === targetInstanceId);
         const newLayer = {
@@ -363,7 +328,6 @@ useEffect(() => {
           baseline_ref: null,
           animate_drop: false,
         };
-
         const next = [...prev];
         next.splice(targetIdx, 0, newLayer);
 
@@ -382,7 +346,6 @@ useEffect(() => {
   const handleDropOnKitchen = (e) => {
     e.preventDefault()
     setIsDragOverBox(false)
-
     if (!draggingData) return
 
     if (draggingData.type === 'pantry') {
@@ -390,7 +353,6 @@ useEffect(() => {
         setDraggingData(null);
         return;
       }
-
       if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) {
         setDraggingData(null);
         return;
@@ -400,7 +362,6 @@ useEffect(() => {
       setBurgerStack((prev) => {
         const srcIdx = prev.findIndex((l) => l.instance_id === draggingData.instance_id)
         if (srcIdx < 0) return prev
-
         const next = [...prev]
         const [moved] = next.splice(srcIdx, 1)
         next.push(moved)
@@ -418,7 +379,6 @@ useEffect(() => {
   const handleAddAnotherVariation = () => {
     if (!canCheckout) return
     setIsSavingVariation(true)
-
     const payload = {
       menu_id: selectedMenu.id,
       name: selectedMenu.name,
@@ -429,9 +389,7 @@ useEffect(() => {
       ingredients: burgerStack.map((l) => l.ingredient_name),
       is_customized: true,
     }
-
     addToCart(payload)
-
     setTimeout(() => {
       setBurgerStack([...baselineStack]);
       setIsSavingVariation(false)
@@ -450,7 +408,6 @@ useEffect(() => {
       ingredients: burgerStack.map((l) => l.ingredient_name),
       is_customized: true,
     }
-
     setIsAddingToCart(true)
     addToCart(payload)
     navigate('/cart')
@@ -468,7 +425,7 @@ useEffect(() => {
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main className="relative z-0 min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-4 py-8 sm:px-6 font-sans">
       <style>
         {`
           @keyframes dropBounce {
@@ -489,43 +446,49 @@ useEffect(() => {
           }
         `}
       </style>
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
 
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+        
         {/* TOP: WORKSPACE */}
-        <article className="rounded-3xl bg-white p-6 shadow-md lg:p-8">
-          <p className="inline-flex rounded-full bg-aldesYellow px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black">Digital Kitchen</p>
-          <h1 className="mt-3 text-2xl font-black text-aldesRed">{selectedMenu?.name ?? 'Build your burger'}</h1>
-          <p className="mt-2 text-sm text-aldesRed/80">Drag ingredients from the Pantry, or reorder layers in the Stack List below (buns stay locked in place)!</p>
+        <article className="rounded-[2.5rem] bg-white p-6 shadow-[10px_10px_0_0_#000] border-[5px] border-black lg:p-8">
+          <p className="inline-flex rounded-xl bg-[#FFC926] border-[3px] border-black px-4 py-1.5 text-xs font-black uppercase tracking-widest text-black shadow-[3px_3px_0_0_#000]">
+            Digital Kitchen
+          </p>
+          <h1 className="mt-4 text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">
+            {selectedMenu?.name ?? 'Build your burger'}
+          </h1>
+          <p className="mt-2 text-sm font-bold text-gray-500 uppercase tracking-wide">
+            Drag ingredients from the Pantry, or reorder layers in the Stack List (buns are locked)!
+          </p>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-
+          <div className="mt-8 grid gap-8 lg:grid-cols-2">
+            
             {/* --- VISUAL STACK CONTAINER --- */}
             <div className="flex flex-col h-[550px] overflow-hidden">
-              <h2 className="mb-3 text-lg font-black text-aldesRed text-center">Visual Stack</h2>
-
+              <h2 className="mb-3 text-xl font-black text-black uppercase tracking-tight text-center">
+                Visual Stack
+              </h2>
               <div
-                className={`flex-1 rounded-3xl border-4 relative overflow-hidden transition-all duration-300 flex justify-center items-end pb-4 bg-cover bg-center
-                  ${isDragOverBox ? 'border-aldesYellow shadow-[inset_0_0_50px_rgba(234,179,8,0.3)]' : 'border-aldesCream/80 shadow-inner'}`}
+                className={`flex-1 rounded-3xl border-[4px] border-black relative overflow-hidden transition-all duration-300 flex justify-center items-end pb-4 bg-cover bg-center 
+                  ${isDragOverBox ? 'shadow-[inset_0_0_50px_rgba(255,201,38,0.5)]' : 'shadow-[inset_0_4px_20px_rgba(0,0,0,0.1)]'}`}
                 style={{ backgroundImage: `url(${imgKitchenBg})` }}
                 onDragOver={(e) => { e.preventDefault(); setIsDragOverBox(true) }}
                 onDragLeave={() => setIsDragOverBox(false)}
                 onDrop={handleDropOnKitchen}
                 onClick={() => setHoveredLayerId(null)}
               >
-
                 {/* OVERLAY KACA KETIKA KOSONG */}
                 <div className={`absolute inset-0 transition-all duration-500 pointer-events-none 
-                  ${burgerStack.length === 0
-                    ? (isDragOverBox ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-[3px]')
+                  ${burgerStack.length === 0 
+                    ? (isDragOverBox ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-[3px]') 
                     : 'bg-transparent backdrop-blur-none'}
                 `} />
 
                 {/* --- MINI THUMBNAIL LIST --- */}
-                <div className="absolute left-1 top-4 bottom-4 w-20 z-10 flex flex-col items-center gap-3 overflow-y-auto scrollbar-hide py-3 pointer-events-none">
+                <div className="absolute left-2 top-4 bottom-4 w-20 z-10 flex flex-col items-center gap-3 overflow-y-auto scrollbar-hide py-3 pointer-events-none">
                   {[...burgerStack].reverse().map(layer => {
                     const isHovered = hoveredLayerId === layer.instance_id;
                     const isDragTarget = dragOverItemId === layer.instance_id;
-
                     return (
                       <div
                         key={layer.instance_id}
@@ -543,10 +506,10 @@ useEffect(() => {
                         onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
                         onMouseLeave={() => setHoveredLayerId(null)}
                         title={layer.ingredient_name}
-                        className={`group pointer-events-auto w-14 h-14 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border-2 flex items-center justify-center flex-shrink-0 transition-all relative
+                        className={`group pointer-events-auto w-14 h-14 bg-white rounded-xl border-[3px] flex items-center justify-center flex-shrink-0 transition-all relative 
                           ${(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
-                          ${isHovered ? 'border-aldesRed scale-105 shadow-aldesRed/20 z-10' : 'border-aldesCream/80 hover:border-aldesYellow'}
-                          ${isDragTarget ? 'border-aldesYellow bg-aldesYellow/30 scale-105' : ''}`}
+                          ${isHovered ? 'border-[#D52518] scale-105 shadow-[4px_4px_0_0_#D52518] z-10' : 'border-black shadow-[4px_4px_0_0_#000]'}
+                          ${isDragTarget ? 'border-[#FFC926] bg-[#FFC926]/30 scale-105' : ''}`}
                       >
                         {!!selectedMenu?.is_custom && !isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name) && (
                           <button
@@ -555,16 +518,15 @@ useEffect(() => {
                               setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id));
                               setHoveredLayerId(null);
                             }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-sm hover:bg-red-600 transition-all z-20 cursor-pointer"
+                            className="absolute -top-2 -right-2 bg-[#D52518] border-2 border-black text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-[2px_2px_0_0_#000] hover:bg-black transition-all z-20 cursor-pointer"
                           >
-                            <X size={12} strokeWidth={3} />
+                            <X size={14} strokeWidth={4} />
                           </button>
                         )}
-
                         {getIngredientImage(layer.ingredient_name) ? (
                           <img src={getIngredientImage(layer.ingredient_name)} className="w-9 h-9 object-contain pointer-events-none drop-shadow-sm" alt="" />
                         ) : (
-                          <span className="text-[10px] font-bold text-aldesRed uppercase">Img</span>
+                          <span className="text-[10px] font-black text-black uppercase">Img</span>
                         )}
                       </div>
                     )
@@ -580,10 +542,10 @@ useEffect(() => {
                       setHoveredLayerId(null);
                       setQty(1);
                     }}
-                    className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-md text-red-500 rounded-xl px-4 py-2 shadow-md border border-red-100 flex items-center gap-2 text-xs font-bold hover:bg-red-50 hover:scale-105 active:scale-95 transition-all"
+                    className="absolute top-4 right-4 z-20 bg-white text-[#D52518] rounded-xl px-4 py-2 border-[3px] border-black shadow-[4px_4px_0_0_#000] flex items-center gap-2 text-xs font-black uppercase hover:bg-[#D52518] hover:text-[#FFC926] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
                     title="Clear all layers"
                   >
-                    <Trash2 className="h-4 w-4" /> CLEAR ALL
+                    <Trash2 className="h-4 w-4 stroke-[3]" /> CLEAR ALL
                   </button>
                 )}
 
@@ -592,25 +554,24 @@ useEffect(() => {
                 {/* BIG VISUAL BURGER STACK */}
                 {isFetching ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
-                    <Loader2 className="h-16 w-16 text-aldesRed animate-spin mb-4 drop-shadow-md" />
-                    <div className="bg-white/80 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-red-100 flex flex-col items-center animate-pulse">
-                      <span className="font-black text-lg text-aldesRed uppercase tracking-wide">Preparing Your Burger...</span>
+                    <Loader2 className="h-16 w-16 text-[#D52518] animate-spin mb-4 drop-shadow-md" />
+                    <div className="bg-white border-[4px] border-black px-6 py-2.5 rounded-2xl shadow-[6px_6px_0_0_#000] flex flex-col items-center animate-pulse">
+                      <span className="font-black text-lg text-black uppercase tracking-wide">Preparing Your Burger...</span>
                       <span className="text-xs font-bold text-gray-500">Loading recipe from kitchen</span>
                     </div>
                   </div>
                 ) : burgerStack.length === 0 ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center pt-20 z-20 transition-all">
                     <img src={imgBottomBurger} alt="placeholder" className="w-40 grayscale opacity-40 drop-shadow-xl animate-pulse" />
-                    <div className="mt-6 bg-aldesRed text-white px-6 py-2.5 rounded-full shadow-lg flex flex-col items-center animate-bounce">
-                      <span className="font-black text-lg">Empty Stack!</span>
-                      <span className="text-xs font-medium opacity-90">Drag the Bottom Bun here first</span>
+                    <div className="mt-6 bg-[#D52518] border-[4px] border-black text-[#FFC926] px-6 py-2.5 rounded-2xl shadow-[6px_6px_0_0_#000] flex flex-col items-center animate-bounce">
+                      <span className="font-black text-xl uppercase tracking-tighter">Empty Stack!</span>
+                      <span className="text-xs font-bold text-white uppercase mt-0.5">Drag Bottom Bun here first</span>
                     </div>
                   </div>
                 ) : (
                   stackWithPositions.map((layer, index) => {
                     const n = layer.ingredient_name.toLowerCase();
                     let imgWidthClass = 'w-[180px]';
-
                     if (n.includes('bun') || n.includes('bottom') || n.includes('top')) {
                       imgWidthClass = 'w-[200px]';
                     } else if (n.includes('beef') || n.includes('chicken') || n.includes('patty')) {
@@ -618,11 +579,11 @@ useEffect(() => {
                     } else if (n.includes('cheese') || n.includes('keju')) {
                       imgWidthClass = 'w-[180px]';
                     } else if (n.includes('sauce') || n.includes('saus') || n.includes('mayo') || n.includes('ketchup')) {
-                      // Lebar khusus untuk saus agar lelehannya proporsional
                       imgWidthClass = 'w-[160px]'; 
                     } else {
                       imgWidthClass = 'w-[180px]';
-                  }
+                    }
+
                     const isHovered = hoveredLayerId === layer.instance_id;
                     const isDragTarget = dragOverItemId === layer.instance_id;
 
@@ -646,15 +607,15 @@ useEffect(() => {
                               src={getIngredientImage(layer.ingredient_name)}
                               alt={layer.ingredient_name}
                               className={`object-contain relative z-10 transition-all duration-300 ${imgWidthClass} 
-                                  ${!isHovered && !isDragTarget ? 'drop-shadow-[0_12px_10px_rgba(0,0,0,0.25)]' : ''}
-                                  ${isHovered && !isDragTarget ? 'scale-[1.03] drop-shadow-[0_15px_15px_rgba(239,68,68,0.4)] brightness-105' : ''}
-                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-[0_20px_20px_rgba(234,179,8,0.8)] brightness-110 opacity-90' : ''}`}
+                                  ${!isHovered && !isDragTarget ? 'drop-shadow-[0_12px_10px_rgba(0,0,0,0.3)]' : ''}
+                                  ${isHovered && !isDragTarget ? 'scale-[1.03] drop-shadow-[0_15px_15px_rgba(213,37,24,0.5)] brightness-105' : ''}
+                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-[0_20px_20px_rgba(255,201,38,0.8)] brightness-110 opacity-90' : ''}`}
                             />
                           ) : (
                             <div
-                              className={`${imgWidthClass} h-12 bg-aldesYellow rounded-full border-4 border-aldesRed flex items-center justify-center text-base font-black text-aldesRed shadow-md relative z-10 transition-all duration-300
-                                  ${isHovered ? 'scale-[1.03] drop-shadow-lg brightness-105' : ''}
-                                  ${isDragTarget ? 'scale-[1.03] drop-shadow-lg brightness-110 opacity-90 border-dashed' : ''}`}
+                              className={`${imgWidthClass} h-12 bg-[#FFC926] rounded-full border-[4px] border-black flex items-center justify-center text-base font-black text-black shadow-[4px_4px_0_0_#000] relative z-10 transition-all duration-300
+                                  ${isHovered ? 'scale-[1.03]' : ''}
+                                  ${isDragTarget ? 'scale-[1.03] opacity-90 border-dashed' : ''}`}
                             >
                               {layer.ingredient_name}
                             </div>
@@ -667,24 +628,26 @@ useEffect(() => {
               </div>
             </div>
 
-            <aside className="rounded-3xl bg-white p-5 shadow-sm border border-aldesCream h-[550px] flex flex-col">
-              <h2 className="text-xl font-black text-aldesRed mb-4">Pantry</h2>
+            {/* PANTRY */}
+            <aside className="rounded-3xl bg-white p-5 border-[4px] border-black shadow-[8px_8px_0_0_#000] h-[550px] flex flex-col">
+              <h2 className="text-2xl font-black text-black uppercase tracking-tight mb-4 flex items-center gap-2">
+                <Flame size={24} className="text-[#D52518] fill-current" /> Pantry
+              </h2>
 
               {!selectedMenu?.is_custom ? (
                 // Signature menu UI: show ingredient checklist
                 <>
-                  <p className="text-xs text-gray-500 mb-3">Customize the Signature recipe (uncheck to remove an ingredient)</p>
-                  <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
+                  <p className="text-[11px] font-bold uppercase text-gray-500 mb-4 tracking-wide border-b-4 border-dashed border-black/10 pb-3">Customize Recipe (uncheck to remove)</p>
+                  <div className="flex-1 overflow-y-auto pr-3 flex flex-col gap-4">
                     {signatureIngredients.map((sigIng) => {
                       const isIncluded = burgerStack.some(l => l.ingredient_id === sigIng.ingredient_id);
-                      // Lock buns — they cannot be unchecked
                       const isBaseBun = isBottomBunItem(sigIng.ingredient_name) || isTopBunItem(sigIng.ingredient_name);
-
+                      
                       return (
                         <label
                           key={sigIng.ingredient_id}
-                          className={`group flex items-center gap-4 rounded-2xl border-2 p-3 transition-all cursor-pointer 
-                            ${!isIncluded ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-aldesCream/50 bg-white hover:border-aldesYellow hover:shadow-md'}`}
+                          className={`group flex items-center gap-4 rounded-2xl border-[3px] p-3 transition-all cursor-pointer 
+                            ${!isIncluded ? 'border-gray-300 bg-gray-100 opacity-60' : 'border-black bg-white shadow-[4px_4px_0_0_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000]'}`}
                         >
                           <div className="flex-shrink-0 pl-1">
                             <input
@@ -692,19 +655,19 @@ useEffect(() => {
                               checked={isIncluded}
                               disabled={isBaseBun}
                               onChange={() => toggleSignatureIngredient(sigIng.ingredient_id, isIncluded)}
-                              className="w-5 h-5 accent-aldesRed rounded border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+                              className="w-6 h-6 accent-[#D52518] rounded border-[3px] border-black cursor-pointer disabled:cursor-not-allowed"
                             />
                           </div>
-                          <div className={`h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl transition-transform ${!isIncluded ? 'bg-gray-200' : 'bg-aldesCream/30 group-hover:scale-110 group-hover:-rotate-3'}`}>
+                          <div className={`h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl border-2 border-transparent transition-transform ${!isIncluded ? 'bg-gray-200' : 'bg-[#F3E8CC] border-black group-hover:scale-110 group-hover:-rotate-3'}`}>
                             {getIngredientImage(sigIng.ingredient_name) ? (
                               <img src={getIngredientImage(sigIng.ingredient_name)} alt="" className="h-10 w-10 object-contain drop-shadow-sm pointer-events-none" />
                             ) : (
-                              <span className="text-[10px] text-aldesRed/40 font-bold uppercase">Img</span>
+                              <span className="text-[10px] text-black font-black uppercase">Img</span>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`truncate font-bold text-sm ${!isIncluded ? 'text-gray-500' : 'text-aldesRed'}`}>{sigIng.ingredient_name}</p>
-                            {isBaseBun && <p className="text-[10px] text-gray-400 mt-0.5">Required Foundation</p>}
+                            <p className={`truncate font-black text-sm uppercase tracking-tight ${!isIncluded ? 'text-gray-500' : 'text-black'}`}>{sigIng.ingredient_name}</p>
+                            {isBaseBun && <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase">Required Foundation</p>}
                           </div>
                         </label>
                       )
@@ -714,8 +677,8 @@ useEffect(() => {
               ) : (
                 // Custom menu UI: show draggable ingredients
                 <>
-                  <p className="text-xs text-gray-500 mb-3">Drag ingredients below into the burger stack area!</p>
-                  <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
+                  <p className="text-[11px] font-bold uppercase text-gray-500 mb-4 tracking-wide border-b-4 border-dashed border-black/10 pb-3">Drag ingredients into the visual stack</p>
+                  <div className="flex-1 overflow-y-auto pr-3 flex flex-col gap-4">
                     {isFetching ? (
                       Array.from({ length: 6 }).map((_, idx) => <ListItemSkeleton key={idx} />)
                     ) : (
@@ -724,7 +687,7 @@ useEffect(() => {
                         const isBottomBun = isBottomBunItem(ingredient.name);
                         const isDisabled = isFoundationMissing && !isBottomBun;
                         const itemPrice = Number(ingredient.price ?? 0);
-
+                        
                         return (
                           <div
                             key={ingredient.id}
@@ -738,36 +701,35 @@ useEffect(() => {
                               }
                             }}
                             onDragEnd={() => setDraggingData(null)}
-                            className={`group flex items-center gap-4 rounded-2xl border-2 p-3 transition-all
-                                ${isDisabled
-                                ? 'border-gray-100 bg-gray-50 opacity-40 grayscale cursor-not-allowed'
-                                : 'border-aldesCream/50 bg-white hover:border-aldesYellow hover:bg-aldesYellow/5 hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing'}`}
+                            className={`group flex items-center gap-3 rounded-2xl border-[3px] p-2.5 transition-all 
+                                ${isDisabled 
+                                ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed' 
+                                : 'border-black bg-white shadow-[4px_4px_0_0_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] cursor-grab active:cursor-grabbing'}`}
                           >
-                            <div className={`h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-xl transition-transform
-                                ${isDisabled ? 'bg-gray-200' : 'bg-aldesCream/30 group-hover:scale-110 group-hover:-rotate-3'}`}>
+                            <div className={`h-14 w-14 flex-shrink-0 flex items-center justify-center rounded-xl border-[2px] border-transparent transition-transform 
+                                ${isDisabled ? 'bg-gray-200' : 'bg-[#F3E8CC] border-black group-hover:scale-110 group-hover:-rotate-3'}`}>
                               {getIngredientImage(ingredient.name) ? (
-                                <img src={getIngredientImage(ingredient.name)} alt="" className="h-12 w-12 object-contain drop-shadow-sm pointer-events-none" />
+                                <img src={getIngredientImage(ingredient.name)} alt="" className="h-10 w-10 object-contain drop-shadow-sm pointer-events-none" />
                               ) : (
-                                <span className="text-[10px] text-aldesRed/40 font-bold uppercase">Img</span>
+                                <span className="text-[10px] text-black font-black uppercase">Img</span>
                               )}
                             </div>
                             <div className="flex-1 min-w-0 pointer-events-none">
-                              <p className={`truncate font-bold text-sm ${isDisabled ? 'text-gray-500' : 'text-aldesRed'}`}>{ingredient.name}</p>
-
+                              <p className={`truncate font-black text-sm uppercase tracking-tight ${isDisabled ? 'text-gray-500' : 'text-black'}`}>{ingredient.name}</p>
                               {itemPrice > 0 && (
-                                <p className="text-xs font-bold text-gray-500 mt-0.5">Rp {itemPrice.toLocaleString('id-ID')}</p>
+                                <p className="text-[10px] font-bold text-gray-500 mt-0.5">IDR {itemPrice.toLocaleString('id-ID')}</p>
                               )}
                             </div>
                             <button
                               type="button"
                               disabled={isDisabled}
                               onClick={() => addIngredientToStack(ingredient, burgerStack.length, true)}
-                              className={`rounded-xl p-2.5 shadow-sm transition-all flex-shrink-0
-                                ${isDisabled
-                                  ? 'bg-gray-300 text-gray-100'
-                                  : 'bg-aldesRed text-white hover:brightness-110 active:scale-95'}`}
+                              className={`rounded-xl border-[2px] border-black p-2 shadow-[2px_2px_0_0_#000] transition-all flex-shrink-0 
+                                ${isDisabled 
+                                  ? 'bg-gray-200 text-gray-400 border-gray-300 shadow-none' 
+                                  : 'bg-[#D52518] text-[#FFC926] hover:bg-black active:translate-y-1 active:translate-x-1 active:shadow-none'}`}
                             >
-                              <Plus className="h-5 w-5" />
+                              <Plus className="h-5 w-5 stroke-[4]" />
                             </button>
                           </div>
                         )
@@ -781,24 +743,30 @@ useEffect(() => {
         </article>
 
         {/* BOTTOM: ORDER SUMMARY */}
-        <aside className="rounded-3xl bg-white p-6 shadow-md lg:p-8">
-          <h2 className="text-xl font-black text-aldesRed mb-4 border-b border-aldesCream pb-4">Order Summary</h2>
+        <aside className="rounded-[2.5rem] bg-white p-6 shadow-[10px_10px_0_0_#000] border-[5px] border-black lg:p-8">
+          <h2 className="text-3xl font-black text-black uppercase tracking-tighter mb-6 border-b-[5px] border-dashed border-black pb-4">
+            Order Summary
+          </h2>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+            
             {/* 1. CURRENT STACK LIST */}
-            <div className="rounded-2xl bg-aldesCream p-4 border border-aldesRed/10 flex flex-col lg:col-span-6">
-              <p className="text-xs font-bold text-aldesRed uppercase tracking-wider mb-3">Stack List ({burgerStack.length})</p>
-
-              <div className="flex-1 space-y-2">
+            <div className="rounded-3xl bg-[#F3E8CC]/50 p-4 border-[4px] border-black shadow-[inset_0_4px_0_0_rgba(0,0,0,0.05)] flex flex-col lg:col-span-6 min-h-[250px]">
+              <p className="text-[11px] font-black text-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                Stack List <span className="bg-black text-[#FFC926] px-2 py-0.5 rounded-full">{burgerStack.length}</span>
+              </p>
+              
+              <div className="flex-1 space-y-3 overflow-y-auto max-h-[350px] pr-2 custom-scroll">
                 {burgerStack.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic text-center mt-4 pb-4">Burger is empty</p>
+                  <div className="h-full flex flex-col items-center justify-center py-10 opacity-50">
+                    <p className="text-sm font-black uppercase text-gray-500">Burger is empty</p>
+                  </div>
                 ) : (
                   [...burgerStack].reverse().map((layer) => {
                     const isHovered = hoveredLayerId === layer.instance_id;
                     const isDragTarget = dragOverItemId === layer.instance_id;
                     const layerPrice = Number(layer.ingredient_price ?? 0);
-
+                    
                     return (
                       <div
                         key={layer.instance_id}
@@ -813,34 +781,33 @@ useEffect(() => {
                         onDrop={(e) => handleDropOnItem(e, layer.instance_id)}
                         onMouseEnter={() => setHoveredLayerId(layer.instance_id)}
                         onMouseLeave={() => setHoveredLayerId(null)}
-                        className={`flex items-center justify-between text-sm p-2 rounded-xl border transition-all 
-                            ${(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
-                            ${isDragTarget ? 'border-aldesYellow border-2 shadow-md bg-aldesYellow/10 scale-[1.02]' :
-                            isHovered ? 'border-aldesRed bg-red-50/50 shadow-md scale-[1.01] z-10 relative' : 'bg-white border-aldesCream/50 shadow-sm'}`}
+                        className={`flex items-center justify-between text-sm p-2.5 rounded-xl border-[3px] transition-all 
+                             ${(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
+                            ${isDragTarget ? 'border-black shadow-[4px_4px_0_0_#000] bg-[#FFC926] scale-[1.02]' : 
+                            isHovered ? 'border-black bg-white shadow-[4px_4px_0_0_#000] -translate-y-0.5 z-10 relative' : 'bg-white border-black shadow-[2px_2px_0_0_#000]'}`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                           {(!isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name)) && (
-                            <GripVertical className={`h-4 w-4 flex-shrink-0 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-400'}`} />
+                            <GripVertical className={`h-4 w-4 flex-shrink-0 transition-colors ${isHovered ? 'text-black' : 'text-gray-400'}`} />
                           )}
-
-                          {getIngredientImage(layer.ingredient_name) ? (
-                            <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-7 w-7 object-contain drop-shadow-sm pointer-events-none flex-shrink-0" />
-                          ) : (
-                            <div className="h-7 w-7 bg-aldesCream rounded-full flex-shrink-0 pointer-events-none" />
-                          )}
-                          <span className={`font-bold truncate pointer-events-none flex-1 transition-colors ${isHovered ? 'text-aldesRed' : 'text-gray-700'}`}>
+                          <div className="h-8 w-8 bg-[#F3E8CC] rounded-lg border-2 border-black flex items-center justify-center flex-shrink-0 pointer-events-none">
+                            {getIngredientImage(layer.ingredient_name) ? (
+                              <img src={getIngredientImage(layer.ingredient_name)} alt="" className="h-6 w-6 object-contain drop-shadow-sm" />
+                            ) : (
+                              <span className="text-[8px] font-black uppercase">Img</span>
+                            )}
+                          </div>
+                          <span className={`font-black uppercase tracking-tight truncate pointer-events-none flex-1 transition-colors ${isHovered ? 'text-[#D52518]' : 'text-black'}`}>
                             {layer.ingredient_name}
                           </span>
                         </div>
-
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-3 flex-shrink-0">
                           {!!selectedMenu?.is_custom && layerPrice > 0 && (
-                            <span className="text-xs font-semibold text-gray-400 pointer-events-none">+{layerPrice.toLocaleString('id-ID')}</span>
+                            <span className="text-[10px] font-black text-gray-500 pointer-events-none">+Rp {layerPrice.toLocaleString('id-ID')}</span>
                           )}
-
                           {!!selectedMenu?.is_custom && !isBottomBunItem(layer.ingredient_name) && !isTopBunItem(layer.ingredient_name) && (
-                            <button onClick={() => setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id))} className="text-red-400 hover:text-white hover:bg-red-500 transition-colors p-1.5 rounded-lg ml-1">
-                              <Trash2 className="h-4 w-4" />
+                            <button onClick={() => setBurgerStack(prev => prev.filter(l => l.instance_id !== layer.instance_id))} className="text-black hover:text-[#FFC926] hover:bg-black border-2 border-transparent hover:border-black transition-colors p-1.5 rounded-lg">
+                              <Trash2 className="h-4 w-4 stroke-[3]" />
                             </button>
                           )}
                         </div>
@@ -852,60 +819,60 @@ useEffect(() => {
             </div>
 
             {/* 2. Price & Qty */}
-            <div className="flex flex-col gap-4 lg:col-span-3 justify-center sticky top-24">
-              <div className="flex flex-col border-b border-aldesCream/80 pb-3">
-                <p className="text-xs font-bold text-gray-400 uppercase">Unit Price</p>
-                <p className="text-xl font-black text-aldesRed">Rp {unitPrice.toLocaleString('id-ID')}</p>
+            <div className="flex flex-col gap-6 lg:col-span-3 justify-center sticky top-24">
+              <div className="flex flex-col border-b-[4px] border-dashed border-black pb-4">
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">Unit Price</p>
+                <p className="text-3xl font-black text-[#D52518] italic">IDR {unitPrice.toLocaleString('id-ID')}</p>
               </div>
-
-              <div className="flex items-center justify-between bg-white border-2 border-aldesCream rounded-2xl p-1.5 shadow-sm">
-                <button onClick={() => setQty(q => Math.max(1, q - 1))} className="p-2 rounded-xl bg-aldesCream text-aldesRed hover:bg-aldesYellow transition-colors"><Minus className="h-5 w-5" /></button>
-                <span className="text-lg font-black text-aldesRed w-8 text-center">{qty}</span>
-                <button onClick={() => setQty(q => q + 1)} className="p-2 rounded-xl bg-aldesCream text-aldesRed hover:bg-aldesYellow transition-colors"><Plus className="h-5 w-5" /></button>
+              <div>
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-2">Quantity</p>
+                <div className="flex items-center justify-between bg-white border-[4px] border-black rounded-2xl p-1.5 shadow-[4px_4px_0_0_#000]">
+                  <button onClick={() => setQty(q => Math.max(1, q - 1))} className="p-3 rounded-xl bg-white border-2 border-black text-black hover:bg-[#FFC926] active:scale-95 transition-all"><Minus className="h-5 w-5 stroke-[4]" /></button>
+                  <span className="text-2xl font-black text-black w-12 text-center">{qty}</span>
+                  <button onClick={() => setQty(q => q + 1)} className="p-3 rounded-xl bg-[#FFC926] border-2 border-black text-black hover:bg-black hover:text-[#FFC926] active:scale-95 transition-all"><Plus className="h-5 w-5 stroke-[4]" /></button>
+                </div>
               </div>
             </div>
 
             {/* 3. Multi-Variation Checkout Buttons */}
-            <div className="flex flex-col gap-3 lg:col-span-3 sticky top-24">
+            <div className="flex flex-col gap-4 lg:col-span-3 sticky top-24">
               <button
                 onClick={handleAddToCart}
                 disabled={!canCheckout || isAddingToCart}
-                className={`w-full py-5 rounded-2xl font-black text-lg flex flex-col items-center justify-center gap-1 shadow-lg transition-all min-h-[100px]
-                       ${canCheckout
-                    ? 'bg-aldesRed text-white shadow-red-200 hover:brightness-110 active:scale-[0.98]'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                className={`w-full py-4 rounded-2xl border-[4px] border-black font-black text-xl uppercase flex flex-col items-center justify-center gap-1 transition-all min-h-[90px] 
+                       ${canCheckout 
+                    ? 'bg-[#D52518] text-[#FFC926] shadow-[6px_6px_0_0_#000] active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-black' 
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none border-gray-400'
                   }`}
               >
                 {!canCheckout ? (
-                  <span className="text-sm font-bold uppercase text-center px-4">
+                  <span className="text-sm font-black uppercase text-center px-4">
                     {!isBottomBunValid ? "Needs Bottom Bun!" : "Needs Top Bun!"}
                   </span>
                 ) : (
                   <>
-                    <span className="text-sm font-bold text-white/90 uppercase tracking-wide">Finalize & Cart</span>
-                    <span>Rp {(unitPrice * qty).toLocaleString('id-ID')}</span>
+                    <span className="text-sm font-black text-white uppercase tracking-widest">Finalize & Cart</span>
+                    <span className="italic tracking-tighter">IDR {(unitPrice * qty).toLocaleString('id-ID')}</span>
                   </>
                 )}
               </button>
-
+              
               <button
                 onClick={handleAddAnotherVariation}
                 disabled={!canCheckout || isSavingVariation}
-                className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-2 transition-all
-                       ${canCheckout
-                    ? 'border-aldesRed text-aldesRed hover:bg-red-50 active:scale-[0.98]'
-                    : 'border-gray-200 text-gray-400 cursor-not-allowed'
+                className={`w-full py-4 rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 border-[4px] transition-all 
+                       ${canCheckout 
+                    ? 'border-black bg-white text-black shadow-[4px_4px_0_0_#000] active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#FFC926]' 
+                    : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed shadow-none'
                   }`}
               >
-                {isSavingVariation ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {isSavingVariation ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5 stroke-[4]" />}
                 CONFIRM & BUILD ANOTHER
               </button>
-
-              <p className="text-[10px] text-center text-gray-400 font-medium px-2 italic">
-                Use the button above to save this variation and build another without leaving the page.
+              <p className="text-[10px] text-center text-gray-500 font-bold px-2 uppercase tracking-wide">
+                Save this variation and build another without leaving the page.
               </p>
             </div>
-
           </div>
         </aside>
       </section>

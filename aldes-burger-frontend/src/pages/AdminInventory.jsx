@@ -1,9 +1,8 @@
 import { AlertTriangle, Package, PencilLine, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api'
 
-/* ─── helpers ─────────────────────────────────────────────────────────────── */
-
+// helpers
 function StockBadge({ stock }) {
   const low = stock <= 5
   const mid = stock <= 20
@@ -23,8 +22,7 @@ function StockBadge({ stock }) {
   )
 }
 
-/* ─── component ───────────────────────────────────────────────────────────── */
-
+// component
 function AdminInventory() {
   const [inventory, setInventory] = useState([])
   const [editTarget, setEditTarget] = useState(null) // ingredient being edited
@@ -40,8 +38,7 @@ function AdminInventory() {
     loadInventory()
   }, [])
 
-  /* ── open/close edit modal ── */
-
+  /* open/close edit modal */
   const openEdit = (item) => {
     setEditTarget(item)
     setEditStock(String(item.stock))
@@ -61,14 +58,28 @@ function AdminInventory() {
     loadInventory()
   }
 
-  /* ─── render ──────────────────────────────────────────────────────────── */
+  // LOGIKA BARU: Menyaring data agar item berharga (> 0) di atas, dan yang berharga 0 / strip di bawah
+  const sortedInventory = useMemo(() => {
+    return [...inventory].sort((a, b) => {
+      const priceA = Number(a.price || 0)
+      const priceB = Number(b.price || 0)
 
+      // Jika A punya harga dan B tidak, A naik ke atas
+      if (priceA > 0 && priceB <= 0) return -1
+      // Jika B punya harga dan A tidak, B naik ke atas
+      if (priceA <= 0 && priceB > 0) return 1
+
+      // Jika keduanya sama-sama punya harga atau sama-sama strip, urutkan alfabetis berdasarkan nama
+      return a.name.localeCompare(b.name)
+    })
+  }, [inventory])
+
+  /* render */
   const lowStockCount = inventory.filter((i) => i.stock <= 5).length
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-6 sm:px-6">
       <section className="mx-auto max-w-6xl space-y-6">
-
         {/* Header */}
         <div className="rounded-3xl border border-orange-100 bg-white px-6 py-5 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -84,7 +95,6 @@ function AdminInventory() {
                 Update ingredient stock. Menu availability is computed automatically from inventory.
               </p>
             </div>
-
             <div className="flex gap-3">
               <div className="rounded-2xl bg-aldesCream px-4 py-3 text-center">
                 <p className="text-xs font-medium text-gray-500">Total Items</p>
@@ -114,7 +124,8 @@ function AdminInventory() {
                 </tr>
               </thead>
               <tbody>
-                {inventory.map((item) => (
+                {/* DIUBAH: Memakai sortedInventory, bukan inventory langsung */}
+                {sortedInventory.map((item) => (
                   <tr key={item.id} className="border-t border-gray-50 transition hover:bg-orange-50/40">
                     <td className="px-4 py-3 font-semibold text-gray-900">{item.name}</td>
                     <td className="px-4 py-3">
@@ -130,17 +141,17 @@ function AdminInventory() {
                             <span
                               key={`${m.id}-${idx}`}
                               className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${m.is_custom ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-gray-800'}`}
-                              title={m.is_custom ? 'Used in custom burgers' : `×${m.quantity} per portion`}
+                              title={m.is_custom ? 'Used in custom burgers' : `${m.quantity} per portion`}
                             >
                               {m.is_custom && '🍔 '}{m.name}
                               {(!m.is_custom && m.quantity > 1) && (
-                                <span className="ml-1 font-bold text-yellow-700">×{m.quantity}</span>
+                                <span className="ml-1 font-bold text-yellow-700">x{m.quantity}</span>
                               )}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-gray-400">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -155,7 +166,6 @@ function AdminInventory() {
                     </td>
                   </tr>
                 ))}
-
                 {inventory.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">
@@ -169,7 +179,7 @@ function AdminInventory() {
         </div>
       </section>
 
-      {/* ── Edit Stock Modal ─────────────────────────────────────────────── */}
+      {/* Edit Stock Modal */}
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
@@ -194,25 +204,21 @@ function AdminInventory() {
               </button>
             </div>
 
-            {/* Impact info — only for recipe-based (non-custom) menus */}
+            {/* Impact info only for recipe-based (non-custom) menus */}
             {editTarget.menus?.filter(m => !m.is_custom).length > 0 && (
               <div className="mb-5 rounded-2xl bg-yellow-50 px-4 py-3">
-                <p className="text-xs font-bold text-yellow-700">⚡ Impacts computed stock of:</p>
+                <p className="text-xs font-bold text-yellow-700">⚠️ Impacts computed stock of:</p>
                 <ul className="mt-1.5 space-y-1">
                   {editTarget.menus.filter(m => !m.is_custom).map((m) => (
                     <li key={m.id} className="text-xs text-yellow-800">
                       • <span className="font-semibold">{m.name}</span>{' '}
-                      <span className="text-yellow-600">(uses ×{m.quantity} per portion)</span>
-                      {' → '}
-                      <span className="font-bold">
-                        {Math.floor(Number(editStock || 0) / m.quantity)} portions possible
-                      </span>
+                      <span className="text-yellow-600">(uses {m.quantity} per portion)</span>
                     </li>
                   ))}
                 </ul>
                 {editTarget.menus.some(m => m.is_custom) && (
                   <p className="mt-2 text-xs text-purple-600 font-medium">
-                    🍔 Also used in custom burgers (variable amounts)
+                    ✨ Also used in custom burgers (variable amounts)
                   </p>
                 )}
               </div>
@@ -233,7 +239,6 @@ function AdminInventory() {
                   required
                 />
               </div>
-
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
