@@ -20,7 +20,6 @@ import img6 from '../assets/menus/6.png'
 import img7 from '../assets/menus/7.png'
 import img8 from '../assets/menus/8.png'
 import img9 from '../assets/menus/9.png'
-import img10 from '../assets/menus/10.png'
 
 const menuImages = {
   1: img1,
@@ -31,8 +30,7 @@ const menuImages = {
   6: img6,
   7: img7,
   8: img8,
-  9: img9,
-  10: img10
+  9: img9
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -180,7 +178,6 @@ function Menu() {
     if (sectionKey === 'burgers') {
       if (item.ingredients && item.ingredients.length > 0) {
         
-        // FIX: Menggunakan flatMap untuk mengatasi data pivot bernilai 0 dari Tinker
         itemIngredients = item.ingredients
           .flatMap(i => {
             const pivotQty = Math.max(1, Number(i.pivot?.quantity || 1));

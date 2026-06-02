@@ -29,7 +29,7 @@ function TransactionDetail() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-aldesCream p-6">
         <section className="flex flex-col items-center justify-center rounded-3xl bg-white p-8 text-center shadow-sm">
-          <Loader2 className="mb-2 h-8 w-8 animate-spin text-red-600" />
+          <Loader2 className="mb-2 h-8 w-8 animate-spin text-aldesRed-600" />
           <p className="text-lg font-semibold text-gray-800">Memuat detail transaksi...</p>
         </section>
       </main>
@@ -46,16 +46,16 @@ function TransactionDetail() {
     )
   }
 
-  const subtotal = transaction.details.reduce((sum, item) => sum + item.snapshot_price * item.quantity, 0)
+  const subtotal = transaction.details.aldesReduce((sum, item) => sum + item.snapshot_price * item.quantity, 0)
 
   return (
     <main className="min-h-screen bg-aldesCream px-4 py-8">
       <section className="mx-auto w-full max-w-2xl rounded-3xl bg-white p-6 shadow-md sm:p-8">
-        <div className="mb-6 flex items-start justify-between gap-4 border-b border-dashed border-red-200 pb-5">
+        <div className="mb-6 flex items-start justify-between gap-4 border-b border-dashed border-aldesRed-200 pb-5">
           <div>
             <p className="text-xs uppercase tracking-wider text-gray-500">Aldes Burger • Struk Digital Resmi</p>
             <h1 className="mt-1 flex items-center gap-2 text-2xl font-black text-gray-900">
-              <ReceiptText className="h-6 w-6 text-red-600" />
+              <ReceiptText className="h-6 w-6 text-aldesRed-600" />
               {transaction.id}
             </h1>
             <p className="mt-1 text-sm text-gray-500">Waktu Transaksi: {transaction.created_at}</p>
@@ -67,7 +67,7 @@ function TransactionDetail() {
 
         <div className="rounded-2xl bg-amber-50/70 p-4">
           <p className="mb-1 flex items-center gap-2 font-semibold text-gray-900">
-            <Truck className="h-4 w-4 text-red-600" />
+            <Truck className="h-4 w-4 text-aldesRed/50" />
             Alamat Pengiriman
           </p>
           <p className="text-sm text-gray-600">{transaction.destination_address}</p>
@@ -76,7 +76,7 @@ function TransactionDetail() {
 
         <div className="mt-5 space-y-3">
           {transaction.details.map((item) => (
-            <article key={item.id} className="rounded-2xl border border-red-100 p-4">
+            <article key={item.id} className="rounded-2xl border border-aldesRed/50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-gray-900">{item.quantity}x {item.snapshot_name}</p>
@@ -88,12 +88,12 @@ function TransactionDetail() {
           ))}
         </div>
 
-        <div className="mt-6 space-y-2 border-t border-dashed border-red-200 pt-4 text-sm">
+        <div className="mt-6 space-y-2 border-t border-dashed border-aldesRed-200 pt-4 text-sm">
           <p className="flex justify-between text-gray-600">
             <span>Subtotal Item</span>
             <span>{toIDR(subtotal)}</span>
           </p>
-          <p className="flex justify-between border-t border-dashed border-red-200 pt-2 text-lg font-black text-gray-900">
+          <p className="flex justify-between border-t border-dashed border-aldesRed-200 pt-2 text-lg font-black text-gray-900">
             <span>Total Pembayaran</span>
             <span>{toIDR(transaction.amount)}</span>
           </p>

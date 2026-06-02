@@ -85,7 +85,7 @@ function SignUp() {
   };
 
   return (
-    <main className="min-h-screen w-full overflow-hidden bg-[#F3E8CC] font-sans selection:bg-[#FFC926] selection:text-black relative">
+    <main className="min-h-screen w-full overflow-hidden bg-aldesCream font-sans selection:bg-aldesYellow selection:text-black relative">
       
       {/* Background Burger Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.06]">
@@ -125,8 +125,8 @@ function SignUp() {
       </div>
 
       {/* Decorative Blobs */}
-      <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#D52518] rounded-full blur-3xl opacity-20" />
-      <div className="absolute bottom-[-120px] right-[-120px] w-96 h-96 bg-[#FFC926] rounded-full blur-3xl opacity-35" />
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-aldesRed rounded-full blur-3xl opacity-20" />
+      <div className="absolute bottom-[-120px] right-[-120px] w-96 h-96 bg-aldesYellow rounded-full blur-3xl opacity-35" />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-4 md:px-8 md:py-5 perspective-wrapper">
         <div
@@ -136,16 +136,16 @@ function SignUp() {
         >
           
           {/* LEFT BRAND SECTION */}
-          <section className="relative bg-[#D52518] px-7 py-7 md:px-9 md:py-8 flex flex-col justify-between overflow-hidden">
+          <section className="relative bg-aldesRed px-7 py-7 md:px-9 md:py-8 flex flex-col justify-between overflow-hidden">
             
             {/* Decorative Circle Lines */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="absolute top-8 -left-16 w-64 h-64 border-[24px] border-[#FFC926] rounded-full" />
+              <div className="absolute top-8 -left-16 w-64 h-64 border-[24px] border-aldesYellow rounded-full" />
               <div className="absolute bottom-[-90px] right-[-80px] w-72 h-72 border-[24px] border-white rounded-full" />
             </div>
 
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 bg-black text-[#FFC926] px-4 py-2 rounded-full border-2 border-[#FFC926] font-black text-xs uppercase tracking-wider shadow-[4px_4px_0_0_#FFC926]">
+              <div className="inline-flex items-center gap-2 bg-black text-aldesYellow px-4 py-2 rounded-full border-2 border-aldesYellow font-black text-xs uppercase tracking-wider shadow-[4px_4px_0_0_#FFC926]">
                 <Zap size={15} fill="#FFC926" />
                 Aldes Burger
               </div>
@@ -156,11 +156,11 @@ function SignUp() {
               <div className="relative mb-7">
                 <div className="absolute inset-0 bg-black rounded-[1.8rem] translate-x-3 translate-y-3" />
 
-                <div className="relative w-44 h-44 md:w-52 md:h-52 bg-[#F3E8CC] border-[4px] border-black rounded-[1.8rem] flex items-center justify-center shadow-inner overflow-hidden">
-                  <div className="absolute top-4 left-4 bg-[#FFC926] border-[3px] border-black rounded-full w-11 h-11" />
+                <div className="relative w-44 h-44 md:w-52 md:h-52 bg-aldesCream border-[4px] border-black rounded-[1.8rem] flex items-center justify-center shadow-inner overflow-hidden">
+                  <div className="absolute top-4 left-4 bg-aldesYellow border-[3px] border-black rounded-full w-11 h-11" />
                   <div className="absolute bottom-5 right-5 bg-white border-[3px] border-black rounded-full w-9 h-9" />
 
-                  <Sparkles className="absolute top-7 right-7 text-[#D52518] fill-[#D52518]" size={24} />
+                  <Sparkles className="absolute top-7 right-7 text-aldesRed fill-aldesRed" size={24} />
 
                   <img
                     src={MascotBurger}
@@ -169,12 +169,12 @@ function SignUp() {
                   />
                 </div>
 
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2 rounded-full border-[3px] border-[#FFC926] font-black text-[10px] uppercase whitespace-nowrap rotate-[-2deg]">
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2 rounded-full border-[3px] border-aldesYellow font-black text-[10px] uppercase whitespace-nowrap rotate-[-2deg]">
                   Fresh. Juicy. Crispy.
                 </div>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-[#FFC926] drop-shadow-[4px_4px_0_#000]">
+              <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-aldesYellow drop-shadow-[4px_4px_0_#000]">
                 Join The
                 <br />
                 <span className="text-white">Burger Club</span>
@@ -187,17 +187,17 @@ function SignUp() {
 
             <div className="relative z-10 grid grid-cols-3 gap-3 text-center">
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fast</p>
+                <p className="text-aldesYellow font-black text-base md:text-lg leading-none">Fast</p>
                 <p className="text-white text-[9px] font-bold uppercase mt-1">Order</p>
               </div>
 
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Hot</p>
+                <p className="text-aldesYellow font-black text-base md:text-lg leading-none">Hot</p>
                 <p className="text-white text-[9px] font-bold uppercase mt-1">Deals</p>
               </div>
 
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fresh</p>
+                <p className="text-aldesYellow font-black text-base md:text-lg leading-none">Fresh</p>
                 <p className="text-white text-[9px] font-bold uppercase mt-1">Taste</p>
               </div>
             </div>
@@ -208,7 +208,7 @@ function SignUp() {
             <div className="w-full max-w-[520px] mx-auto">
               
               <div className="mb-6">
-                <div className="inline-flex items-center gap-2 bg-[#FFC926] border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
+                <div className="inline-flex items-center gap-2 bg-aldesYellow border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
                   <Sparkles size={15} className="fill-black" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
                     Create New Account
@@ -217,7 +217,7 @@ function SignUp() {
 
                 <h2 className="text-4xl md:text-[46px] font-black text-black uppercase tracking-tighter leading-none">
                   Sign Up
-                  <span className="text-[#D52518]">.</span>
+                  <span className="text-aldesRed">.</span>
                 </h2>
 
                 <p className="mt-3 text-sm md:text-[15px] text-gray-500 font-semibold">
@@ -226,11 +226,11 @@ function SignUp() {
               </div>
 
               {error && (
-                <div className="mb-5 bg-[#D52518]/10 border-[3px] border-[#D52518] p-3.5 rounded-2xl flex items-start gap-3">
-                  <div className="bg-[#D52518] text-white rounded-full p-1 shrink-0">
+                <div className="mb-5 bg-aldesRed/10 border-[3px] border-aldesRed p-3.5 rounded-2xl flex items-start gap-3">
+                  <div className="bg-aldesRed text-white rounded-full p-1 shrink-0">
                     <AlertCircle size={17} />
                   </div>
-                  <p className="text-sm font-black text-[#D52518]">{error}</p>
+                  <p className="text-sm font-black text-aldesRed">{error}</p>
                 </div>
               )}
 
@@ -246,12 +246,12 @@ function SignUp() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Full Name */}
                 <div className="group">
-                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">
                     Full Name
                   </label>
 
-                  <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                    <User size={19} className="mr-3 text-[#D52518] shrink-0" />
+                  <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                    <User size={19} className="mr-3 text-aldesRed shrink-0" />
                     <input
                       className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
                       placeholder="Enter your full name"
@@ -264,12 +264,12 @@ function SignUp() {
                 {/* Email & Phone */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">
                       Email
                     </label>
 
-                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                      <Mail size={18} className="mr-3 text-[#D52518] shrink-0" />
+                    <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Mail size={18} className="mr-3 text-aldesRed shrink-0" />
                       <input
                         type="email"
                         className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
@@ -281,12 +281,12 @@ function SignUp() {
                   </div>
 
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">
                       Phone
                     </label>
 
-                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                      <Phone size={18} className="mr-3 text-[#D52518] shrink-0" />
+                    <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Phone size={18} className="mr-3 text-aldesRed shrink-0" />
                       <input
                         className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
                         placeholder="0812..."
@@ -301,12 +301,12 @@ function SignUp() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Password */}
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">
                       Password
                     </label>
 
-                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                      <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+                    <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Lock size={18} className="mr-3 text-aldesRed shrink-0" />
 
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -319,7 +319,7 @@ function SignUp() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
+                        className="ml-2 text-black hover:text-aldesRed transition-colors shrink-0"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -329,12 +329,12 @@ function SignUp() {
 
                   {/* Confirm Password */}
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">
                       Confirm Password
                     </label>
 
-                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                      <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+                    <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Lock size={18} className="mr-3 text-aldesRed shrink-0" />
 
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -347,7 +347,7 @@ function SignUp() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
+                        className="ml-2 text-black hover:text-aldesRed transition-colors shrink-0"
                         aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                       >
                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -360,9 +360,9 @@ function SignUp() {
                 <button
                   type="submit"
                   disabled={isLoading || success}
-                  className="w-full bg-[#D52518] text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
+                  className="w-full bg-aldesRed text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-aldesYellow -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
 
                   <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
                     {isLoading ? (
@@ -390,7 +390,7 @@ function SignUp() {
                   Already have an account?{' '}
                   <Link
                     to="/login"
-                    className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4"
+                    className="text-aldesRed hover:bg-aldesYellow px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4"
                   >
                     Login here
                   </Link>
