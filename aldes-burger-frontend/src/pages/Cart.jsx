@@ -12,6 +12,9 @@ import imgLettuce from '../assets/lettuce.png'
 import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
+import imgKetchup from '../assets/ketchup.png'
+import imgMayonnaise from '../assets/mayonnaise.png'
+import imgSecretSauce from '../assets/secret_sauce.png'
 import imgFrenchFries from '../assets/menus png/french_fries.png'
 import imgNugget from '../assets/menus png/nugget.png'
 import imgOnionRing from '../assets/menus png/onion_ring.png'
@@ -28,6 +31,9 @@ const ingredientImageMap = {
   lettuce: imgLettuce,
   pickle: imgPickles,
   tomato: imgTomato,
+  ketchup: imgKetchup,
+  mayonnaise: imgMayonnaise,
+  'secret sauce': imgSecretSauce
 }
 
 const menuImageMap = {
@@ -53,7 +59,7 @@ const getIngredientThickness = (name) => {
   const n = name.toLowerCase()
   if (n.includes('lettuce')) return 0 
   if (n.includes('bottom') || n.includes('pickle') || n.includes('tomato')) return 2
-  if (n.includes('cheese')) return 4
+  if (n.includes('cheese') || n.includes('ketchup') || n.includes('mayonnaise') || n.includes('secret sauce')) return 4
   if (n.includes('beef') || n.includes('chicken')) return 10
   if (n.includes('top')) return 12
   return 2
@@ -149,8 +155,20 @@ function Cart() {
   const getItemPrice = (item) => Number((item.unit_price ?? item.price ?? 0).toString().replace(/[^\d]/g, '')) || 0;
 
   const getIngredientNameById = (item, id) => {
-    const names = { '1':'Beef','2':'Chicken','3':'Cheese','4':'Pickles','5':'Lettuce','6':'Tomato','7':'Top Bun','8':'Bottom Bun' };
-    return names[String(id)] || `Item #${id}`;
+    const names = { 
+      '1':'Beef',
+      '2':'Chicken',
+      '3':'Cheese',
+      '4':'Pickles',
+      '5':'Lettuce',
+      '6':'Tomato',
+      '7':'Top Bun',
+      '8':'Bottom Bun',
+      '9':'Ketchup',
+      '10':'Mayonnaise',
+      '11':'Secret Sauce'
+    };
+    return names[String(id)];
   };
 
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -158,14 +176,14 @@ function Cart() {
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
-      <main className="min-h-screen w-full flex items-center justify-center bg-[#F3E8CC] p-4 font-sans">
+      <main className="min-h-screen w-full flex items-center justify-center bg-aldesCream p-4 font-sans">
         <section className="w-full max-w-[500px] bg-white border-[6px] border-black rounded-[2.5rem] p-8 text-center shadow-[12px_12px_0_0_#000]">
           <ShoppingBag className="mx-auto h-16 w-16 text-black mb-4 stroke-[2.5]" />
           <h2 className="text-3xl font-black text-black uppercase tracking-tighter">EMPTY CART!</h2>
           <p className="mt-2 text-gray-500 font-bold text-sm uppercase">EMPTY CART, EMPTY TUMMY. FIX IT FAST! 🍔</p>
           <button
             onClick={() => navigate('/menu')}
-            className="w-full mt-6 bg-[#D52518] text-[#FFC926] py-4 rounded-2xl border-[5px] border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_2px_0_0_#000] transition-all flex justify-center items-center gap-2"
+            className="w-full mt-6 bg-aldesRed text-aldesYellow py-4 rounded-2xl border-[5px] border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_2px_0_0_#000] transition-all flex justify-center items-center gap-2"
           >
             GRAB YOUR MENU <ArrowRight strokeWidth={4} size={22}/>
           </button>
@@ -179,28 +197,28 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <main className="min-h-screen w-full bg-[#F3E8CC] p-2 md:p-6 font-sans flex justify-center items-start">
+    <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 font-sans flex justify-center items-start">
       <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
         
         {/* Badge Samping */}
-        <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-[#D52518] border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
-          <span className="font-black text-[#FFC926] text-lg md:text-2xl uppercase italic tracking-tighter">CART</span>
+        <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
+          <span className="font-black text-aldesYellow text-lg md:text-2xl uppercase italic tracking-tighter">CART</span>
         </div>
 
         {/* Header Title */}
         <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
           <h2 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter leading-none flex items-center gap-3">
-            <ReceiptText size={40} className="text-black stroke-[3]" />
+            <ReceiptText size={40} className="text-black stroke-3" />
             MY ORDERS
           </h2>
           <p className="text-gray-400 font-bold text-[10px] md:text-xs uppercase mt-2">Check and manage your items before checkout! ✨</p>
         </div>
 
         {/* Pilih Semua Box */}
-        <div className="bg-[#F3E8CC]/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
+        <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
           <button onClick={toggleSelectAll} className="flex-shrink-0 active:scale-90 transition-transform">
             {selectedIds.length === cart.length && cart.length > 0 ? (
-              <div className="w-8 h-8 bg-[#D52518] border-4 border-black rounded-xl flex items-center justify-center">
+              <div className="w-8 h-8 bg-aldesRed border-4 border-black rounded-xl flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#FFC926" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -223,7 +241,7 @@ function Cart() {
                 
                 <button onClick={() => toggleSelect(item.id)} className="flex-shrink-0 active:scale-90 transition-transform z-10">
                   {isSelected ? (
-                    <div className="w-7 h-7 bg-[#D52518] border-4 border-black rounded-lg flex items-center justify-center">
+                    <div className="w-7 h-7 bg-aldesRed border-4 border-black rounded-lg flex items-center justify-center">
                       <svg viewBox="0 0 24 24" fill="none" stroke="#FFC926" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
@@ -243,7 +261,7 @@ function Cart() {
                         // Show the full burger stack as a readable pill list
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.ingredients.map((name, i) => (
-                            <span key={i} className="text-[10px] font-bold bg-[#F3E8CC] text-black px-2 py-0.5 rounded-full border border-black/10">
+                            <span key={i} className="text-[10px] font-bold bg-aldesCream text-black px-2 py-0.5 rounded-full border border-black/10">
                               {name}
                             </span>
                           ))}
@@ -263,12 +281,12 @@ function Cart() {
                         </div>
                       ) : null}
                     </div>
-                    <p className="mt-2 text-lg font-black text-[#D52518] tracking-tight">{formatCurrency(getItemPrice(item))}</p>
+                    <p className="mt-2 text-lg font-black text-aldesRed tracking-tight">{formatCurrency(getItemPrice(item))}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end justify-between gap-4 self-stretch py-1">
-                  <button onClick={() => removeFromCart(item.id)} className="text-black hover:text-[#D52518] transition-colors active:scale-90">
+                  <button onClick={() => removeFromCart(item.id)} className="text-black hover:text-aldesRed transition-colors active:scale-90">
                     <Trash2 size={24} className="stroke-[2.5]" />
                   </button>
                   
@@ -277,7 +295,7 @@ function Cart() {
                       <Minus size={14} strokeWidth={4} />
                     </button>
                     <span className="w-8 text-center text-sm font-black text-black">{item.qty ?? 1}</span>
-                    <button onClick={() => handleIncrease(item)} className="flex h-7 w-7 items-center justify-center bg-[#FFC926] text-black font-black border-2 border-black rounded-md active:scale-75 transition-transform">
+                    <button onClick={() => handleIncrease(item)} className="flex h-7 w-7 items-center justify-center bg-aldesYellow text-black font-black border-2 border-black rounded-md active:scale-75 transition-transform">
                       <Plus size={14} strokeWidth={4} />
                     </button>
                   </div>
@@ -305,7 +323,7 @@ function Cart() {
           
           <div className="flex justify-between border-t-4 border-black pt-4 text-lg md:text-xl font-black text-black items-center">
             <span className="tracking-tighter">TOTAL PAYMENT</span>
-            <span className="text-xl md:text-2xl font-black text-[#D52518] bg-[#FFC926] border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
+            <span className="text-xl md:text-2xl font-black text-aldesRed bg-aldesYellow border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
               {formatCurrency(grandTotal)}
             </span>
           </div>
@@ -320,7 +338,7 @@ function Cart() {
             }}
             className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-xl md:text-2xl uppercase flex justify-center items-center gap-2 transition-all ${
               selectedIds.length > 0 
-              ? 'bg-[#D52518] text-[#FFC926] shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000]' 
+              ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000]' 
               : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
             }`}
           >

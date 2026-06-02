@@ -11,7 +11,6 @@ function Footer() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
 
-    // Resolusi internal canvas (Dibuat lebar agar area jalannya panjang)
     const W = 1200
     const H = 120
     canvas.width = W
@@ -20,7 +19,7 @@ function Footer() {
     const COLS = 4
     const ROWS = 2
     const N = 8
-    const GROUND = H - 15 // Posisi tanah/pijakan di canvas
+    const GROUND = H - 15
     const LEFT_B = 60
     const RIGHT_B = W - 60
 
@@ -28,8 +27,8 @@ function Footer() {
     const fps = 8
     const walkSpeed = 90
     
-    let x = RIGHT_B // Dimulai dari sisi kanan
-    let dir = -1    // -1 = jalan ke kiri, 1 = jalan ke kanan
+    let x = RIGHT_B 
+    let dir = -1 
     let frame = 0
     let frameT = 0
     let lastTs = null
@@ -40,7 +39,6 @@ function Footer() {
     let fh = 0
     let loaded = false
 
-    // Fungsi menghapus background putih dari sprite
     const processSprite = (img) => {
       fw = Math.floor(img.naturalWidth / COLS)
       fh = Math.floor(img.naturalHeight / ROWS)
@@ -55,7 +53,7 @@ function Footer() {
       for (let p = 0; p < d.length; p += 4) {
         const r = d[p], g = d[p + 1], b = d[p + 2]
         if (r > 225 && g > 225 && b > 225) {
-          d[p + 3] = 0 // Jadikan transparan
+          d[p + 3] = 0
         } else if (r > 200 && g > 200 && b > 200) {
           const bright = (r + g + b) / 3
           d[p + 3] = Math.max(0, Math.floor((255 - bright) * 2.5))
@@ -65,31 +63,28 @@ function Footer() {
       loaded = true
     }
 
-    // Load Gambar Sprite
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => processSprite(img)
-    img.src = mascotSprite // Pastikan file '1.jpeg' berada di dalam folder public React Anda
+    img.src = mascotSprite 
 
-    // Gambar bayangan di bawah maskot
     const drawShadow = (cx) => {
       ctx.save()
       ctx.globalAlpha = 0.25
-      ctx.fillStyle = '#000' // Bayangan hitam agar terlihat di atas bg merah
+      ctx.fillStyle = '#000'
       ctx.beginPath()
       ctx.ellipse(cx, GROUND + 8, 35, 7, 0, 0, Math.PI * 2)
       ctx.fill()
       ctx.restore()
     }
 
-    // Gambar frame maskot
     const drawSprite = (fi, cx, bottom, flip) => {
       if (!loaded) return
       const col = fi % COLS
       const row = Math.floor(fi / COLS)
       const sx = col * fw
       const sy = row * fh
-      const dh = 120 // Ukuran tinggi maskot di layar
+      const dh = 120
       const dw = Math.round((dh * fw) / fh)
       const dx = cx - dw / 2
       const dy = bottom - dh
@@ -104,21 +99,17 @@ function Footer() {
       ctx.restore()
     }
 
-    // Loop Animasi Utama
     const loop = (ts) => {
       if (!lastTs) lastTs = ts
       const dt = Math.min((ts - lastTs) / 1000, 0.05)
       lastTs = ts
 
-      // Bersihkan canvas agar transparan
       ctx.clearRect(0, 0, W, H)
 
-      // Update posisi
       x += dir * walkSpeed * dt
       if (x >= RIGHT_B) { x = RIGHT_B; dir = -1; }
       if (x <= LEFT_B)  { x = LEFT_B;  dir =  1; }
       
-      // Update frame sprite
       frameT += dt
       if (frameT >= 1 / fps) { 
         frame = (frame + 1) % N
@@ -136,13 +127,12 @@ function Footer() {
 
     requestRef = requestAnimationFrame(loop)
 
-    // Cleanup saat unmount
     return () => cancelAnimationFrame(requestRef)
   }, [])
 
   return (
     <>
-      <footer className="bg-aldesRed px-4 pb-8 pt-16 text-white sm:px-6 lg:px-8">
+      <footer className="bg-aldesRed px-4 py-4 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 md:grid-cols-3 lg:gap-16">
           
           {/* Kolom 1: Brand & Sosial Media */}
@@ -150,7 +140,7 @@ function Footer() {
             <div>
               <h3 className="text-3xl font-black italic tracking-wide text-aldesYellow">ALDES BURGER</h3>
               <p className="mt-3 text-sm leading-relaxed text-white/80">
-                Nikmati kelezatan burger autentik dengan bahan-bahan premium pilihan. Kepuasan Anda adalah prioritas utama kami.
+                Enjoy the deliciousness of an authentic burger made with carefully selected premium ingredients. Your satisfaction is our top priority.
               </p>
             </div>
             
@@ -200,7 +190,7 @@ function Footer() {
               </li>
               <li className="flex items-center gap-3 transition-colors hover:text-white">
                 <Mail size={18} className="shrink-0 text-aldesYellow" />
-                <span>hello@aldesburger.com</span>
+                <span>aldesburger@gmail.com</span>
               </li>
             </ul>
           </div>
