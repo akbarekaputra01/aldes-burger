@@ -15,7 +15,7 @@ import imgPickles from '../assets/pickles.png'
 import imgTomato from '../assets/tomato.png'
 import imgTopBurger from '../assets/top_burger.png'
 import imgKitchenBg from '../assets/kitchen.png'
-import imgMayonaise from '../assets/mayonaise.png'
+import imgMayonnaise from '../assets/mayonnaise.png'
 import imgKetchup from '../assets/ketchup.png'
 import imgSecretSauce from '../assets/secret_sauce.png'
 
@@ -36,7 +36,7 @@ const getIngredientImage = (name) => {
   if (n.includes('lettuce') || n.includes('selada')) return imgLettuce
   if (n.includes('pickle') || n.includes('acar') || n.includes('onion') || n.includes('caramelized')) return imgPickles
   if (n.includes('tomato') || n.includes('tomat')) return imgTomato
-  if (n.includes('mayo')) return imgMayonaise
+  if (n.includes('mayo')) return imgMayonnaise
   if (n.includes('ketchup') || n.includes('saus tomat')) return imgKetchup
   if (n.includes('secret') || n.includes('rahasia')) return imgSecretSauce
   return null

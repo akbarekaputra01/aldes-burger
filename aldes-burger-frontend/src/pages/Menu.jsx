@@ -20,6 +20,7 @@ import img6 from '../assets/menus/6.png'
 import img7 from '../assets/menus/7.png'
 import img8 from '../assets/menus/8.png'
 import img9 from '../assets/menus/9.png'
+import img10 from '../assets/menus/10.png'
 
 const menuImages = {
   1: img1,
@@ -31,6 +32,7 @@ const menuImages = {
   7: img7,
   8: img8,
   9: img9,
+  10: img10
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -40,15 +42,14 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const sectionDefinitions = [
-  { key: 'burgers', label: 'Burgers' },
-  { key: 'sides', label: 'Side Dishes' },
-  { key: 'drinks', label: 'Drinks' },
+  { key: 'burgers', label: 'BURGERS' },
+  { key: 'sides', label: 'SIDE DISHES' },
+  { key: 'drinks', label: 'DRINKS' },
 ]
 
 const sideKeywords = ['fries', 'side', 'nugget', 'onion ring', 'salad']
 const drinkKeywords = ['drink', 'cola', 'coke', 'tea', 'coffee', 'juice', 'soda', 'water']
 
-// UPDATE: Urutan Tumpukan dengan Ketchup, Mayo, dan Sauce
 const getStackOrder = (name) => {
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
