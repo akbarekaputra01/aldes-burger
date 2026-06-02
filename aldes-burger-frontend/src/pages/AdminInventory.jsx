@@ -1,4 +1,11 @@
-import { AlertTriangle, Package, PencilLine, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Package,
+  PencilLine,
+  X,
+} from 'lucide-react'
 import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api'
 
@@ -6,6 +13,7 @@ import api from '../lib/api'
 function StockBadge({ stock }) {
   const low = stock <= 5
   const mid = stock <= 20
+
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -25,37 +33,77 @@ function StockBadge({ stock }) {
 // component
 function AdminInventory() {
   const [inventory, setInventory] = useState([])
-  const [editTarget, setEditTarget] = useState(null) // ingredient being edited
-  const [editStock, setEditStock] = useState('')
+  const [isLoadingInventory, setIsLoadingInventory] = useState(true)
 
-  const loadInventory = () =>
-    api
-      .get('/admin/inventory')
-      .then(({ data }) => setInventory(data))
-      .catch(() => setInventory([]))
+  const [editTarget, setEditTarget] = useState(null)
+  const [editStock, setEditStock] = useState('')
+  const [isSavingStock, setIsSavingStock] = useState(false)
+
+  const [successMessage, setSuccessMessage] = useState('')
+
+  const loadInventory = async ({ showLoading = false } = {}) => {
+    if (showLoading) setIsLoadingInventory(true)
+
+    try {
+      const { data } = await api.get('/admin/inventory')
+      setInventory(data)
+    } catch (error) {
+      console.error(error)
+      setInventory([])
+    } finally {
+      if (showLoading) setIsLoadingInventory(false)
+    }
+  }
 
   useEffect(() => {
-    loadInventory()
+    loadInventory({ showLoading: true })
   }, [])
 
-  /* open/close edit modal */
+ const showSuccessNotification = (message) => {
+    setSuccessMessage(message)
+
+    setTimeout(() => {
+      setSuccessMessage('')
+    }, 2500)
+  }
+
+  /* — open/close edit modal — */
   const openEdit = (item) => {
     setEditTarget(item)
     setEditStock(String(item.stock))
   }
 
   const closeEdit = () => {
+    if (isSavingStock) return
+
     setEditTarget(null)
     setEditStock('')
   }
 
   const submitEdit = async (e) => {
     e.preventDefault()
+
+    if (isSavingStock) return
+
     const stock = Number(editStock)
     if (Number.isNaN(stock) || stock < 0) return
-    await api.patch(`/admin/inventory/${editTarget.id}`, { stock })
-    closeEdit()
-    loadInventory()
+
+    try {
+      setIsSavingStock(true)
+
+      await api.patch(`/admin/inventory/${editTarget.id}`, { stock })
+
+      await loadInventory()
+
+      setEditTarget(null)
+      setEditStock('')
+
+      showSuccessNotification('Stock changes have been saved successfully.')
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsSavingStock(false)
+    }
   }
 
   // LOGIKA BARU: Menyaring data agar item berharga (> 0) di atas, dan yang berharga 0 / strip di bawah
@@ -78,7 +126,25 @@ function AdminInventory() {
   const lowStockCount = inventory.filter((i) => i.stock <= 5).length
 
   return (
-    <main className="min-h-screen bg-aldesCream px-4 py-6 sm:px-6">
+    <main className="relative min-h-screen bg-aldesCream px-4 py-6 sm:px-6">
+      {/* Success Toast */}
+      {successMessage && (
+        <div className="fixed right-5 top-5 z-[80] rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-sm font-black text-gray-900">Success</p>
+              <p className="text-xs font-semibold text-gray-500">
+                {successMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <div className="rounded-3xl border border-orange-100 bg-white px-6 py-5 shadow-sm">
@@ -88,22 +154,42 @@ function AdminInventory() {
                 <Package className="h-4 w-4" />
                 Aldes Burger Admin
               </div>
+
               <h1 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl">
                 Inventory Management
               </h1>
+
               <p className="mt-1 text-sm text-gray-500">
-                Update ingredient stock. Menu availability is computed automatically from inventory.
+                Update ingredient stock. Menu availability is computed
+                automatically from inventory.
               </p>
             </div>
             <div className="flex gap-3">
               <div className="rounded-2xl bg-aldesCream px-4 py-3 text-center">
-                <p className="text-xs font-medium text-gray-500">Total Items</p>
-                <p className="text-2xl font-black text-red-600">{inventory.length}</p>
+                <p className="text-xs font-medium text-gray-500">
+                  Total Items
+                </p>
+
+                {isLoadingInventory ? (
+                  <div className="mt-1 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-red-600" />
+                  </div>
+                ) : (
+                  <p className="text-2xl font-black text-red-600">
+                    {inventory.length}
+                  </p>
+                )}
               </div>
-              {lowStockCount > 0 && (
+
+              {!isLoadingInventory && lowStockCount > 0 && (
                 <div className="rounded-2xl bg-red-50 px-4 py-3 text-center">
-                  <p className="text-xs font-medium text-red-500">Low Stock</p>
-                  <p className="text-2xl font-black text-red-600">{lowStockCount}</p>
+                  <p className="text-xs font-medium text-red-500">
+                    Low Stock
+                  </p>
+
+                  <p className="text-2xl font-black text-red-600">
+                    {lowStockCount}
+                  </p>
                 </div>
               )}
             </div>
@@ -116,59 +202,123 @@ function AdminInventory() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-red-100 bg-red-50">
-                  <th className="px-4 py-3 font-bold text-gray-600">Ingredient</th>
-                  <th className="px-4 py-3 font-bold text-gray-600">Stock</th>
-                  <th className="px-4 py-3 font-bold text-gray-600">Price / unit</th>
-                  <th className="px-4 py-3 font-bold text-gray-600">Used in Menus</th>
-                  <th className="px-4 py-3 font-bold text-gray-600">Action</th>
+                  <th className="px-4 py-3 font-bold text-gray-600">
+                    Ingredient
+                  </th>
+                  <th className="px-4 py-3 font-bold text-gray-600">
+                    Stock
+                  </th>
+                  <th className="px-4 py-3 font-bold text-gray-600">
+                    Price / unit
+                  </th>
+                  <th className="px-4 py-3 font-bold text-gray-600">
+                    Used in Menus
+                  </th>
+                  <th className="px-4 py-3 font-bold text-gray-600">
+                    Action
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
-                {/* DIUBAH: Memakai sortedInventory, bukan inventory langsung */}
-                {sortedInventory.map((item) => (
-                  <tr key={item.id} className="border-t border-gray-50 transition hover:bg-orange-50/40">
-                    <td className="px-4 py-3 font-semibold text-gray-900">{item.name}</td>
-                    <td className="px-4 py-3">
-                      <StockBadge stock={item.stock} />
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {item.price > 0 ? `Rp ${Number(item.price).toLocaleString('id-ID')}` : <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {item.menus?.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {item.menus.map((m, idx) => (
-                            <span
-                              key={`${m.id}-${idx}`}
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${m.is_custom ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-gray-800'}`}
-                              title={m.is_custom ? 'Used in custom burgers' : `${m.quantity} per portion`}
-                            >
-                              {m.is_custom && '🍔 '}{m.name}
-                              {(!m.is_custom && m.quantity > 1) && (
-                                <span className="ml-1 font-bold text-yellow-700">x{m.quantity}</span>
-                              )}
-                            </span>
-                          ))}
+                {isLoadingInventory && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-14">
+                      <div className="flex flex-col items-center justify-center gap-3 text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                          <Loader2 className="h-7 w-7 animate-spin" />
                         </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(item)}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
-                      >
-                        <PencilLine className="h-3.5 w-3.5" />
-                        Update Stock
-                      </button>
+
+                        <div>
+                          <p className="text-sm font-black text-gray-800">
+                            Loading inventory data...
+                          </p>
+
+                          <p className="mt-1 text-xs font-semibold text-gray-400">
+                            Please wait while the latest stock data is being
+                            loaded.
+                          </p>
+                        </div>
+                      </div>
                     </td>
                   </tr>
-                ))}
-                {inventory.length === 0 && (
+                )}
+
+                {/* DIUBAH: Memakai sortedInventory dan pengecekan loading */}
+                {!isLoadingInventory &&
+                  sortedInventory.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-t border-gray-50 transition hover:bg-orange-50/40"
+                    >
+                      <td className="px-4 py-3 font-semibold text-gray-900">
+                        {item.name}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <StockBadge stock={item.stock} />
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {item.price > 0 ? (
+                          `Rp ${Number(item.price).toLocaleString('id-ID')}`
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {item.menus?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {item.menus.map((m, idx) => (
+                              <span
+                                key={`${m.id}-${idx}`}
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                  m.is_custom
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : 'bg-yellow-100 text-gray-800'
+                                }`}
+                                title={
+                                  m.is_custom
+                                    ? 'Used in custom burgers'
+                                    : `×${m.quantity} per portion`
+                                }
+                              >
+                                {m.is_custom && '🍔 '}
+                                {m.name}
+
+                                {!m.is_custom && m.quantity > 1 && (
+                                  <span className="ml-1 font-bold text-yellow-700">
+                                    ×{m.quantity}
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(item)}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+                        >
+                          <PencilLine className="h-3.5 w-3.5" />
+                          Update Stock
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                {!isLoadingInventory && sortedInventory.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">
+                    <td
+                      colSpan={5}
+                      className="px-4 py-10 text-center text-sm text-gray-400"
+                    >
                       No inventory data available.
                     </td>
                   </tr>
@@ -182,43 +332,83 @@ function AdminInventory() {
       {/* Edit Stock Modal */}
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-6 shadow-xl">
+            {/* Saving overlay */}
+            {isSavingStock && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-3xl bg-white/70 backdrop-blur-[3px]">
+                <div className="flex w-[260px] flex-col items-center gap-3 rounded-3xl border border-orange-100 bg-white px-7 py-6 text-center shadow-xl">
+                  <Loader2 className="h-9 w-9 animate-spin text-red-600" />
+
+                  <div>
+                    <p className="text-sm font-black text-gray-900">
+                      Saving Stock...
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-gray-500">
+                      Please wait, your changes are being saved.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
                   <Package className="h-4 w-4" />
                   Update Stock
                 </div>
-                <h2 className="text-xl font-black text-gray-900">{editTarget.name}</h2>
+
+                <h2 className="text-xl font-black text-gray-900">
+                  {editTarget.name}
+                </h2>
+
                 <p className="mt-0.5 text-sm text-gray-500">
                   Current stock:{' '}
-                  <span className="font-bold text-gray-800">{editTarget.stock}</span>
+                  <span className="font-bold text-gray-800">
+                    {editTarget.stock}
+                  </span>
                 </p>
               </div>
+
               <button
                 type="button"
                 onClick={closeEdit}
-                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                disabled={isSavingStock}
+                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Impact info only for recipe-based (non-custom) menus */}
-            {editTarget.menus?.filter(m => !m.is_custom).length > 0 && (
+            {/* Impact info — only for recipe-based (non-custom) menus */}
+            {editTarget.menus?.filter((m) => !m.is_custom).length > 0 && (
               <div className="mb-5 rounded-2xl bg-yellow-50 px-4 py-3">
-                <p className="text-xs font-bold text-yellow-700">⚠️ Impacts computed stock of:</p>
+                <p className="text-xs font-bold text-yellow-700">
+                  ⚡ Impacts computed stock of:
+                </p>
+
                 <ul className="mt-1.5 space-y-1">
-                  {editTarget.menus.filter(m => !m.is_custom).map((m) => (
-                    <li key={m.id} className="text-xs text-yellow-800">
-                      • <span className="font-semibold">{m.name}</span>{' '}
-                      <span className="text-yellow-600">(uses {m.quantity} per portion)</span>
-                    </li>
-                  ))}
+                  {editTarget.menus
+                    .filter((m) => !m.is_custom)
+                    .map((m) => (
+                      <li key={m.id} className="text-xs text-yellow-800">
+                        • <span className="font-semibold">{m.name}</span>{' '}
+                        <span className="text-yellow-600">
+                          (uses ×{m.quantity} per portion)
+                        </span>
+                        {' → '}
+                        <span className="font-bold">
+                          {Math.floor(Number(editStock || 0) / m.quantity)}{' '}
+                          portions possible
+                        </span>
+                      </li>
+                    ))}
                 </ul>
-                {editTarget.menus.some(m => m.is_custom) && (
-                  <p className="mt-2 text-xs text-purple-600 font-medium">
-                    ✨ Also used in custom burgers (variable amounts)
+
+                {editTarget.menus.some((m) => m.is_custom) && (
+                  <p className="mt-2 text-xs font-medium text-purple-600">
+                    🍔 Also used in custom burgers (variable amounts)
                   </p>
                 )}
               </div>
@@ -226,16 +416,21 @@ function AdminInventory() {
 
             <form onSubmit={submitEdit}>
               <div className="mb-5">
-                <label htmlFor="stock" className="mb-2 block text-sm font-bold text-gray-700">
+                <label
+                  htmlFor="stock"
+                  className="mb-2 block text-sm font-bold text-gray-700"
+                >
                   New Stock
                 </label>
+
                 <input
                   id="stock"
                   type="number"
                   min={0}
                   value={editStock}
+                  disabled={isSavingStock}
                   onChange={(e) => setEditStock(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900 outline-none transition focus:border-red-300 focus:ring-4 focus:ring-red-50"
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900 outline-none transition focus:border-red-300 focus:ring-4 focus:ring-red-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-70"
                   required
                 />
               </div>
@@ -243,15 +438,25 @@ function AdminInventory() {
                 <button
                   type="button"
                   onClick={closeEdit}
-                  className="rounded-2xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
+                  disabled={isSavingStock}
+                  className="rounded-2xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+                  disabled={isSavingStock}
+                  className="inline-flex min-w-[135px] items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
                 >
-                  Save Stock
+                  {isSavingStock ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Stock'
+                  )}
                 </button>
               </div>
             </form>
