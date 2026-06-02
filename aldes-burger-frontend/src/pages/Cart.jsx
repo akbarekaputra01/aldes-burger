@@ -58,8 +58,8 @@ const getIngredientThickness = (name) => {
   if (!name) return 8
   const n = name.toLowerCase()
   if (n.includes('lettuce')) return 0 
-  if (n.includes('bottom') || n.includes('pickle') || n.includes('tomato')) return 2
-  if (n.includes('cheese') || n.includes('ketchup') || n.includes('mayonnaise') || n.includes('secret sauce')) return 4
+  if (n.includes('pickle') || n.includes('tomato') || n.includes('cheese')) return 1
+  if (n.includes('bottom') || n.includes('ketchup') || n.includes('mayonnaise') || n.includes('secret sauce')) return 2
   if (n.includes('beef') || n.includes('chicken')) return 10
   if (n.includes('top')) return 12
   return 2
@@ -76,7 +76,7 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
   const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
 
   return (
-    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-white border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
+    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
       <div 
         className="absolute bottom-2 w-full flex justify-center items-end transition-transform duration-300"
         style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
