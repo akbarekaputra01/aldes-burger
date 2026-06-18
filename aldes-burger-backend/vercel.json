@@ -17,11 +17,8 @@
             "dest": "/api/index.php"
         },
         {
-            "handle": "filesystem"
-        },
-        {
             "src": "/(.*)",
-            "dest": "/index.html"
+            "dest": "/api/index.php"
         }
     ]
 }
