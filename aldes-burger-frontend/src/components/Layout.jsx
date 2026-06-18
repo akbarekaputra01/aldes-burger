@@ -4,7 +4,9 @@ import Footer from './Footer'
 import { getToken } from '../utils/auth'
 
 function Layout() {
-  const isLoggedIn = Boolean(getToken())
+  // TEMP: Bypass login — uncomment baris bawah & hapus baris ini untuk restore
+  // const isLoggedIn = Boolean(getToken())
+  const isLoggedIn = true
 
   return (
     <div className="flex min-h-screen flex-col bg-aldesCream">
