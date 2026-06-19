@@ -58,8 +58,8 @@ const getIngredientThickness = (name) => {
   if (!name) return 8
   const n = name.toLowerCase()
   if (n.includes('lettuce')) return 0 
-  if (n.includes('bottom') || n.includes('pickle') || n.includes('tomato')) return 2
-  if (n.includes('cheese') || n.includes('ketchup') || n.includes('mayonnaise') || n.includes('secret sauce')) return 4
+  if (n.includes('pickle') || n.includes('tomato') || n.includes('cheese')) return 1
+  if (n.includes('bottom') || n.includes('ketchup') || n.includes('mayonnaise') || n.includes('secret sauce')) return 2
   if (n.includes('beef') || n.includes('chicken')) return 10
   if (n.includes('top')) return 12
   return 2
@@ -127,32 +127,7 @@ function Cart() {
   const navigate = useNavigate()
   const contextValue = useCart()
 
-  const cart = [
-    {
-      id: "dummy-1",
-      name: "BEEF BURGER",
-      price: 36500,
-      qty: 1,
-      ingredients: [
-        "Bottom Bun", "Lettuce", "Tomato", "Pickles", "Beef Patty", 
-        "Cheddar Cheese", "Mayonnaise", "Ketchup", "Secret Sauce", "Top Bun"
-      ]
-    },
-    {
-      id: "dummy-2",
-      name: "TEA",
-      price: 8000,
-      qty: 1,
-      ingredients: [] // Kosongkan agar dia merender MenuMiniPreview (gambar teh)
-    },
-    {
-      id: "dummy-3",
-      name: "NUGGETS",
-      price: 20000,
-      qty: 2,
-      ingredients: [] // Kosongkan agar merender MenuMiniPreview (gambar nugget)
-    }
-  ];
+  const cart = contextValue?.cart ?? []
   const removeFromCart = contextValue?.removeFromCart ?? (() => { })
   const updateQty = contextValue?.updateQty
 
@@ -315,7 +290,7 @@ function Cart() {
                     <Trash2 size={24} className="stroke-[2.5]" />
                   </button>
                   
-                  <div className="flex items-center bg-aldesCream border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
+                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
                     <button onClick={() => handleDecrease(item)} className="flex h-7 w-7 items-center justify-center bg-white text-black font-black border-2 border-black rounded-md active:scale-75 transition-transform">
                       <Minus size={14} strokeWidth={4} />
                     </button>
