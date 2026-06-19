@@ -9,14 +9,18 @@ import {
   Flame,
   CreditCard,
   Banknote,
+  FileText,
+  ShoppingCart,
+  User,
   Plus,
   ChevronDown,
   ChevronUp,
+  Home,
+  Briefcase,
 } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
 import AddressBookModal from '../components/AddressBookModal';
-import Navbar from '../components/Navbar'; // <-- Menggunakan Navbar asli sesuai gambarmu
 
 // --- Burger ingredient image assets ---
 import imgBeefPatty from '../assets/beef_patty.png'
@@ -94,9 +98,9 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
   const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
 
   return (
-    <div className="relative w-24 h-28 bg-aldesCream border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
+    <div className="relative w-24 h-28 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
       <div
-        className="absolute bottom-2 w-full flex justify-center items-end"
+        className="absolute bottom-2 w-full flex center items-end"
         style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
       >
         {ingredients.map((name, index) => {
@@ -131,49 +135,27 @@ const MenuMiniPreview = ({ name }) => {
 
   const img = getMenuImage(name);
   return (
-    <div className="relative w-24 h-28 bg-aldesCream rounded-2xl overflow-hidden flex-shrink-0 border-4 border-black flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
+    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
       {img ? (
-        <img src={img} alt={name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+        <img src={img} alt={name} className="max-w-15 max-h-15 object-contain" />
       ) : (
-        <div className="text-xs font-black text-black text-center uppercase">No Img</div>
+        <div className="text-[10px] font-black text-black text-center uppercase">No Img</div>
       )}
     </div>
   );
+}
+
+const AddressLabelIcon = ({ label }) => {
+  if (label === 'Work') return <Briefcase size={12} className="inline mr-1" />;
+  return <Home size={12} className="inline mr-1" />;
 }
 
 function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- 1. DATA DUMMY PRODUK DI SINI ---
-  const checkoutItems = [
-    {
-      id: "dummy-1",
-      name: "BEEF BURGER",
-      unit_price: 36500,
-      qty: 1,
-      ingredients: [
-        "Bottom Bun", "Lettuce", "Tomato", "Pickles", "Beef Patty", 
-        "Cheddar Cheese", "Mayonnaise", "Ketchup", "Secret Sauce", "Top Bun"
-      ]
-    },
-    {
-      id: "dummy-2",
-      name: "TEA",
-      unit_price: 8000,
-      qty: 1,
-      ingredients: []
-    },
-    {
-      id: "dummy-3",
-      name: "NUGGETS",
-      unit_price: 20000,
-      qty: 2,
-      ingredients: []
-    }
-  ];
-
-  const { removeFromCart } = useCart();
+  const checkoutItems = location.state?.checkoutItems || [];
+  const { removeFromCart, cartCount } = useCart();
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
@@ -187,23 +169,30 @@ function Checkout() {
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId) || null;
 
-  // --- 2. DATA DUMMY ALAMAT DI SINI ---
   useEffect(() => {
-    const dummyAddresses = [
-      {
-        id: "addr-dummy",
-        recipient_name: "Rachel",
-        label: "Home",
-        phone_number: "0812-3456-7890",
-        address: "Jl. Kebon Jeruk No. 12, Jakarta Barat, DKI Jakarta",
-        is_default: true
+    const fetchAddresses = async () => {
+      setLoadingAddresses(true);
+      try {
+        const res = await api.get('/addresses');
+        setAddresses(res.data);
+        const def = res.data.find(a => a.is_default) || res.data[0];
+        if (def) {
+          setSelectedAddressId(def.id);
+          setUserPhone(def.phone_number || '');
+        }
+      } catch {
+        setAddresses([]);
+      } finally {
+        setLoadingAddresses(false);
       }
-    ];
-    
-    setAddresses(dummyAddresses);
-    setSelectedAddressId("addr-dummy");
-    setUserPhone("0812-3456-7890");
-    setLoadingAddresses(false); 
+    };
+    fetchAddresses();
+  }, []);
+
+  useEffect(() => {
+    const globalNav = document.querySelector('nav') || document.querySelector('.navbar-global');
+    if (globalNav) globalNav.style.display = 'none';
+    return () => { if (globalNav) globalNav.style.display = 'block'; };
   }, []);
 
   const subtotal = checkoutItems.reduce((sum, item) => sum + ((item.unit_price ?? 0) * (item.qty ?? 1)), 0);
@@ -230,7 +219,7 @@ function Checkout() {
       navigate('/payment-status?status=success');
     } catch (error) {
       console.error('Checkout error:', error.response?.data);
-      navigate('/payment-status?status=success');
+      alert(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -238,26 +227,12 @@ function Checkout() {
 
   return (
     <main className="min-h-screen w-full bg-aldesCream font-sans text-black pb-20">
-      
-      {/* ─── NAVBAR ASLI SESUAI GAMBAR ─── */}
-      <Navbar />
-
-      {/* Striped divider bergaya Neo-Brutalist */}
-      <div className="relative h-2 w-full flex overflow-hidden">
-        <div className="absolute inset-0 flex">
-          {[...Array(87)].map((_, i) => (
-            <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? 'bg-aldesRed' : 'bg-white'}`}></div>
-          ))}
-        </div>
-      </div>
-
-      {/* Konten Utama */}
-      <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-8 mt-4">
+      <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-8">
 
         {/* ── Delivery Address ── */}
         <section className="bg-white border-[3px] border-black rounded-2xl overflow-hidden shadow-[6px_6px_0_0_#000]">
           <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#D52518,#D52518_10px,#fff_10px,#fff_20px,#FFC926_20px,#FFC926_30px,#fff_30px,#fff_40px)]"></div>
-          <div className="p-6 text-left">
+          <div className="p-6">
             <div className="flex items-center gap-2 text-aldesRed mb-4">
               <MapPin size={16} fill="currentColor" />
               <h2 className="font-black uppercase text-[11px] tracking-widest">Delivery Address</h2>
@@ -284,7 +259,7 @@ function Checkout() {
                         <span className="font-black text-lg uppercase">{selectedAddress.recipient_name}</span>
                         {selectedAddress.label && (
                           <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-aldesYellow">
-                            {selectedAddress.label}
+                            <AddressLabelIcon label={selectedAddress.label} />{selectedAddress.label}
                           </span>
                         )}
                         {selectedAddress.is_default && (
@@ -316,7 +291,7 @@ function Checkout() {
                           <span className="font-black text-sm uppercase">{addr.recipient_name}</span>
                           {addr.label && (
                             <span className="px-1.5 py-0.5 bg-aldesYellow border border-black text-[8px] font-black uppercase rounded">
-                              {addr.label}
+                              <AddressLabelIcon label={addr.label} />{addr.label}
                             </span>
                           )}
                           {addr.is_default && (
@@ -340,7 +315,7 @@ function Checkout() {
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-10 text-left">
+          <div className="lg:col-span-2 space-y-10">
 
             {/* ── Payment Method ── */}
             <div className="space-y-4">
@@ -387,7 +362,7 @@ function Checkout() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
-                          <h3 className="font-black text-base uppercase truncate">{item.name}</h3>
+                          <h3 className="font-black text-base uppercase">{item.name}</h3>
                           <span className="px-3 py-1 bg-black text-aldesYellow text-[10px] font-black rounded-full uppercase flex-shrink-0">
                             {item.qty}x
                           </span>
@@ -418,8 +393,8 @@ function Checkout() {
                         )}
 
                         <div className="mt-3 text-right">
-                          <p className="text-[10px] font-black text-gray-400 uppercase">Subtotal</p>
-                          <p className="font-black text-xl italic text-aldesRed">
+                          <p className="text-[10px] font-black text-gray-400">Subtotal</p>
+                          <p className="font-black text-xl italic">
                             IDR {((item.unit_price ?? 0) * (item.qty ?? 1)).toLocaleString('id-ID')}
                           </p>
                         </div>
@@ -432,31 +407,29 @@ function Checkout() {
           </div>
 
           {/* ── Payment Summary sidebar ── */}
-          <aside className="w-full text-left">
+          <aside className="w-full">
             <div className="bg-white text-aldesRed rounded-[2rem] p-7 border-4 border-black shadow-[8px_8px_0_0_#000] sticky top-28">
               <div className="space-y-3 mb-6 text-[10px] font-black uppercase text-aldesRed/60">
                 <div className="flex justify-between items-center">
                   <span>Subtotal</span>
-                  <span className="text-aldesRed text-xs font-black">IDR {subtotal.toLocaleString('id-ID')}</span>
+                  <span className="text-aldesRed text-xs">IDR {subtotal.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b-2 border-black/10">
                   <span>Delivery</span>
-                  <span className="text-aldesRed text-xs font-black bg-green-200 border border-black px-2 py-0.5 rounded text-black">FREE</span>
+                  <span className="text-aldesRed text-xs">FREE</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-end mb-8">
                 <div>
-                  <p className="text-[10px] font-black uppercase text-aldesRed/70">Grand Total</p>
-                  <p className="text-3xl font-black italic bg-aldesYellow border-3 border-black text-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] mt-1 inline-block">
-                    IDR {total.toLocaleString('id-ID')}
-                  </p>
+                  <p className="text-[10px] font-black uppercase text-aldesRed">Grand Total</p>
+                  <p className="text-3xl font-black italic">IDR {total.toLocaleString('id-ID')}</p>
                 </div>
-                <Flame className="text-aldesRed animate-pulse mb-1 flex-shrink-0" size={32} fill="currentColor" />
+                <Flame className="text-aldesRed animate-pulse" size={32} fill="currentColor" />
               </div>
 
               {!selectedAddressId && !loadingAddresses && (
-                <p className="text-[10px] text-red-500 font-bold mb-3 text-center uppercase tracking-wide">
+                <p className="text-[10px] text-red-500 font-bold mb-3 text-center uppercase">
                   ⚠ Please select a delivery address
                 </p>
               )}
@@ -464,9 +437,9 @@ function Checkout() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={checkoutItems.length === 0 || loading || !selectedAddressId}
-                className="w-full py-4 rounded-xl bg-aldesRed text-aldesYellow border-3 border-black font-black text-xl uppercase shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-[0_2px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 rounded-xl bg-aldesRed text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Ordering...' : 'Place Order'} <CheckCircle2 size={22} strokeWidth={4} />
+                {loading ? 'Ordering...' : 'Place Order'} <CheckCircle2 size={20} strokeWidth={4} />
               </button>
             </div>
           </aside>
@@ -477,7 +450,12 @@ function Checkout() {
         open={showAddressModal}
         onClose={() => setShowAddressModal(false)}
         onSaved={async () => {
-          // Dummy mode callback bypass
+          try {
+            const res = await api.get('/addresses');
+            setAddresses(res.data);
+            const def = res.data.find(a => a.is_default) || res.data[0];
+            if (def) setSelectedAddressId(def.id);
+          } catch { /* ignore */ }
         }}
         userPhone={userPhone}
       />
