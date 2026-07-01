@@ -8,16 +8,23 @@ use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
+// Endpoint Autentikasi Publik
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify-otp', [AuthController::class, 'verifyRegisterOtp']); // Route verifikasi registrasi baru
 Route::post('/login', [AuthController::class, 'login']);
+
+// Endpoint Lupa Password
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']); // Request OTP
+Route::post('/reset-password', [AuthController::class, 'resetPasswordWithOtp']); // Submit OTP & Password Baru
 
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
+// Endpoint yang membutuhkan Token (Login)
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::put('/user/password', [AuthController::class, 'updatePassword']);
+    Route::put('/user/password', [AuthController::class, 'updatePassword']); // Ubah password dari dalam aplikasi (pakai old password)
     
     Route::get('/addresses', [CheckoutController::class, 'addresses']);
     Route::post('/addresses', [CheckoutController::class, 'storeAddress']);

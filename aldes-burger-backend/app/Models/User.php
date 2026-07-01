@@ -21,6 +21,8 @@ class User extends Authenticatable
         'password',
         'profile_picture',
         'role',
+        'otp',              // Kolom untuk menyimpan kode OTP
+        'otp_expires_at',   // Kolom untuk menyimpan batas waktu kadaluarsa OTP
     ];
 
     protected $hidden = [
