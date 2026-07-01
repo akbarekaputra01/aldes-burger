@@ -7,7 +7,10 @@ import {
   Lock,
   Mail,
   Zap,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  ArrowLeft
 } from 'lucide-react';
 
 import { useState } from 'react';
@@ -26,7 +29,15 @@ function Auth() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // step: 'login' | 'forgot' | 'reset'
+  const [step, setStep] = useState('login');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,6 +83,113 @@ function Auth() {
         setError('The password does not match the registered email.');
       } else {
         setError(apiMessage || 'Login failed. Please check your registered email and password.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const goToForgot = () => {
+    setError('');
+    setSuccess('');
+    setStep('forgot');
+  };
+
+  const backToLogin = () => {
+    setError('');
+    setSuccess('');
+    setOtp('');
+    setNewPassword('');
+    setPasswordConfirmation('');
+    setStep('login');
+  };
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+
+    const email = form.email.trim().toLowerCase();
+
+    if (!email) {
+      setError('Please enter your registered email address.');
+      return;
+    }
+
+    if (!email.endsWith('@gmail.com')) {
+      setError('Please use a valid Gmail address ending with @gmail.com.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      await api.post('/forgot-password', { email });
+      setSuccess('An OTP code has been sent to your email.');
+      setStep('reset');
+    } catch (err) {
+      const status = err.response?.status;
+      const apiMessage = err.response?.data?.message;
+
+      if (status === 404) {
+        setError('This email is not registered. Please check your email or create a new account.');
+      } else {
+        setError(apiMessage || 'Failed to send OTP. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+
+    if (!otp) {
+      setError('Please enter the OTP code sent to your email.');
+      return;
+    }
+
+    if (!newPassword) {
+      setError('Please enter a new password.');
+      return;
+    }
+
+    if (newPassword !== passwordConfirmation) {
+      setError('Password confirmation does not match.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      const email = form.email.trim().toLowerCase();
+
+      await api.post('/reset-password', {
+        email,
+        otp,
+        password: newPassword,
+        password_confirmation: passwordConfirmation
+      });
+
+      setSuccess('Your password has been reset successfully. Please log in.');
+      setOtp('');
+      setNewPassword('');
+      setPasswordConfirmation('');
+
+      setTimeout(() => {
+        setStep('login');
+        setSuccess('');
+      }, 1800);
+    } catch (err) {
+      const status = err.response?.status;
+      const apiMessage = err.response?.data?.message;
+
+      if (status === 401 || status === 422) {
+        setError('Invalid OTP or the passwords do not match.');
+      } else {
+        setError(apiMessage || 'Failed to reset password. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -166,13 +284,36 @@ function Auth() {
               </div>
 
               <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-[#FFC926] drop-shadow-[4px_4px_0_#000]">
-                Welcome
-                <br />
-                <span className="text-white">Back!</span>
+                {step === 'login' && (
+                  <>
+                    Welcome
+                    <br />
+                    <span className="text-white">Back!</span>
+                  </>
+                )}
+                {step === 'forgot' && (
+                  <>
+                    Reset
+                    <br />
+                    <span className="text-white">Password</span>
+                  </>
+                )}
+                {step === 'reset' && (
+                  <>
+                    Almost
+                    <br />
+                    <span className="text-white">There!</span>
+                  </>
+                )}
               </h1>
 
               <p className="mt-4 max-w-sm text-white font-bold text-sm md:text-[15px] leading-relaxed">
-                Log in with your registered email to continue your order and enjoy Aldes Burger specials.
+                {step === 'login' &&
+                  'Log in with your registered email to continue your order and enjoy Aldes Burger specials.'}
+                {step === 'forgot' &&
+                  "No worries! Enter your registered email and we'll send you an OTP code to reset your password."}
+                {step === 'reset' &&
+                  'Enter the OTP code we sent you and choose a new password for your account.'}
               </p>
             </div>
 
@@ -202,17 +343,26 @@ function Auth() {
                 <div className="inline-flex items-center gap-2 bg-[#FFC926] border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
                   <Sparkles size={15} className="fill-black" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
-                    Member Login
+                    {step === 'login' && 'Member Login'}
+                    {step === 'forgot' && 'Forgot Password'}
+                    {step === 'reset' && 'Verify & Reset'}
                   </span>
                 </div>
 
                 <h2 className="text-4xl md:text-[46px] font-black text-black uppercase tracking-tighter leading-none">
-                  Log In
+                  {step === 'login' && 'Log In'}
+                  {step === 'forgot' && 'Recover'}
+                  {step === 'reset' && 'New Pass'}
                   <span className="text-[#D52518]">.</span>
                 </h2>
 
                 <p className="mt-3 text-sm md:text-[15px] text-gray-500 font-semibold">
-                  Enter your registered Gmail address and password to access your account.
+                  {step === 'login' &&
+                    'Enter your registered Gmail address and password to access your account.'}
+                  {step === 'forgot' &&
+                    'Enter your registered Gmail address to receive a One-Time Password (OTP).'}
+                  {step === 'reset' &&
+                    'Check your inbox for the OTP code, then set a new password.'}
                 </p>
               </div>
 
@@ -225,91 +375,284 @@ function Auth() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                
-                {/* Email */}
-                <div className="group">
-                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
-                    Registered Email
-                  </label>
-
-                  <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                    <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
-                    <input
-                      type="email"
-                      value={form.email}
-                      className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
-                      placeholder="mail@gmail.com"
-                      required
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    />
+              {success && (
+                <div className="mb-5 bg-green-600/10 border-[3px] border-green-600 p-3.5 rounded-2xl flex items-start gap-3">
+                  <div className="bg-green-600 text-white rounded-full p-1 shrink-0">
+                    <CheckCircle2 size={17} />
                   </div>
+                  <p className="text-sm font-black text-green-700">{success}</p>
                 </div>
+              )}
 
-                {/* Password */}
-                <div className="group">
-                  <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
-                    Password
-                  </label>
+              {/* ===== STEP: LOGIN ===== */}
+              {step === 'login' && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  
+                  {/* Email */}
+                  <div className="group">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                      Registered Email
+                    </label>
 
-                  <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
-                    <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
+                      <input
+                        type="email"
+                        value={form.email}
+                        className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
+                        placeholder="mail@gmail.com"
+                        required
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal"
-                      placeholder="Enter your password"
-                      required
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    />
+                  {/* Password */}
+                  <div className="group">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                        Password
+                      </label>
 
+                      {/* <button
+                        type="button"
+                        onClick={goToForgot}
+                        className="text-[11px] font-black uppercase text-[#D52518] hover:underline underline-offset-4 tracking-wider"
+                      >
+                        Forgot?
+                      </button> */}
+                    </div>
+
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password}
+                        className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal"
+                        placeholder="Enter your password"
+                        required
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                        type="button"
+                        onClick={goToForgot}
+                        className="text-[11px] font-black uppercase text-[#D52518] hover:underline underline-offset-4 tracking-wider"
+                      >
+                        Forgot?
+                      </button>
                   </div>
-                </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-[#D52518] text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
-
-                  <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="animate-spin" size={23} />
-                        Signing In...
-                      </>
-                    ) : (
-                      <>
-                        Log In
-                        <ArrowRight strokeWidth={4} size={23} />
-                      </>
-                    )}
-                  </span>
-                </button>
-              </form>
-
-              <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
-                <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
-                  New to Aldes Burger?{' '}
-                  <Link
-                    to="/signup"
-                    className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4"
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-[#D52518] text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
                   >
-                    Create account
-                  </Link>
-                </p>
-              </div>
+                    <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+
+                    <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={23} />
+                          Signing In...
+                        </>
+                      ) : (
+                        <>
+                          Log In
+                          <ArrowRight strokeWidth={4} size={23} />
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </form>
+              )}
+
+              {/* ===== STEP: FORGOT (send OTP) ===== */}
+              {step === 'forgot' && (
+                <form onSubmit={handleForgot} className="space-y-4">
+                  
+                  {/* Email */}
+                  <div className="group">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                      Registered Email
+                    </label>
+
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
+                      <input
+                        type="email"
+                        value={form.email}
+                        className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
+                        placeholder="mail@gmail.com"
+                        required
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Send OTP Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-black text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#D52518] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#D52518] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+
+                    <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={23} />
+                          Sending OTP...
+                        </>
+                      ) : (
+                        <>
+                          Send OTP
+                          <ArrowRight strokeWidth={4} size={23} />
+                        </>
+                      )}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={backToLogin}
+                    className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"
+                  >
+                    <ArrowLeft size={14} strokeWidth={3} />
+                    Back to Login
+                  </button>
+                </form>
+              )}
+
+              {/* ===== STEP: RESET (OTP + new password) ===== */}
+              {step === 'reset' && (
+                <form onSubmit={handleReset} className="space-y-4">
+
+                  {/* OTP */}
+                  <div className="group">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                      OTP Code
+                    </label>
+
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <KeyRound size={18} className="mr-3 text-[#D52518] shrink-0" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={otp}
+                        maxLength={6}
+                        className="bg-transparent w-full outline-none font-bold text-sm tracking-[0.4em] placeholder:tracking-normal placeholder:text-gray-400"
+                        placeholder="6-digit code"
+                        required
+                        onChange={(e) => setOtp(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div className="group">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                      New Password
+                    </label>
+
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
+                        placeholder="Enter new password"
+                        required
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0"
+                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="group">
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">
+                      Confirm Password
+                    </label>
+
+                    <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
+                      <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={passwordConfirmation}
+                        className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400"
+                        placeholder="Re-enter new password"
+                        required
+                        onChange={(e) => setPasswordConfirmation(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Reset Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+
+                    <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={23} />
+                          Resetting...
+                        </>
+                      ) : (
+                        <>
+                          Reset Password
+                          <ArrowRight strokeWidth={4} size={23} />
+                        </>
+                      )}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={backToLogin}
+                    className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"
+                  >
+                    <ArrowLeft size={14} strokeWidth={3} />
+                    Back to Login
+                  </button>
+                </form>
+              )}
+
+              {step === 'login' && (
+                <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
+                  <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
+                    New to Aldes Burger?{' '}
+                    <Link
+                      to="/signup"
+                      className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4"
+                    >
+                      Create account
+                    </Link>
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         </div>
