@@ -41,7 +41,7 @@ class CheckoutController extends Controller
         $user = $request->user();
         $address = Address::query()->where('user_id', $user->id)->findOrFail($payload['address_id']);
 
-        $transaction = DB::transaction(function () use ($payload, $user, $address) {
+        $result = DB::transaction(function () use ($payload, $user, $address) {
             $payment = Payment::query()->firstOrCreate(['method' => $payload['payment_method']]);
 
             $totalAmount = 0;
@@ -156,10 +156,41 @@ class CheckoutController extends Controller
                 }
             }
 
-            return $transaction->load(['details', 'payment']);
+            // ── Midtrans Integration ────────────────────────────────
+            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            // \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+            \Midtrans\Config::$isProduction = false; // Harus false untuk Sandbox
+            \Midtrans\Config::$isSanitized = true;
+            \Midtrans\Config::$is3ds = true;
+            \Midtrans\Config::$curlOptions = [
+                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => 0,
+                CURLOPT_HTTPHEADER => [], // Tambahkan baris ini untuk mencegah error 10023
+            ];
+
+            $midtransParams = [
+                'transaction_details' => [
+                    'order_id' => $transaction->id,
+                    'gross_amount' => (int) $totalAmount, // Pastikan menjadi integer
+                ],
+                'customer_details' => [
+                    'first_name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $address->phone_number,
+                ]
+            ];
+
+            $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
+            // dd(env('MIDTRANS_SERVER_KEY'));
+            // Return array berisi data transaksi dan snap token
+            return [
+                'transaction' => $transaction->load(['details', 'payment']),
+                'snap_token' => $snapToken
+            ];
         });
 
-        return response()->json($transaction, 201);
+        // Response dikembalikan sebagai JSON dengan HTTP status 201 Created
+        return response()->json($result, 201);
     }
 
     public function storeAddress(Request $request): JsonResponse

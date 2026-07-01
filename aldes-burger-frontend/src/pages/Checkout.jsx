@@ -214,9 +214,35 @@ function Checkout() {
         })),
       };
 
-      await api.post('/checkout', payload);
-      checkoutItems.forEach(item => removeFromCart(item.id));
-      navigate('/payment-status?status=success');
+      // Tembak API checkout di Laravel
+      const response = await api.post('/checkout', payload);
+      
+      // Ambil snap_token dari response
+      const snapToken = response.data.snap_token;
+
+      // Jika metode pembayaran cash, tidak perlu Midtrans
+      if (paymentMethod === 'cash') {
+        checkoutItems.forEach(item => removeFromCart(item.id));
+        navigate('/payment-status?status=success');
+      } else if (snapToken) {
+        // Jika pakai Midtrans, panggil popup
+        window.snap.pay(snapToken, {
+          onSuccess: function(result){
+            checkoutItems.forEach(item => removeFromCart(item.id));
+            navigate('/payment-status?status=success');
+          },
+          onPending: function(result){
+            checkoutItems.forEach(item => removeFromCart(item.id));
+            navigate('/transactions'); 
+          },
+          onError: function(result){
+            navigate('/payment-status?status=failed');
+          },
+          onClose: function(){
+            alert('Anda menutup popup pembayaran sebelum menyelesaikannya.');
+          }
+        });
+      }
     } catch (error) {
       console.error('Checkout error:', error.response?.data);
       alert(error.response?.data?.message || 'Failed to place order. Please try again.');
