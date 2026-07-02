@@ -2,7 +2,7 @@ import { ChefHat, Flame, Sliders, Star, Truck, Quote } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../utils/auth'
 
-import burgerImg from '../assets/menus/1.png'
+import burgerImg from '../assets/menus/1.jpg'
 
 const steps = [
   {
