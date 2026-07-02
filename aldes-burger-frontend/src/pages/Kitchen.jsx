@@ -1,5 +1,5 @@
 import { GripVertical, Loader2, Minus, Plus, Trash2, X, Flame } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ListItemSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
@@ -126,6 +126,7 @@ function Kitchen() {
   const [isFetching, setIsFetching] = useState(true)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingVariation, setIsSavingVariation] = useState(false)
+  
 
   const [draggingData, setDraggingData] = useState(null)
   const [isDragOverBox, setIsDragOverBox] = useState(false)
@@ -169,9 +170,14 @@ function Kitchen() {
     }
     loadData()
   }, [])
-
+  const initializedMenuIdRef = useRef(null);
   useEffect(() => {
     if (!selectedMenu || ingredients.length === 0) return;
+
+    if (initializedMenuIdRef.current === selectedMenu.id) return;
+    // Catat ID menu ini sebagai "sudah diinisialisasi"
+    initializedMenuIdRef.current = selectedMenu.id;
+
     if (selectedMenu.is_custom) {
       setBaselineStack([])
       setBurgerStack([])
@@ -359,20 +365,29 @@ function Kitchen() {
       }
       addIngredientToStack(draggingData.ingredient, burgerStack.length, false)
     } else if (draggingData.type === 'stack') {
-      setBurgerStack((prev) => {
-        const srcIdx = prev.findIndex((l) => l.instance_id === draggingData.instance_id)
-        if (srcIdx < 0) return prev
-        const next = [...prev]
-        const [moved] = next.splice(srcIdx, 1)
-        next.push(moved)
+        setBurgerStack((prev) => {
+          const srcIdx = prev.findIndex((l) => l.instance_id === draggingData.instance_id)
+          if (srcIdx < 0) return prev
+          const next = [...prev]
+          const [moved] = next.splice(srcIdx, 1)
 
-        if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
-        const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
-        if (topBunIdx !== -1 && topBunIdx !== next.length - 1) return prev;
+          // --- UBAH BAGIAN INI ---
+          // Cari posisi Top Bun, lalu selipkan layer yang di-drop tepat di bawahnya
+          const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+          if (topBunIdx !== -1) {
+            next.splice(topBunIdx, 0, moved);
+          } else {
+            next.push(moved); // Jika belum ada Top Bun, baru push ke akhir
+          }
+          // -----------------------
 
-        return next
-      })
-    }
+          if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
+          const finalTopBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
+          if (finalTopBunIdx !== -1 && finalTopBunIdx !== next.length - 1) return prev;
+
+          return next
+        })
+      }
     setDraggingData(null)
   }
 
@@ -425,8 +440,7 @@ function Kitchen() {
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-4 py-8 sm:px-6 font-sans">
-      <style>
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-4 py-8 sm:px-6 font-sans select-none">      <style>
         {`
           @keyframes dropBounce {
             0% { transform: translateY(-300px); opacity: 0; }

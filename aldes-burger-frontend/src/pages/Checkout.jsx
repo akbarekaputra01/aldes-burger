@@ -239,7 +239,13 @@ function Checkout() {
             navigate('/payment-status?status=failed');
           },
           onClose: function(){
-            alert('Anda menutup popup pembayaran sebelum menyelesaikannya.');
+            alert('Pembayaran ditunda. Pesanan Anda tersimpan dan dapat dilanjutkan nanti.');
+            
+            // Kosongkan keranjang agar user tidak membuat order ganda
+            checkoutItems.forEach(item => removeFromCart(item.id));
+            
+            // Arahkan ke halaman Transaksi
+            navigate('/transactions');
           }
         });
       }

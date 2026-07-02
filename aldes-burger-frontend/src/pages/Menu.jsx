@@ -7,19 +7,19 @@ import { useCart } from '../context/CartContext'
 import api from '../lib/api'
 
 // Import gambar Carousel
-import promo1 from '../assets/promo1.png'
-import promo2 from '../assets/promo2.png'
+import promo1 from '../assets/promo1.jpg'
+import promo2 from '../assets/promo2.jpg'
 
 // Import gambar Menu
-import img1 from '../assets/menus/1.png'
-import img2 from '../assets/menus/2.png'
-import img3 from '../assets/menus/3.png'
-import img4 from '../assets/menus/4.png'
-import img5 from '../assets/menus/5.png'
-import img6 from '../assets/menus/6.png'
-import img7 from '../assets/menus/7.png'
-import img8 from '../assets/menus/8.png'
-import img9 from '../assets/menus/9.png'
+import img1 from '../assets/menus/1.jpg'
+import img2 from '../assets/menus/2.jpg'
+import img3 from '../assets/menus/3.jpg'
+import img4 from '../assets/menus/4.jpg'
+import img5 from '../assets/menus/5.jpg'
+import img6 from '../assets/menus/6.jpg'
+import img7 from '../assets/menus/7.jpg'
+import img8 from '../assets/menus/8.jpg'
+import img9 from '../assets/menus/9.jpg'
 
 const menuImages = {
   1: img1,
