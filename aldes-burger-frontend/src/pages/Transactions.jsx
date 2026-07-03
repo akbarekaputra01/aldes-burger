@@ -21,13 +21,25 @@ function Transactions() {
   const [activeTab, setActiveTab] = useState('on_progress');
   const [isFetching, setIsFetching] = useState(true);
 
-  // 1. MENGAMBIL DATA DARI API LARAVEL
+  // 1. MENGAMBIL DATA DARI API LARAVEL DENGAN SWR
   useEffect(() => {
     const fetchOrders = async () => {
-      setIsFetching(true);
+      // SWR: Tampilkan riwayat cache secara instan
+      const cachedTx = sessionStorage.getItem('aldes_transactions_cache');
+      if (cachedTx) {
+        try {
+          setTransactions(JSON.parse(cachedTx));
+          setIsFetching(false);
+        } catch(e) {}
+      } else {
+        setIsFetching(true);
+      }
+
+      // SWR: Fetch API secara diam-diam (silent update)
       try {
         const { data } = await api.get('/transactions');
         setTransactions(data);
+        sessionStorage.setItem('aldes_transactions_cache', JSON.stringify(data));
       } catch (error) {
         console.error("Gagal memuat transaksi:", error);
       } finally {

@@ -33,6 +33,9 @@ function TransactionDetail() {
           const txData = data.data || data
           setTransaction(txData)
           setIsLoading(false)
+          
+          // Simpan snapshot detail rincian ke cache temporer
+          sessionStorage.setItem(`aldes_tx_detail_${id}`, JSON.stringify(txData))
 
           // AMAN & REAL-TIME: Jika status di database Vercel masih pending,
           // cek kembali otomatis ke server setiap 3 detik untuk mendeteksi Webhook Midtrans.
@@ -43,15 +46,24 @@ function TransactionDetail() {
         .catch((err) => {
           if (!isMounted) return
           console.error(err)
-          setTransaction(null)
+          if (!sessionStorage.getItem(`aldes_tx_detail_${id}`)) {
+            setTransaction(null)
+          }
           setIsLoading(false)
         })
     }
 
-    setIsLoading(true)
+    // SWR: Ambil cache detail spesifik transaksi jika ada
+    const cachedDetail = sessionStorage.getItem(`aldes_tx_detail_${id}`)
+    if (cachedDetail) {
+      setTransaction(JSON.parse(cachedDetail))
+      setIsLoading(false)
+    } else {
+      setIsLoading(true)
+    }
+
     fetchTransactionDetails()
 
-    // Bersihkan timer saat berpindah halaman agar tidak memory leak
     return () => {
       isMounted = false
       if (pollingTimer) clearTimeout(pollingTimer)
@@ -63,6 +75,8 @@ function TransactionDetail() {
     if (transaction?.snap_token) {
       window.snap.pay(transaction.snap_token, {
         onSuccess: () => {
+          sessionStorage.removeItem(`aldes_tx_detail_${id}`)
+          sessionStorage.removeItem('aldes_transactions_cache')
           navigate('/payment-status?status=success')
         },
         onPending: () => {
@@ -111,7 +125,6 @@ function TransactionDetail() {
   return (
     <main className="min-h-screen bg-aldesCream font-sans text-black px-4 py-10 pb-20">
       <section className="mx-auto max-w-3xl space-y-6">
-
         {/* Header Transaksi */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -119,17 +132,14 @@ function TransactionDetail() {
               <p className="text-sm font-black uppercase text-aldesRed tracking-widest">
                 Aldes Burger
               </p>
-
               <h1 className="mt-2 flex items-center gap-2 text-2xl font-black text-gray-900">
                 <ReceiptText className="h-6 w-6 text-aldesRed" strokeWidth={3} />
                 {transaction.id}
               </h1>
-
               <p className="mt-2 text-sm font-bold text-gray-500 uppercase">
                 {transaction.created_at}
               </p>
             </div>
-
             <span
               className={`self-start rounded-full border-2 px-4 py-2 text-xs font-black uppercase ${
                 statusClass[transaction.status] || 'bg-gray-100 text-gray-700 border-gray-300'
@@ -148,25 +158,23 @@ function TransactionDetail() {
               <MapPin className="h-5 w-5 text-aldesRed" strokeWidth={3} />
               <p className="font-black uppercase text-gray-900 text-sm">Alamat Pengiriman</p>
             </div>
-
             <p className="text-sm font-bold text-gray-600 leading-relaxed uppercase">
               {transaction.destination_address}
             </p>
           </div>
 
-          {/* Kotak Pembayaran + Tombol Lanjutkan Pembayaran Terintegrasi */}
+          {/* Kotak Pembayaran */}
           <div className="flex flex-col justify-between rounded-3xl bg-white p-5 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-aldesRed" strokeWidth={3} />
                 <p className="font-black uppercase text-gray-900 text-sm">Pembayaran</p>
               </div>
-
               <p className="text-sm font-bold text-gray-600 uppercase">
                 {transaction.payment?.method?.replace('_', ' ') || '-'}
               </p>
             </div>
-
+            
             {/* Area Aksi Status Khusus */}
             <div className="mt-4 pt-3 border-t-2 border-dashed border-black/20 flex items-center justify-between gap-2">
               <span className="text-[10px] font-black uppercase text-gray-400">Status</span>
@@ -174,7 +182,7 @@ function TransactionDetail() {
               {transaction.status === 'pending' ? (
                 transaction.payment?.method !== 'cash' ? (
                   <button 
-                    onClick={handleContinuePayment}
+                     onClick={handleContinuePayment}
                     className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1"
                   >
                     Lanjutkan Pembayaran
@@ -202,7 +210,6 @@ function TransactionDetail() {
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
             Detail Pesanan
           </h2>
-
           <div className="space-y-3">
             {(transaction.details || []).map((item) => (
               <article
@@ -213,12 +220,10 @@ function TransactionDetail() {
                   <div>
                     <p className="font-black uppercase text-gray-900 text-sm">
                       {item.quantity}x {item.snapshot_name}
-                    </p>
-                    <p className="mt-1 text-xs font-bold text-gray-500 uppercase">
+                    </p>                     <p className="mt-1 text-xs font-bold text-gray-500 uppercase">
                       {toIDR(item.snapshot_price)} / item
                     </p>
                   </div>
-
                   <p className="font-black text-aldesRed italic text-lg">
                     {toIDR(item.snapshot_price * item.quantity)}
                   </p>
@@ -233,13 +238,11 @@ function TransactionDetail() {
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
             Ringkasan Pembayaran
           </h2>
-
           <div className="space-y-3">
             <div className="flex justify-between text-gray-600 font-bold uppercase text-sm">
               <span>Subtotal</span>
               <span>{toIDR(subtotal)}</span>
             </div>
-
             <div className="border-t-2 border-dashed border-black/20 pt-3">
               <div className="flex justify-between items-end text-xl font-black text-gray-900 uppercase">
                 <span>Total</span>
@@ -250,7 +253,6 @@ function TransactionDetail() {
             </div>
           </div>
         </div>
-
       </section>
     </main>
   )

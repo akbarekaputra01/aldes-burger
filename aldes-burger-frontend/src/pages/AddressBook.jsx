@@ -22,7 +22,10 @@ const loadLeaflet = async () => {
 }
 
 function AddressBook() {
-  const navigate = useNavigate(); const [searchParams] = useSearchParams(); const addressId = searchParams.get('addressId'); const isEditMode = useMemo(() => Boolean(addressId), [addressId])
+  const navigate = useNavigate(); 
+  const [searchParams] = useSearchParams(); 
+  const addressId = searchParams.get('addressId'); 
+  const isEditMode = useMemo(() => Boolean(addressId), [addressId])
   const [form, setForm] = useState({ recipient_name: '', phone_number: '', province: '', city: '', district: '', postal_code: '', street_address: '', detail_address: '', label: 'Home', is_default: false, latitude: null, longitude: null, pin_source: 'default', pin_confirmed: false })
   const [suggestions, setSuggestions] = useState([]); const [error, setError] = useState(''); const [isSaving, setIsSaving] = useState(false)
   const [isSearching, setIsSearching] = useState(false); const [suggestionError, setSuggestionError] = useState('')
@@ -37,7 +40,30 @@ function AddressBook() {
   const canSubmit = canSubmitAddress(form)
   const hasStreetAddress = form.street_address.trim().length >= 3
 
-  useEffect(() => { if (!isEditMode) return; api.get('/addresses').then(({ data }) => { const item = data.find((it) => String(it.id) === String(addressId)); if (!item) return setError('Address not found.'); setForm((prev) => ({ ...prev, ...item, latitude: item.latitude ?? null, longitude: item.longitude ?? null, pin_source: item.pin_source ?? 'default', pin_confirmed: !!item.pin_confirmed })) }).catch(() => setError('Unable to load selected address.')) }, [addressId, isEditMode])
+  useEffect(() => { 
+    if (!isEditMode) return; 
+    
+    // SWR: Cek cache dulu agar form langsung terisi
+    const cached = sessionStorage.getItem('aldes_addresses_cache');
+    if (cached) {
+      try {
+        const data = JSON.parse(cached);
+        const item = data.find((it) => String(it.id) === String(addressId));
+        if (item) {
+          setForm((prev) => ({ ...prev, ...item, latitude: item.latitude ?? null, longitude: item.longitude ?? null, pin_source: item.pin_source ?? 'default', pin_confirmed: !!item.pin_confirmed }));
+        }
+      } catch (e) {}
+    }
+
+    // SWR: Tetap panggil API untuk memverifikasi data terbaru
+    api.get('/addresses').then(({ data }) => { 
+      sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(data));
+      const item = data.find((it) => String(it.id) === String(addressId)); 
+      if (!item) return setError('Address not found.'); 
+      setForm((prev) => ({ ...prev, ...item, latitude: item.latitude ?? null, longitude: item.longitude ?? null, pin_source: item.pin_source ?? 'default', pin_confirmed: !!item.pin_confirmed })) 
+    }).catch(() => setError('Unable to load selected address.')) 
+  }, [addressId, isEditMode])
+  
   useEffect(() => { getProvinces().then(setProvinceOptions).catch(() => setProvinceOptions([])) }, [])
 
   useEffect(() => {
@@ -58,7 +84,6 @@ function AddressBook() {
     getPostalCodes(selected.id, { district: form.district, city: form.city, province: form.province }).then(setPostalCodeOptions).catch(() => setPostalCodeOptions([]))
   }, [form.district, districtOptions, form.city, form.province])
 
-
   useEffect(() => {
     const q = form.street_address?.trim()
     if (!form.postal_code) { setSuggestions([]); setSuggestionError('Select postal code first to get better street suggestions.'); return }
@@ -76,12 +101,29 @@ function AddressBook() {
     return () => clearTimeout(t)
   }, [form.street_address, form.province, form.city, form.district, form.postal_code])
 
-
   useEffect(() => { if (!hasStreetAddress) return; let mounted = true; loadLeaflet().then((L) => { if (!mounted || mapRef.current || !mapElRef.current) return; mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); mapRef.current.on('click', (event) => { setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) }) }).catch(() => setError('Unable to load map.')); return () => { mounted = false; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null } } }, [hasStreetAddress, form.latitude, form.longitude])
 
   useEffect(() => { if (!mapRef.current || !markerRef.current || form.latitude === null || form.longitude === null) return; markerRef.current.setLatLng([form.latitude, form.longitude]); mapRef.current.panTo([form.latitude, form.longitude]) }, [form.latitude, form.longitude])
 
-  const submit = async (e) => { e.preventDefault(); setError(''); if (!hasValidPinValue) return setError('Choose a location from the suggestions or set a map pin so the courier can find your address.'); setIsSaving(true); try { if (isEditMode) await api.put(`/addresses/${addressId}`, form); else await api.post('/addresses', form); navigate('/profile', { state: { refreshAddressesAt: Date.now() } }) } catch (err) { setError(err?.response?.data?.message ?? 'Unable to save address.') } finally { setIsSaving(false) } }
+  const submit = async (e) => { 
+    e.preventDefault(); 
+    setError(''); 
+    if (!hasValidPinValue) return setError('Choose a location from the suggestions or set a map pin so the courier can find your address.'); 
+    setIsSaving(true); 
+    try { 
+      if (isEditMode) await api.put(`/addresses/${addressId}`, form); 
+      else await api.post('/addresses', form); 
+      
+      // SWR: Hapus cache karena ada data alamat baru/update
+      sessionStorage.removeItem('aldes_addresses_cache');
+      
+      navigate('/profile', { state: { refreshAddressesAt: Date.now() } }) 
+    } catch (err) { 
+      setError(err?.response?.data?.message ?? 'Unable to save address.') 
+    } finally { 
+      setIsSaving(false) 
+    } 
+  }
 
   return <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-8"><section className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-md sm:p-8"><div className="mb-6 flex items-start justify-between"><h1 className="text-2xl font-black">{isEditMode ? 'Edit Delivery Address' : 'Add Delivery Address'}</h1><MapPin className="h-6 w-6" /></div><form onSubmit={submit} className="space-y-3"><input value={form.recipient_name} onChange={(e)=>setForm((p)=>({ ...p, recipient_name: e.target.value }))} placeholder="recipient name" className="w-full rounded-2xl border px-4 py-3" required/><input value={form.phone_number} onChange={(e)=>setForm((p)=>({ ...p, phone_number: e.target.value }))} placeholder="phone number" className="w-full rounded-2xl border px-4 py-3" required/><select value={form.province} onChange={(e)=>setForm((p)=>({ ...p, province: e.target.value, city: '', district: '', postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required><option value="">Select Province</option>{provinceOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><select value={form.city} onChange={(e)=>setForm((p)=>({ ...p, city: e.target.value, district: '', postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.province}><option value="">Select City/Regency</option>{cityOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><select value={form.district} onChange={(e)=>setForm((p)=>({ ...p, district: e.target.value, postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.city}><option value="">Select District</option>{districtOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><input list="postal-code-options" value={form.postal_code} onChange={(e)=>setForm((p)=>({ ...p, postal_code: e.target.value.replace(/[^0-9]/g, '').slice(0, 5) }))} placeholder={form.district ? 'Select or type Postal Code' : 'Select district first'} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.district}/><datalist id="postal-code-options">{postalCodeOptions.map((x)=><option key={x.postalCode} value={x.postalCode}>{x.postalCode}</option>)}</datalist><input value={form.street_address} onChange={(e)=>setForm((p)=>({ ...p, street_address: e.target.value, pin_source:'default', pin_confirmed:false }))} placeholder="street address" className="w-full rounded-2xl border px-4 py-3" required/><input value={form.detail_address} onChange={(e)=>setForm((p)=>({ ...p, detail_address: e.target.value }))} placeholder="detail address" className="w-full rounded-2xl border px-4 py-3" />
   {!form.postal_code && <p className="text-sm text-gray-500">Pilih atau ketik postal code dulu supaya saran street address muncul.</p>}
