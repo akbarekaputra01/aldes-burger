@@ -10,7 +10,6 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-// --- IMPORT ASSETS ---
 import imgBeefPatty from '../assets/beef_patty.png'
 import imgBottomBurger from '../assets/bottom_burger.png'
 import imgCheese from '../assets/cheese.png'
@@ -55,9 +54,11 @@ const menuImageMap = {
 const getIngredientImage = (name) => {
   if (!name) return null
   const n = name.toLowerCase()
+
   for (const key in ingredientImageMap) {
     if (n.includes(key)) return ingredientImageMap[key]
   }
+
   return null
 }
 
@@ -68,6 +69,7 @@ const getIngredientThickness = (name) => {
   if (n.includes('lettuce')) return 0
   if (n.includes('pickle') || n.includes('tomato') || n.includes('cheese'))
     return 1
+
   if (
     n.includes('bottom') ||
     n.includes('ketchup') ||
@@ -75,6 +77,7 @@ const getIngredientThickness = (name) => {
     n.includes('secret sauce')
   )
     return 2
+
   if (n.includes('beef') || n.includes('chicken')) return 10
   if (n.includes('top')) return 12
 
@@ -126,18 +129,8 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
 }
 
 const MenuMiniPreview = ({ name }) => {
-  const getMenuImage = (itemName) => {
-    if (!itemName) return null
-    const n = itemName.toLowerCase().replace(' ', '_')
-
-    for (const key in menuImageMap) {
-      if (n.includes(key)) return menuImageMap[key]
-    }
-
-    return null
-  }
-
-  const img = getMenuImage(name)
+  const img =
+    menuImageMap[name?.toLowerCase().replace(' ', '_')] || null
 
   return (
     <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
@@ -154,23 +147,9 @@ const MenuMiniPreview = ({ name }) => {
 
 function Cart() {
   const navigate = useNavigate()
-  const contextValue = useCart()
-
-  const cart = contextValue?.cart ?? []
-  const removeFromCart = contextValue?.removeFromCart ?? (() => {})
-  const updateQty = contextValue?.updateQty
+  const { cart = [], removeFromCart = () => {}, updateQty } = useCart() || {}
 
   const [selectedIds, setSelectedIds] = useState([])
-
-  const handleIncrease = (item) => updateQty(item.id, (item.qty ?? 1) + 1)
-
-  const handleDecrease = (item) => {
-    if ((item.qty ?? 1) > 1) {
-      updateQty(item.id, (item.qty ?? 1) - 1)
-    } else {
-      removeFromCart(item.id)
-    }
-  }
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('id-ID', {
@@ -184,27 +163,61 @@ function Cart() {
       (item.unit_price ?? item.price ?? 0).toString().replace(/[^\d]/g, '')
     ) || 0
 
-  const toggleSelect = (id) =>
+  const toggleSelect = (id) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     )
+  }
 
-  const toggleSelectAll = () =>
-    selectedIds.length === cart.length && cart.length > 0
-      ? setSelectedIds([])
-      : setSelectedIds(cart.map((i) => i.id))
+  const toggleSelectAll = () => {
+    if (selectedIds.length === cart.length && cart.length > 0) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(cart.map((item) => item.id))
+    }
+  }
+
+  const handleIncrease = (item) => {
+    updateQty(item.id, (item.qty ?? 1) + 1)
+  }
+
+  const handleDecrease = (item) => {
+    if ((item.qty ?? 1) > 1) {
+      updateQty(item.id, (item.qty ?? 1) - 1)
+    } else {
+      removeFromCart(item.id)
+      setSelectedIds((prev) => prev.filter((id) => id !== item.id))
+    }
+  }
+
+  const handleRemove = (id) => {
+    removeFromCart(id)
+    setSelectedIds((prev) => prev.filter((itemId) => itemId !== id))
+  }
 
   const grandTotal = cart
     .filter((item) => selectedIds.includes(item.id))
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
+
+  const handleCheckout = () => {
+    const selectedItems = cart.filter((item) =>
+      selectedIds.includes(item.id)
+    )
+
+    navigate('/checkout', {
+      state: {
+        selectedItems,
+      },
+    })
+  }
 
   return (
     <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 font-sans flex justify-center items-start">
       <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
 
         {/* Badge */}
-        <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
-          <span className="font-black text-aldesYellow text-base md:text-xl uppercase italic tracking-tighter">
+        <div className="absolute -top-8 -right-2 bg-aldesRed border-[4px] border-black px-5 py-2 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
+          <span className="font-black text-aldesYellow text-lg uppercase italic">
             CART
           </span>
         </div>
@@ -215,163 +228,125 @@ function Cart() {
             <ReceiptText size={40} />
             MY ORDERS
           </h2>
-
-          <p className="text-gray-400 font-bold text-xs md:text-sm uppercase mt-2 tracking-wide">
-            CHECK AND MANAGE YOUR ITEMS BEFORE CHECKOUT! ✨
-          </p>
         </div>
 
-        {/* Select All */}
-        <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
-          <button onClick={toggleSelectAll}>
-            {selectedIds.length === cart.length && cart.length > 0 ? (
-              <div className="w-7 h-7 bg-aldesRed border-4 border-black rounded-xl flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#FFC926"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-5 h-5"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            ) : (
-              <div className="w-7 h-7 border-4 border-black rounded-xl bg-white" />
-            )}
-          </button>
+        {cart.length === 0 ? (
+          <div className="py-16 flex flex-col items-center text-center">
+            <ShoppingBag size={70} strokeWidth={2.5} />
+            <h3 className="mt-4 text-2xl font-black uppercase">
+              Your Tray Is Empty!
+            </h3>
+            <p className="text-gray-400 font-bold mt-2">
+              Add some delicious burgers first 🍔
+            </p>
 
-          <span className="font-black text-sm md:text-base uppercase tracking-wide">
-            SELECT ALL ({cart.length} ITEMS)
-          </span>
-        </div>
+            <button
+              onClick={() => navigate('/menu')}
+              className="mt-6 bg-aldesYellow border-4 border-black px-6 py-3 rounded-2xl font-black shadow-[5px_5px_0_0_#000]"
+            >
+              ORDER NOW
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Select All */}
+            <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
+              <button onClick={toggleSelectAll}>
+                <div className="w-7 h-7 border-4 border-black rounded-xl bg-white flex items-center justify-center font-black">
+                  {selectedIds.length === cart.length &&
+                    cart.length > 0 &&
+                    '✓'}
+                </div>
+              </button>
 
-        {/* Items */}
-        <div className="space-y-3">
-          {cart.map((item) => {
-            const hasIngredients =
-              Array.isArray(item.ingredients) && item.ingredients.length > 0
-            const isSelected = selectedIds.includes(item.id)
+              <span className="font-black uppercase">
+                SELECT ALL ({cart.length})
+              </span>
+            </div>
 
-            return (
-              <article
-                key={item.id}
-                className="bg-white border-4 border-black rounded-2xl p-3 flex items-center gap-3 shadow-[6px_6px_0_0_#000]"
-              >
-                <button onClick={() => toggleSelect(item.id)}>
-                  {isSelected ? (
-                    <div className="w-6 h-6 bg-aldesRed border-4 border-black rounded-lg flex items-center justify-center">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#FFC926"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 border-4 border-black rounded-lg bg-white" />
-                  )}
-                </button>
+            {/* Items */}
+            <div className="space-y-4">
+              {cart.map((item) => {
+                const hasIngredients =
+                  Array.isArray(item.ingredients) &&
+                  item.ingredients.length > 0
 
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {hasIngredients ? (
-                    <BurgerMiniPreview ingredients={item.ingredients} />
-                  ) : (
-                    <MenuMiniPreview name={item.name} />
-                  )}
+                const isSelected = selectedIds.includes(item.id)
 
-                  <div className="min-w-0 flex-1 text-left">
-                    <h3 className="text-sm md:text-base font-black uppercase truncate">
-                      {item.name}
-                    </h3>
+                return (
+                  <article
+                    key={item.id}
+                    className={`relative border-4 border-black rounded-2xl p-4 flex items-center gap-4 shadow-[6px_6px_0_0_#000] ${
+                      isSelected ? 'bg-aldesCream/30' : 'bg-white'
+                    }`}
+                  >
+                    <div
+                      className={`absolute left-0 top-0 h-full w-3 rounded-l-xl ${
+                        isSelected ? 'bg-aldesRed' : 'bg-aldesYellow'
+                      }`}
+                    />
 
-                    {hasIngredients && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.ingredients.map((name, i) => (
-                          <span
-                            key={i}
-                            className="text-[9px] md:text-[10px] font-bold bg-aldesCream px-2 py-0.5 rounded-full border border-black/10"
-                          >
-                            {name}
-                          </span>
-                        ))}
+                    <button onClick={() => toggleSelect(item.id)}>
+                      <div className="w-6 h-6 border-4 border-black rounded-lg bg-white flex items-center justify-center font-black">
+                        {isSelected && '✓'}
                       </div>
+                    </button>
+
+                    {hasIngredients ? (
+                      <BurgerMiniPreview ingredients={item.ingredients} />
+                    ) : (
+                      <MenuMiniPreview name={item.name} />
                     )}
 
-                    <p className="mt-2 text-sm md:text-lg font-black italic text-aldesRed">
-                      {formatCurrency(getItemPrice(item))}
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black uppercase truncate">
+                        {item.name}
+                      </h3>
 
-                <div className="flex flex-col items-end gap-3">
-                  <button onClick={() => removeFromCart(item.id)}>
-                    <Trash2 size={20} />
-                  </button>
+                      <p className="mt-2 text-lg font-black italic text-aldesRed">
+                        {formatCurrency(getItemPrice(item))}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
-                    <button
-                      onClick={() => handleDecrease(item)}
-                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center border-2 border-black rounded-md"
-                    >
-                      <Minus size={12} strokeWidth={4} />
-                    </button>
+                    <div className="flex flex-col items-end gap-3">
+                      <button
+                        onClick={() => handleRemove(item.id)}
+                        className="bg-aldesRed p-2 rounded-xl border-2 border-black shadow-[2px_2px_0_0_#000] hover:scale-105 transition-all"
+                      >
+                        <Trash2 size={16} color="#FFC926" />
+                      </button>
 
-                    <span className="w-8 text-center text-sm md:text-base font-black">
-                      {item.qty ?? 1}
-                    </span>
+                      <div className="flex items-center bg-white border-4 border-black rounded-xl p-1 shadow-[3px_3px_0_0_#000]">
+                        <button
+                          onClick={() => handleDecrease(item)}
+                          className="w-7 h-7 border-2 border-black rounded-md flex items-center justify-center"
+                        >
+                          <Minus size={12} strokeWidth={4} />
+                        </button>
 
-                    <button
-                      onClick={() => handleIncrease(item)}
-                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center bg-aldesYellow border-2 border-black rounded-md"
-                    >
-                      <Plus size={12} strokeWidth={4} />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
+                        <span className="w-8 text-center font-black">
+                          {item.qty ?? 1}
+                        </span>
 
-        {/* Add More */}
-        <button
-          onClick={() => navigate('/menu')}
-          className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-wide flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000]"
-        >
-          <Plus size={20} strokeWidth={4} />
-          ADD MORE ORDERS
-        </button>
+                        <button
+                          onClick={() => handleIncrease(item)}
+                          className="w-7 h-7 bg-aldesYellow border-2 border-black rounded-md flex items-center justify-center"
+                        >
+                          <Plus size={12} strokeWidth={4} />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
 
-        {/* Payment */}
-        <div className="mt-6 pt-5 border-t-[5px] border-dashed border-black space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400 font-bold text-xs md:text-sm tracking-wide">
-              TOTAL ITEMS SELECTED ({selectedIds.length})
-            </span>
-
-            <span className="text-sm md:text-base font-black">
-              {formatCurrency(grandTotal)}
-            </span>
-          </div>
-
-          <div className="flex justify-between border-t-4 border-black pt-4 items-center">
-            <span className="text-base md:text-lg font-black tracking-tight">
-              TOTAL PAYMENT
-            </span>
-
-            <span className="text-lg md:text-2xl font-black text-aldesRed bg-aldesYellow border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
-              {formatCurrency(grandTotal)}
-            </span>
-          </div>
-        </div>
+            {/* Checkout */}
+            <div className="mt-8 border-t-[5px] border-dashed border-black pt-6">
+              <div className="flex justify-between mb-4">
+                <span className="font-bold uppercase text-sm text-gray-400">
+                  Total Selected ({selectedIds.length})
+                </span>
 
         {/* Checkout */}
         <div className="mt-6">
