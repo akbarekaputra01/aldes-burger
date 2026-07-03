@@ -129,13 +129,16 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
 }
 
 const MenuMiniPreview = ({ name }) => {
-  const img =
-    menuImageMap[name?.toLowerCase().replace(' ', '_')] || null
+  const img = menuImageMap[name?.toLowerCase().replace(' ', '_')] || null
 
   return (
     <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
       {img ? (
-        <img src={img} alt={name} className="max-w-12 max-h-12 object-contain" />
+        <img
+          src={img}
+          alt={name}
+          className="max-w-12 max-h-12 object-contain"
+        />
       ) : (
         <div className="text-[10px] font-black text-black text-center uppercase">
           No Img
@@ -199,30 +202,15 @@ function Cart() {
     .filter((item) => selectedIds.includes(item.id))
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
-  const handleCheckout = () => {
-    const selectedItems = cart.filter((item) =>
-      selectedIds.includes(item.id)
-    )
-
-    navigate('/checkout', {
-      state: {
-        selectedItems,
-      },
-    })
-  }
-
   return (
     <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 font-sans flex justify-center items-start">
       <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
-
-        {/* Badge */}
         <div className="absolute -top-8 -right-2 bg-aldesRed border-[4px] border-black px-5 py-2 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
           <span className="font-black text-aldesYellow text-lg uppercase italic">
             CART
           </span>
         </div>
 
-        {/* Header */}
         <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight flex items-center gap-3">
             <ReceiptText size={40} />
@@ -236,20 +224,9 @@ function Cart() {
             <h3 className="mt-4 text-2xl font-black uppercase">
               Your Tray Is Empty!
             </h3>
-            <p className="text-gray-400 font-bold mt-2">
-              Add some delicious burgers first 🍔
-            </p>
-
-            <button
-              onClick={() => navigate('/menu')}
-              className="mt-6 bg-aldesYellow border-4 border-black px-6 py-3 rounded-2xl font-black shadow-[5px_5px_0_0_#000]"
-            >
-              ORDER NOW
-            </button>
           </div>
         ) : (
           <>
-            {/* Select All */}
             <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
               <button onClick={toggleSelectAll}>
                 <div className="w-7 h-7 border-4 border-black rounded-xl bg-white flex items-center justify-center font-black">
@@ -264,7 +241,6 @@ function Cart() {
               </span>
             </div>
 
-            {/* Items */}
             <div className="space-y-4">
               {cart.map((item) => {
                 const hasIngredients =
@@ -280,12 +256,6 @@ function Cart() {
                       isSelected ? 'bg-aldesCream/30' : 'bg-white'
                     }`}
                   >
-                    <div
-                      className={`absolute left-0 top-0 h-full w-3 rounded-l-xl ${
-                        isSelected ? 'bg-aldesRed' : 'bg-aldesYellow'
-                      }`}
-                    />
-
                     <button onClick={() => toggleSelect(item.id)}>
                       <div className="w-6 h-6 border-4 border-black rounded-lg bg-white flex items-center justify-center font-black">
                         {isSelected && '✓'}
@@ -311,28 +281,22 @@ function Cart() {
                     <div className="flex flex-col items-end gap-3">
                       <button
                         onClick={() => handleRemove(item.id)}
-                        className="bg-aldesRed p-2 rounded-xl border-2 border-black shadow-[2px_2px_0_0_#000] hover:scale-105 transition-all"
+                        className="bg-aldesRed p-2 rounded-xl border-2 border-black"
                       >
                         <Trash2 size={16} color="#FFC926" />
                       </button>
 
-                      <div className="flex items-center bg-white border-4 border-black rounded-xl p-1 shadow-[3px_3px_0_0_#000]">
-                        <button
-                          onClick={() => handleDecrease(item)}
-                          className="w-7 h-7 border-2 border-black rounded-md flex items-center justify-center"
-                        >
-                          <Minus size={12} strokeWidth={4} />
+                      <div className="flex items-center bg-white border-4 border-black rounded-xl p-1">
+                        <button onClick={() => handleDecrease(item)}>
+                          <Minus size={12} />
                         </button>
 
                         <span className="w-8 text-center font-black">
                           {item.qty ?? 1}
                         </span>
 
-                        <button
-                          onClick={() => handleIncrease(item)}
-                          className="w-7 h-7 bg-aldesYellow border-2 border-black rounded-md flex items-center justify-center"
-                        >
-                          <Plus size={12} strokeWidth={4} />
+                        <button onClick={() => handleIncrease(item)}>
+                          <Plus size={12} />
                         </button>
                       </div>
                     </div>
@@ -341,33 +305,39 @@ function Cart() {
               })}
             </div>
 
-            {/* Checkout */}
             <div className="mt-8 border-t-[5px] border-dashed border-black pt-6">
               <div className="flex justify-between mb-4">
                 <span className="font-bold uppercase text-sm text-gray-400">
                   Total Selected ({selectedIds.length})
                 </span>
 
-        {/* Checkout */}
-        <div className="mt-6">
-          <button
-            disabled={selectedIds.length === 0}
-            onClick={() => {
-              // (Opsional) Ambil hanya item yang dicentang
-              const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
-              
-              // Arahkan ke halaman checkout dan bawa data item yang dipilih
-              navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
-            }}
-            className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
-              selectedIds.length > 0
-                ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] hover:bg-red-700 active:translate-y-1 active:shadow-none transition-all'
-                : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
-            }`}
-          >
-            PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
-          </button>
-        </div>
+                <span className="font-black text-2xl md:text-3xl text-aldesRed">
+                  {formatCurrency(grandTotal)}
+                </span>
+              </div>
+
+              <button
+                disabled={selectedIds.length === 0}
+                onClick={() => {
+                  const selectedItemsToCheckout = cart.filter((item) =>
+                    selectedIds.includes(item.id)
+                  )
+
+                  navigate('/checkout', {
+                    state: { checkoutItems: selectedItemsToCheckout },
+                  })
+                }}
+                className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
+                  selectedIds.length > 0
+                    ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000]'
+                    : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed'
+                }`}
+              >
+                PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
+              </button>
+            </div>
+          </>
+        )}
       </section>
     </main>
   )
