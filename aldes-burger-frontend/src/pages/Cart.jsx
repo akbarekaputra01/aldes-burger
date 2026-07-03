@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
+// --- IMPORT ASSETS ---
 import imgBeefPatty from '../assets/beef_patty.png'
 import imgBottomBurger from '../assets/bottom_burger.png'
 import imgCheese from '../assets/cheese.png'
@@ -54,11 +55,9 @@ const menuImageMap = {
 const getIngredientImage = (name) => {
   if (!name) return null
   const n = name.toLowerCase()
-
   for (const key in ingredientImageMap) {
     if (n.includes(key)) return ingredientImageMap[key]
   }
-
   return null
 }
 
@@ -69,7 +68,6 @@ const getIngredientThickness = (name) => {
   if (n.includes('lettuce')) return 0
   if (n.includes('pickle') || n.includes('tomato') || n.includes('cheese'))
     return 1
-
   if (
     n.includes('bottom') ||
     n.includes('ketchup') ||
@@ -77,7 +75,6 @@ const getIngredientThickness = (name) => {
     n.includes('secret sauce')
   )
     return 2
-
   if (n.includes('beef') || n.includes('chicken')) return 10
   if (n.includes('top')) return 12
 
@@ -129,16 +126,23 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
 }
 
 const MenuMiniPreview = ({ name }) => {
-  const img = menuImageMap[name?.toLowerCase().replace(' ', '_')] || null
+  const getMenuImage = (itemName) => {
+    if (!itemName) return null
+    const n = itemName.toLowerCase().replace(' ', '_')
+
+    for (const key in menuImageMap) {
+      if (n.includes(key)) return menuImageMap[key]
+    }
+
+    return null
+  }
+
+  const img = getMenuImage(name)
 
   return (
     <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 shadow-[4px_4px_0_0_#000]">
       {img ? (
-        <img
-          src={img}
-          alt={name}
-          className="max-w-12 max-h-12 object-contain"
-        />
+        <img src={img} alt={name} className="max-w-12 max-h-12 object-contain" />
       ) : (
         <div className="text-[10px] font-black text-black text-center uppercase">
           No Img
@@ -150,9 +154,23 @@ const MenuMiniPreview = ({ name }) => {
 
 function Cart() {
   const navigate = useNavigate()
-  const { cart = [], removeFromCart = () => {}, updateQty } = useCart() || {}
+  const contextValue = useCart()
+
+  const cart = contextValue?.cart ?? []
+  const removeFromCart = contextValue?.removeFromCart ?? (() => {})
+  const updateQty = contextValue?.updateQty
 
   const [selectedIds, setSelectedIds] = useState([])
+
+  const handleIncrease = (item) => updateQty(item.id, (item.qty ?? 1) + 1)
+
+  const handleDecrease = (item) => {
+    if ((item.qty ?? 1) > 1) {
+      updateQty(item.id, (item.qty ?? 1) - 1)
+    } else {
+      removeFromCart(item.id)
+    }
+  }
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('id-ID', {
@@ -166,37 +184,15 @@ function Cart() {
       (item.unit_price ?? item.price ?? 0).toString().replace(/[^\d]/g, '')
     ) || 0
 
-  const toggleSelect = (id) => {
+  const toggleSelect = (id) =>
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     )
-  }
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === cart.length && cart.length > 0) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(cart.map((item) => item.id))
-    }
-  }
-
-  const handleIncrease = (item) => {
-    updateQty(item.id, (item.qty ?? 1) + 1)
-  }
-
-  const handleDecrease = (item) => {
-    if ((item.qty ?? 1) > 1) {
-      updateQty(item.id, (item.qty ?? 1) - 1)
-    } else {
-      removeFromCart(item.id)
-      setSelectedIds((prev) => prev.filter((id) => id !== item.id))
-    }
-  }
-
-  const handleRemove = (id) => {
-    removeFromCart(id)
-    setSelectedIds((prev) => prev.filter((itemId) => itemId !== id))
-  }
+  const toggleSelectAll = () =>
+    selectedIds.length === cart.length && cart.length > 0
+      ? setSelectedIds([])
+      : setSelectedIds(cart.map((i) => i.id))
 
   const grandTotal = cart
     .filter((item) => selectedIds.includes(item.id))
@@ -205,139 +201,198 @@ function Cart() {
   return (
     <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 font-sans flex justify-center items-start">
       <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
-        <div className="absolute -top-8 -right-2 bg-aldesRed border-[4px] border-black px-5 py-2 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
-          <span className="font-black text-aldesYellow text-lg uppercase italic">
+
+        {/* Badge */}
+        <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
+          <span className="font-black text-aldesYellow text-base md:text-xl uppercase italic tracking-tighter">
             CART
           </span>
         </div>
 
+        {/* Header */}
         <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight flex items-center gap-3">
             <ReceiptText size={40} />
             MY ORDERS
           </h2>
+
+          <p className="text-gray-400 font-bold text-xs md:text-sm uppercase mt-2 tracking-wide">
+            CHECK AND MANAGE YOUR ITEMS BEFORE CHECKOUT! ✨
+          </p>
         </div>
 
-        {cart.length === 0 ? (
-          <div className="py-16 flex flex-col items-center text-center">
-            <ShoppingBag size={70} strokeWidth={2.5} />
-            <h3 className="mt-4 text-2xl font-black uppercase">
-              Your Tray Is Empty!
-            </h3>
-          </div>
-        ) : (
-          <>
-            <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
-              <button onClick={toggleSelectAll}>
-                <div className="w-7 h-7 border-4 border-black rounded-xl bg-white flex items-center justify-center font-black">
-                  {selectedIds.length === cart.length &&
-                    cart.length > 0 &&
-                    '✓'}
-                </div>
-              </button>
+        {/* Select All */}
+        <div className="bg-aldesCream/50 border-4 border-black rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-[4px_4px_0_0_#000]">
+          <button onClick={toggleSelectAll}>
+            {selectedIds.length === cart.length && cart.length > 0 ? (
+              <div className="w-7 h-7 bg-aldesRed border-4 border-black rounded-xl flex items-center justify-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FFC926"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            ) : (
+              <div className="w-7 h-7 border-4 border-black rounded-xl bg-white" />
+            )}
+          </button>
 
-              <span className="font-black uppercase">
-                SELECT ALL ({cart.length})
-              </span>
-            </div>
+          <span className="font-black text-sm md:text-base uppercase tracking-wide">
+            SELECT ALL ({cart.length} ITEMS)
+          </span>
+        </div>
 
-            <div className="space-y-4">
-              {cart.map((item) => {
-                const hasIngredients =
-                  Array.isArray(item.ingredients) &&
-                  item.ingredients.length > 0
+        {/* Items */}
+        <div className="space-y-3">
+          {cart.map((item) => {
+            const hasIngredients =
+              Array.isArray(item.ingredients) && item.ingredients.length > 0
+            const isSelected = selectedIds.includes(item.id)
 
-                const isSelected = selectedIds.includes(item.id)
+            return (
+              <article
+                key={item.id}
+                className="bg-white border-4 border-black rounded-2xl p-3 flex items-center gap-3 shadow-[6px_6px_0_0_#000]"
+              >
+                <button onClick={() => toggleSelect(item.id)}>
+                  {isSelected ? (
+                    <div className="w-6 h-6 bg-aldesRed border-4 border-black rounded-lg flex items-center justify-center">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#FFC926"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 border-4 border-black rounded-lg bg-white" />
+                  )}
+                </button>
 
-                return (
-                  <article
-                    key={item.id}
-                    className={`relative border-4 border-black rounded-2xl p-4 flex items-center gap-4 shadow-[6px_6px_0_0_#000] ${
-                      isSelected ? 'bg-aldesCream/30' : 'bg-white'
-                    }`}
-                  >
-                    <button onClick={() => toggleSelect(item.id)}>
-                      <div className="w-6 h-6 border-4 border-black rounded-lg bg-white flex items-center justify-center font-black">
-                        {isSelected && '✓'}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {hasIngredients ? (
+                    <BurgerMiniPreview ingredients={item.ingredients} />
+                  ) : (
+                    <MenuMiniPreview name={item.name} />
+                  )}
+
+                  <div className="min-w-0 flex-1 text-left">
+                    <h3 className="text-sm md:text-base font-black uppercase truncate">
+                      {item.name}
+                    </h3>
+
+                    {hasIngredients && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.ingredients.map((name, i) => (
+                          <span
+                            key={i}
+                            className="text-[9px] md:text-[10px] font-bold bg-aldesCream px-2 py-0.5 rounded-full border border-black/10"
+                          >
+                            {name}
+                          </span>
+                        ))}
                       </div>
-                    </button>
-
-                    {hasIngredients ? (
-                      <BurgerMiniPreview ingredients={item.ingredients} />
-                    ) : (
-                      <MenuMiniPreview name={item.name} />
                     )}
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-black uppercase truncate">
-                        {item.name}
-                      </h3>
+                    <p className="mt-2 text-sm md:text-lg font-black italic text-aldesRed">
+                      {formatCurrency(getItemPrice(item))}
+                    </p>
+                  </div>
+                </div>
 
-                      <p className="mt-2 text-lg font-black italic text-aldesRed">
-                        {formatCurrency(getItemPrice(item))}
-                      </p>
-                    </div>
+                <div className="flex flex-col items-end gap-3">
+                  <button onClick={() => removeFromCart(item.id)}>
+                    <Trash2 size={20} />
+                  </button>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <button
-                        onClick={() => handleRemove(item.id)}
-                        className="bg-aldesRed p-2 rounded-xl border-2 border-black"
-                      >
-                        <Trash2 size={16} color="#FFC926" />
-                      </button>
+                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
+                    <button
+                      onClick={() => handleDecrease(item)}
+                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center border-2 border-black rounded-md"
+                    >
+                      <Minus size={12} strokeWidth={4} />
+                    </button>
 
-                      <div className="flex items-center bg-white border-4 border-black rounded-xl p-1">
-                        <button onClick={() => handleDecrease(item)}>
-                          <Minus size={12} />
-                        </button>
+                    <span className="w-8 text-center text-sm md:text-base font-black">
+                      {item.qty ?? 1}
+                    </span>
 
-                        <span className="w-8 text-center font-black">
-                          {item.qty ?? 1}
-                        </span>
+                    <button
+                      onClick={() => handleIncrease(item)}
+                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center bg-aldesYellow border-2 border-black rounded-md"
+                    >
+                      <Plus size={12} strokeWidth={4} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
 
-                        <button onClick={() => handleIncrease(item)}>
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
+        {/* Add More */}
+        <button
+          onClick={() => navigate('/menu')}
+          className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-wide flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000]"
+        >
+          <Plus size={20} strokeWidth={4} />
+          ADD MORE ORDERS
+        </button>
 
-            <div className="mt-8 border-t-[5px] border-dashed border-black pt-6">
-              <div className="flex justify-between mb-4">
-                <span className="font-bold uppercase text-sm text-gray-400">
-                  Total Selected ({selectedIds.length})
-                </span>
+        {/* Payment */}
+        <div className="mt-6 pt-5 border-t-[5px] border-dashed border-black space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400 font-bold text-xs md:text-sm tracking-wide">
+              TOTAL ITEMS SELECTED ({selectedIds.length})
+            </span>
 
-                <span className="font-black text-2xl md:text-3xl text-aldesRed">
-                  {formatCurrency(grandTotal)}
-                </span>
-              </div>
+            <span className="text-sm md:text-base font-black">
+              {formatCurrency(grandTotal)}
+            </span>
+          </div>
 
-              <button
-                disabled={selectedIds.length === 0}
-                onClick={() => {
-                  const selectedItemsToCheckout = cart.filter((item) =>
-                    selectedIds.includes(item.id)
-                  )
+          <div className="flex justify-between border-t-4 border-black pt-4 items-center">
+            <span className="text-base md:text-lg font-black tracking-tight">
+              TOTAL PAYMENT
+            </span>
 
-                  navigate('/checkout', {
-                    state: { checkoutItems: selectedItemsToCheckout },
-                  })
-                }}
-                className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
-                  selectedIds.length > 0
-                    ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000]'
-                    : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed'
-                }`}
-              >
-                PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
-              </button>
-            </div>
-          </>
-        )}
+            <span className="text-lg md:text-2xl font-black text-aldesRed bg-aldesYellow border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
+              {formatCurrency(grandTotal)}
+            </span>
+          </div>
+        </div>
+
+        {/* Checkout */}
+        <div className="mt-6">
+          <button
+            disabled={selectedIds.length === 0}
+            onClick={() => {
+              // (Opsional) Ambil hanya item yang dicentang
+              const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
+              
+              // Arahkan ke halaman checkout dan bawa data item yang dipilih
+              navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
+            }}
+            className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
+              selectedIds.length > 0
+                ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] hover:bg-red-700 active:translate-y-1 active:shadow-none transition-all'
+                : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
+            }`}
+          >
+            PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
+          </button>
+        </div>
       </section>
     </main>
   )
