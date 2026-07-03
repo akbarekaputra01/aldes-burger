@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
+import { 
   Mail, Phone, MapPin, Edit, Trash2,
   Plus, LogOut, Loader2, AlertCircle, Key,
-  Lock, Eye, EyeOff, Save, X
+  Lock, Eye, EyeOff, Save, X 
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AddressBookModal from '../components/AddressBookModal'
@@ -53,7 +53,18 @@ function Profile() {
 
   useEffect(() => {
     let isMounted = true
-    setIsLoading(true)
+    
+    // SWR Cache Layer
+    const cachedUser = sessionStorage.getItem('aldes_user_cache')
+    const cachedAddresses = sessionStorage.getItem('aldes_addresses_cache')
+    
+    if (cachedUser && cachedAddresses) {
+      setUser(JSON.parse(cachedUser))
+      setAddresses(JSON.parse(cachedAddresses))
+      setIsLoading(false)
+    } else {
+      setIsLoading(true)
+    }
     setError('')
     
     Promise.all([api.get('/user'), api.get('/addresses')])
@@ -61,10 +72,16 @@ function Profile() {
         if (!isMounted) return
         setUser(userResponse.data)
         setAddresses(addressesResponse.data)
+        
+        // Simpan versi terbaru ke cache
+        sessionStorage.setItem('aldes_user_cache', JSON.stringify(userResponse.data))
+        sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(addressesResponse.data))
       })
       .catch(() => {
         if (!isMounted) return
-        setError('Failed to load profile data. Please refresh the page.')
+        if (!cachedUser || !cachedAddresses) {
+          setError('Failed to load profile data. Please refresh the page.')
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)
@@ -86,7 +103,9 @@ function Profile() {
     setIsDeletingId(addressId)
     try {
       await api.delete(`/addresses/${addressId}`)
-      setAddresses((prev) => prev.filter((address) => address.id !== addressId))
+      const nextAddresses = addresses.filter((address) => address.id !== addressId)
+      setAddresses(nextAddresses)
+      sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(nextAddresses))
     } catch {
       setError('Failed to delete address. Please try again.')
     } finally {
@@ -131,6 +150,7 @@ function Profile() {
       // Abaikan error network, paksa hapus sesi lokal
     } finally {
       clearAuthSession()
+      sessionStorage.clear() // Bersihkan semua render cache
       navigate('/login')
       window.location.reload()
     }
@@ -176,9 +196,7 @@ function Profile() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* ========================================================= */}
           {/* KOLOM KIRI: PROFIL & KEAMANAN */}
-          {/* ========================================================= */}
           <div className="lg:col-span-5 flex flex-col gap-8">
             
             {/* CARD: USER INFO */}
@@ -334,9 +352,7 @@ function Profile() {
             </button>
           </div>
 
-          {/* ========================================================= */}
           {/* KOLOM KANAN: ALAMAT TERSIMPAN */}
-          {/* ========================================================= */}
           <div className="lg:col-span-7">
             <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full min-h-[600px]">
               
@@ -352,7 +368,7 @@ function Profile() {
                 </span>
               </div>
 
-              {/* Area List Alamat dengan Scroll (DIPERBAIKI MAX-HEIGHT NYA) */}
+              {/* Area List Alamat dengan Scroll */}
               <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5 max-h-[400px]">
                 {sortedAddresses.length === 0 ? (
                   <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-4 border-dashed border-black bg-aldesCream p-6 text-center">
@@ -392,13 +408,15 @@ function Profile() {
                       <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto mt-2 sm:mt-0">
                         {!address.is_default && (
                           <button 
-                            type="button" 
-                            onClick={async () => { 
-                              await api.put(`/addresses/${address.id}`, { ...address, is_default: true }); 
-                              setAddresses((prev)=>prev.map((it)=>({ ...it, is_default: it.id===address.id }))) 
-                            }} 
-                            className="rounded-xl p-3 border-2 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none" 
-                            title="Set as Default"
+                             type="button"
+                             onClick={async () => {
+                               await api.put(`/addresses/${address.id}`, { ...address, is_default: true });
+                               const next = addresses.map((it)=>({ ...it, is_default: it.id===address.id }))
+                               setAddresses(next)
+                               sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(next))
+                             }}
+                             className="rounded-xl p-3 border-2 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                             title="Set as Default"
                           >
                             <MapPin className="h-5 w-5" />
                           </button>
@@ -440,20 +458,20 @@ function Profile() {
               </button>
             </article>
           </div>
-
         </div>
       </div>
-      
+
       <AddressBookModal 
-        open={isAddressModalOpen} 
-        initialAddress={editingAddress} 
-        userPhone={user?.phone} 
-        onClose={() => setIsAddressModalOpen(false)} 
-        onSaved={async () => { 
-          const { data } = await api.get('/addresses'); 
-          setAddresses(data) 
-        }} 
-      />
+         open={isAddressModalOpen} 
+         initialAddress={editingAddress} 
+         userPhone={user?.phone} 
+         onClose={() => setIsAddressModalOpen(false)} 
+         onSaved={async () => {
+           const { data } = await api.get('/addresses');
+           setAddresses(data)
+           sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(data))
+         }} 
+       />
     </main>
   )
 }

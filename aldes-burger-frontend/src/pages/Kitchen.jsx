@@ -127,7 +127,6 @@ function Kitchen() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingVariation, setIsSavingVariation] = useState(false)
   
-
   const [draggingData, setDraggingData] = useState(null)
   const [isDragOverBox, setIsDragOverBox] = useState(false)
   const [dragOverItemId, setDragOverItemId] = useState(null)
@@ -144,14 +143,27 @@ function Kitchen() {
 
   useEffect(() => {
     const loadData = async () => {
-      setIsFetching(true)
+      // SWR: Tampilkan data dari Cache instan (jika ada)
+      const cachedMenu = sessionStorage.getItem('aldes_menu_cache');
+      const cachedIngredients = sessionStorage.getItem('aldes_ingredients_cache');
+      
+      if (cachedMenu && cachedIngredients) {
+        setMenu(JSON.parse(cachedMenu));
+        setIngredients(JSON.parse(cachedIngredients));
+        setIsFetching(false); 
+      } else {
+        setIsFetching(true);
+      }
+
+      // SWR: Lakukan fetch di background untuk update data terbaru
       try {
-        const [menuRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')])
-        setMenu(menuRes.data)
+        const [menuRes, ingredientsRes] = await Promise.all([api.get('/menus'), api.get('/ingredients')]);
+        const fetchedMenus = menuRes.data;
+        
         const uniqueIngredients = [];
         const seenNames = new Set();
-        
         const nonBurgerItems = ['water','drink', 'mineral', 'fries', 'nugget', 'soda', 'tea', 'ring', 'cola'];
+        
         ingredientsRes.data.forEach((item) => {
           const itemName = item.name.toLowerCase();
           const isExcluded = nonBurgerItems.some(keyword => itemName.includes(keyword));
@@ -160,22 +172,28 @@ function Kitchen() {
             uniqueIngredients.push(item);
           }
         });
+        
+        setMenu(fetchedMenus);
         setIngredients(uniqueIngredients);
+        sessionStorage.setItem('aldes_menu_cache', JSON.stringify(fetchedMenus));
+        sessionStorage.setItem('aldes_ingredients_cache', JSON.stringify(uniqueIngredients));
       } catch (error) {
-        setMenu([])
-        setIngredients([])
+        if (!cachedMenu || !cachedIngredients) {
+          setMenu([]);
+          setIngredients([]);
+        }
       } finally {
-        setIsFetching(false)
+        setIsFetching(false);
       }
     }
     loadData()
   }, [])
+
   const initializedMenuIdRef = useRef(null);
   useEffect(() => {
     if (!selectedMenu || ingredients.length === 0) return;
 
     if (initializedMenuIdRef.current === selectedMenu.id) return;
-    // Catat ID menu ini sebagai "sudah diinisialisasi"
     initializedMenuIdRef.current = selectedMenu.id;
 
     if (selectedMenu.is_custom) {
@@ -371,15 +389,12 @@ function Kitchen() {
           const next = [...prev]
           const [moved] = next.splice(srcIdx, 1)
 
-          // --- UBAH BAGIAN INI ---
-          // Cari posisi Top Bun, lalu selipkan layer yang di-drop tepat di bawahnya
           const topBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
           if (topBunIdx !== -1) {
             next.splice(topBunIdx, 0, moved);
           } else {
-            next.push(moved); // Jika belum ada Top Bun, baru push ke akhir
+            next.push(moved); 
           }
-          // -----------------------
 
           if (next.length > 0 && !isBottomBunItem(next[0].ingredient_name)) return prev;
           const finalTopBunIdx = next.findIndex(l => isTopBunItem(l.ingredient_name));
@@ -440,7 +455,8 @@ function Kitchen() {
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-4 py-8 sm:px-6 font-sans select-none">      <style>
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-4 py-8 sm:px-6 font-sans select-none">
+      <style>
         {`
           @keyframes dropBounce {
             0% { transform: translateY(-300px); opacity: 0; }

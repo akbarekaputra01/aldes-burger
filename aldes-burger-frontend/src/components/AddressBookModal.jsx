@@ -40,7 +40,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [showRegionSelector, setShowRegionSelector] = useState(false)
   const [activeRegionTab, setActiveRegionTab] = useState('province')
   const regionSelectorRef = useRef(null)
-
+  
   const [error, setError] = useState('')
   const previewMapElRef = useRef(null)
   const previewMapRef = useRef(null)
@@ -61,10 +61,8 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     setForm(initialAddress ? { ...form, ...initialAddress } : { ...form, phone_number: userPhone || '' })
     setShowMapLayer(false)
     setShowRegionSelector(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialAddress, userPhone])
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -82,7 +80,17 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [postalCodeOptions, setPostalCodeOptions] = useState([])
 
   useEffect(() => {
-    getProvinces().then(setProvinceOptions).catch(() => setProvinceOptions([]))
+    // Gunakan sessionStorage cache wilayah jika tersedia demi kecepatan form
+    const cachedProvinces = sessionStorage.getItem('aldes_province_options')
+    if (cachedProvinces) {
+      setProvinceOptions(JSON.parse(cachedProvinces))
+    }
+    getProvinces().then(data => {
+      setProvinceOptions(data)
+      sessionStorage.setItem('aldes_province_options', JSON.stringify(data))
+    }).catch(() => {
+      if(!cachedProvinces) setProvinceOptions([])
+    })
   }, [])
 
   useEffect(() => {
@@ -92,10 +100,20 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }
     const cleanProv = form.province.trim().toUpperCase()
     const province = provinceOptions.find(p => p.name === form.province || p.name.includes(cleanProv) || cleanProv.includes(p.name))
-    
+         
     if (province) {
       if (form.province !== province.name) setForm(prev => ({ ...prev, province: province.name }))
-      getCities(province.id).then(setCityOptions).catch(() => setCityOptions([]))
+      
+      const cacheKey = `aldes_cities_${province.id}`
+      const cachedCities = sessionStorage.getItem(cacheKey)
+      if (cachedCities) setCityOptions(JSON.parse(cachedCities))
+
+      getCities(province.id).then(data => {
+        setCityOptions(data)
+        sessionStorage.setItem(cacheKey, JSON.stringify(data))
+      }).catch(() => {
+        if(!cachedCities) setCityOptions([])
+      })
     } else {
       setCityOptions([])
     }
@@ -108,10 +126,20 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }
     const cleanCity = form.city.replace(/^(KOTA|KABUPATEN|KAB\.|KAB|KOTA KAB)\s+/i, '').trim().toUpperCase()
     const city = cityOptions.find(c => c.name === form.city || c.name.replace(/^(KOTA|KABUPATEN)\s+/i, '').trim() === cleanCity)
-    
+         
     if (city) {
       if (form.city !== city.name) setForm(prev => ({ ...prev, city: city.name }))
-      getDistricts(city.id).then(setDistrictOptions).catch(() => setDistrictOptions([]))
+      
+      const cacheKey = `aldes_districts_${city.id}`
+      const cachedDistricts = sessionStorage.getItem(cacheKey)
+      if (cachedDistricts) setDistrictOptions(JSON.parse(cachedDistricts))
+
+      getDistricts(city.id).then(data => {
+        setDistrictOptions(data)
+        sessionStorage.setItem(cacheKey, JSON.stringify(data))
+      }).catch(() => {
+        if(!cachedDistricts) setDistrictOptions([])
+      })
     } else {
       setDistrictOptions([])
     }
@@ -124,7 +152,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }
     const cleanDist = form.district.replace(/^(KECAMATAN|KEC\.|KEC)\s+/i, '').trim().toUpperCase()
     const district = districtOptions.find(d => d.name === form.district || d.name.replace(/^(KECAMATAN)\s+/i, '').trim() === cleanDist)
-    
+         
     if (district) {
       if (form.district !== district.name) setForm(prev => ({ ...prev, district: district.name }))
       getPostalCodes(district.id, { province: form.province, city: form.city, district: form.district })
@@ -144,7 +172,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }
   }, [form.district, districtOptions, form.province, form.city])
 
-  // Close region selector on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (regionSelectorRef.current && !regionSelectorRef.current.contains(event.target)) {
@@ -158,7 +185,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   useEffect(() => {
     const q = form.street_address?.trim()
     if (!q || q.length < 3 || form.pin_source !== 'default') return setSuggestions([])
-    
+         
     searchAddressSuggestions(q, { province: form.province, city: form.city, district: form.district, postalCode: form.postal_code })
       .then(setSuggestions)
       .catch(() => setSuggestions([]))
@@ -167,7 +194,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   useEffect(() => {
     if (!fullAddressQuery || fullAddressQuery.length < 8) return
     if (form.pin_source === 'manual_map' || form.pin_source === 'manual_adjusted' || form.pin_source === 'current_location') return
-
     let cancelled = false
     geocodeAddress(fullAddressQuery)
       .then((result) => {
@@ -197,7 +223,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }))
   }
 
-  // Cleanup maps when unmounting
   useEffect(() => {
     return () => {
       if (previewMapRef.current) { previewMapRef.current.remove(); previewMapRef.current = null; previewMarkerRef.current = null; }
@@ -205,7 +230,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }
   }, [])
 
-  // Initialize Preview Map - recreate completely when hasStreet changes
   useEffect(() => {
     if (showMapLayer || !previewMapElRef.current || !hasStreet) return
     let mounted = true
@@ -214,32 +238,29 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       if (!mounted || !previewMapElRef.current) return
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
-
       map = L.map(previewMapElRef.current, {
         zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, keyboard: false
       }).setView([lat, lng], 15)
-      
+             
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
       const marker = L.marker([lat, lng]).addTo(map)
-      
+             
       previewMapRef.current = map
       previewMarkerRef.current = marker
-      
+             
       setTimeout(() => { if (map) map.invalidateSize() }, 100)
     }).catch(() => {})
-    
+         
     return () => { 
-      mounted = false 
+      mounted = false
       if (map) {
         map.remove()
         previewMapRef.current = null
         previewMarkerRef.current = null
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showMapLayer, hasStreet]) 
+  }, [showMapLayer, hasStreet])
 
-  // Initialize Editor Map
   useEffect(() => {
     if (!showMapLayer || !mapElRef.current) return
     let mounted = true
@@ -248,20 +269,17 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       if (!mounted || !mapElRef.current) return
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
-
       map = L.map(mapElRef.current, { zoomControl: false }).setView([lat, lng], 16)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
-
-      // When map moves, update the form state (fixed pin in center)
       map.on('moveend', () => {
         const center = map.getCenter()
         updatePin(Number(center.lat.toFixed(8)), Number(center.lng.toFixed(8)), 'manual_map')
       })
-      
+             
       mapRef.current = map
       setTimeout(() => { if (map) map.invalidateSize() }, 150)
     }).catch(() => {})
-    
+         
     return () => { 
       mounted = false
       if (map) {
@@ -269,15 +287,12 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
          mapRef.current = null
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showMapLayer])
 
-  // Update map centers when form.latitude/longitude changes
   useEffect(() => {
     const lat = form.latitude
     const lng = form.longitude
     if (lat === null || lng === null) return
-
     if (!showMapLayer && previewMapRef.current && previewMarkerRef.current) {
       previewMapRef.current.setView([lat, lng], previewMapRef.current.getZoom() || 15)
       previewMarkerRef.current.setLatLng([lat, lng])
@@ -289,11 +304,11 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       setError('Geolocation is not supported by your browser')
       return
     }
-    
+         
     navigator.geolocation.getCurrentPosition(async (position) => {
       const lat = position.coords.latitude
       const lng = position.coords.longitude
-      
+             
       try {
         const reverseData = await reverseGeocode(lat, lng)
         const updates = {
@@ -302,19 +317,19 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
           pin_source: 'current_location',
           pin_confirmed: true
         }
-        
+                 
         if (reverseData.province) updates.province = reverseData.province.toUpperCase()
-        
+                 
         let city = reverseData.city || ''
         if (city) {
           city = city.replace(/^(KOTA|KABUPATEN|KAB\.|KAB|KOTA KAB)\s+/i, '').trim()
           updates.city = city.toUpperCase()
         }
-        
+                 
         updates.district = reverseData.district ? reverseData.district.toUpperCase() : ''
         updates.postal_code = reverseData.postalCode || ''
         updates.street_address = reverseData.formattedAddress || ''
-        
+                 
         setForm(prev => ({ ...prev, ...updates }))
       } catch (err) {
         updatePin(lat, lng, 'current_location')
@@ -331,6 +346,9 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     try {
       if (isEdit) await api.put(`/addresses/${initialAddress.id}`, form)
       else await api.post('/addresses', form)
+      
+      // Hapus cache agar pemanggil memicu pembaruan data
+      sessionStorage.removeItem('aldes_addresses_cache')
       onSaved()
       onClose()
     } catch {
@@ -338,12 +356,11 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     } finally { setIsSaving(false) }
   }
 
-  // --- NEO BRUTALISM STYLE HELPERS ---
   const inputClassName = "w-full rounded-xl border-4 border-black bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold"
   const labelClassName = "pointer-events-none absolute left-3 -top-3 bg-white px-2 text-xs font-black uppercase text-black border-2 border-black rounded-lg transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-transparent peer-placeholder-shown:border-transparent peer-focus:-top-3 peer-focus:text-xs peer-focus:text-aldesRed peer-focus:border-black peer-focus:border-2 peer-focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
 
   if (!open) return null
-  
+
   if (showMapLayer) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/70 p-4 sm:p-6 backdrop-blur-sm" style={{ zIndex: 99999 }}>
@@ -358,37 +375,35 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             </div>
           </div>
           
-          <div className="relative flex-1 bg-gray-100 border-b-4 border-black">
+          <div className="relative flex-1 bg-gray-100 border-b-4 border-black"> 
              <div ref={mapElRef} className="h-full w-full" />
              
-             {/* Center fixed marker */}
              <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1000] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                <div className="mb-2 whitespace-nowrap rounded-xl border-4 border-black bg-aldesRed px-4 py-2.5 text-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative">
-                   <p className="text-sm font-black uppercase">Your pin is here</p>
-                   <p className="text-[10px] font-bold opacity-90 mt-0.5">DRAG MAP TO ADJUST</p>
-                   <div className="absolute -bottom-[9px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-black"></div>
-                   <div className="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-aldesRed"></div>
-                </div>
-                <svg viewBox="0 0 24 24" className="h-12 w-12 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-1/2 text-aldesRed" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>
+                 <div className="mb-2 whitespace-nowrap rounded-xl border-4 border-black bg-aldesRed px-4 py-2.5 text-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative"> 
+                    <p className="text-sm font-black uppercase">Your pin is here</p>
+                    <p className="text-[10px] font-bold opacity-90 mt-0.5">DRAG MAP TO ADJUST</p>
+                    <div className="absolute -bottom-[9px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-black"></div>
+                    <div className="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-aldesRed"></div>
+                 </div>
+                 <svg viewBox="0 0 24 24" className="h-12 w-12 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-1/2 text-aldesRed" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                 </svg>
              </div>
              
              <div className="absolute right-4 top-4 z-[1000] flex flex-col gap-2">
-                <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomIn()}><span className="text-xl leading-none block font-black text-black">+</span></button>
-                <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-black text-black">−</span></button>
+                 <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomIn()}><span className="text-xl leading-none block font-black text-black">+</span></button>
+                 <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-black text-black"> </span></button>
              </div>
              
              <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-3">
-                <button type="button" className="rounded-2xl border-4 border-black bg-aldesYellow p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-y-1 active:shadow-none transition-all text-black" onClick={handleCurrentLocation} title="Use Current Location">
-                  <Navigation className="h-6 w-6 stroke-[3]" />
-                </button>
-                <button type="button" className="rounded-2xl border-4 border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all text-aldesRed" onClick={() => mapRef.current?.panTo([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng])} title="Go to pin">
-                   <MapPin className="h-6 w-6 stroke-[3]" />
-                </button>
+                 <button type="button" className="rounded-2xl border-4 border-black bg-aldesYellow p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-y-1 active:shadow-none transition-all text-black" onClick={handleCurrentLocation} title="Use Current Location">
+                   <Navigation className="h-6 w-6 stroke-[3]" />
+                 </button>
+                 <button type="button" className="rounded-2xl border-4 border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all text-aldesRed" onClick={() => mapRef.current?.panTo([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng])} title="Go to pin"> 
+                    <MapPin className="h-6 w-6 stroke-[3]" />
+                 </button>
              </div>
           </div>
-
           <div className="flex justify-end gap-4 bg-aldesCream p-4 sm:p-5">
             <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all uppercase">Cancel</button>
             <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">Confirm</button>
@@ -400,9 +415,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-black/60 p-4 sm:p-6 flex items-start justify-center backdrop-blur-sm" style={{ zIndex: 9999 }}>
-      
-      {/* PERBAIKAN: overflow-hidden dihapus dari sini agar dropdown yang panjang ke bawah tidak terpotong (clip) 
-      */}
       <div className="mt-8 w-full max-w-2xl rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col">
         
         {/* MODAL HEADER */}
@@ -416,7 +428,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
         <div className="p-6 bg-aldesCream rounded-b-2xl">
           <form onSubmit={onSubmit} className="space-y-6">
             
-            {/* 1. RECIPIENT INFO (z-50) */}
+            {/* 1. RECIPIENT INFO */}
             <div className="relative z-50 grid grid-cols-1 gap-5 sm:grid-cols-2 pt-2">
               <div className="relative">
                 <input 
@@ -424,11 +436,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                   className={`${inputClassName} peer`}
                   placeholder="Full Name" 
                   value={form.recipient_name || ''} 
-                  onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))} 
+                  onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))}
                 />
                 <label htmlFor="recipient_name" className={labelClassName}>Full Name</label>
               </div>
-
               <div className="relative">
                 <input 
                   id="phone_number"
@@ -436,7 +447,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                   placeholder="Phone Number" 
                   value={form.phone_number || ''} 
                   onFocus={() => setShowPhoneReco(true)} 
-                  onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))} 
+                  onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))}
                 />
                 <label htmlFor="phone_number" className={labelClassName}>Phone Number</label>
                 
@@ -452,7 +463,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               </div>
             </div>
             
-            {/* 2. REGION SELECTOR (z-40) */}
+            {/* 2. REGION SELECTOR */}
             <div className="relative z-40" ref={regionSelectorRef}>
               <div 
                 className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform ${showRegionSelector ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : 'border-black'}`}
@@ -481,7 +492,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 Province, City, District, Postal Code
               </label>
 
-              {/* DROPDOWN REGION: Hardcoded zIndex tinggi */}
               {showRegionSelector && (
                 <div className="absolute mt-2 w-full rounded-2xl border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden" style={{ zIndex: 100 }}>
                   <div className="flex border-b-4 border-black text-sm overflow-x-auto whitespace-nowrap scrollbar-hide bg-gray-50">
@@ -538,7 +548,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               )}
             </div>
             
-            {/* 3. STREET ADDRESS & SUGGESTION BOX (z-30) */}
+            {/* 3. STREET ADDRESS & SUGGESTION BOX */}
             <div className="relative z-30">
               <textarea 
                 id="street_address"
@@ -546,7 +556,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 className={`peer w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black placeholder-transparent focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
                 placeholder="Street Name, Building, House No." 
                 value={form.street_address || ''} 
-                onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))} 
+                onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))}
               />
               <label 
                 htmlFor="street_address" 
@@ -555,7 +565,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 {isRegionFilled ? 'Street Name, Building, House No.' : 'Select Region first'}
               </label>
 
-              {/* DROPDOWN SARAN ALAMAT: Hardcoded zIndex tinggi */}
               {suggestions.length > 0 && (
                 <div className="absolute w-full max-h-48 overflow-auto rounded-2xl border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mt-2" style={{ zIndex: 100 }}>
                   {suggestions.slice(0, 5).map(s => (
@@ -571,7 +580,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               )}
             </div>
 
-            {/* 4. MAP PREVIEW AREA (z-10) */}
+            {/* 4. MAP PREVIEW AREA */}
             <div className={`w-full rounded-2xl p-4 border-4 relative z-10 transition-colors ${hasStreet ? 'bg-aldesYellow border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]' : 'bg-white border-dashed border-gray-400'}`}>
               <div className="mb-4 flex items-start justify-between gap-2">
                 <div className="flex gap-3">
@@ -599,7 +608,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 )}
                 
                 {!hasStreet && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100"> 
                      <button type="button" disabled className="relative z-10 flex items-center gap-2 rounded-xl bg-white px-4 py-2 border-2 border-gray-300 text-sm font-black uppercase text-gray-400">
                        <MapPin className="h-5 w-5 stroke-[2]" /> Add Location
                      </button>
@@ -614,14 +623,14 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               </div>
             </div>
 
-            {/* 5. DETAIL ADDRESS (z-0) */}
+            {/* 5. DETAIL ADDRESS */}
             <div className="relative z-0">
               <textarea 
                 id="detail_address"
                 className={`${inputClassName} min-h-[50px] peer resize-y`}
                 placeholder="Other Details (e.g. Block / Unit No., Landmarks)" 
                 value={form.detail_address || ''} 
-                onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))} 
+                onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))}
               />
               <label htmlFor="detail_address" className={labelClassName}>Other Details</label>
             </div>
@@ -638,7 +647,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             <div className="pt-2 text-sm text-black">
               <label className="flex items-center gap-3 cursor-pointer group w-max">
                 <input type="checkbox" className="h-5 w-5 accent-aldesRed border-2 border-black rounded cursor-pointer" checked={!!form.is_default} onChange={e => setForm(p => ({ ...p, is_default: e.target.checked }))} /> 
-                <span className="font-black uppercase group-hover:text-aldesRed transition-colors">Set as Default Address</span>
+                 <span className="font-black uppercase group-hover:text-aldesRed transition-colors">Set as Default Address</span>
               </label>
             </div>
             
