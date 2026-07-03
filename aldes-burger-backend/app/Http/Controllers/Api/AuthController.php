@@ -12,60 +12,66 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    // 1. Fungsi Register (Dimodifikasi)
+    // 1. Register
+    // IMPORTANT: the submitted password is NOT written to the real
+    // `password` column here. It is staged in `pending_password` and only
+    // promoted to `password` after the OTP is successfully verified in
+    // verifyRegisterOtp(). This is what prevents an unverified re-registration
+    // from silently taking over the account's login credentials.
     public function register(Request $request): JsonResponse
     {
-        // 1. HAPUS aturan 'unique:users,email' agar kita bisa melakukan pengecekan manual
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'], 
+            'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'confirmed', 'min:6'],
         ]);
 
         $existingUser = User::query()->where('email', $request->email)->first();
 
-        // 2. Jika email sudah ada DAN sudah diverifikasi -> TOLAK
+        // Email already registered AND already verified -> reject
         if ($existingUser && $existingUser->email_verified_at !== null) {
             return response()->json([
-                'message' => 'The email has already been taken.'
+                'message' => 'This email is already registered. Please log in or use a different email.'
             ], 422);
         }
 
         $otp = (string) rand(100000, 999999);
 
-        // 3. Jika email sudah ada TAPI BELUM diverifikasi -> UPDATE datanya
+        // Email exists but is NOT verified yet -> update pending data only
         if ($existingUser && $existingUser->email_verified_at === null) {
             $existingUser->update([
                 'name' => $request->name,
                 'phone' => $request->phone,
-                'password' => $request->password, // Laravel otomatis melakukan Hash sesuai setingan casts di Model
+                'pending_password' => Hash::make($request->password),
                 'otp' => $otp,
                 'otp_expires_at' => now()->addMinutes(10),
             ]);
             $user = $existingUser;
         } else {
-            // 4. Jika email benar-benar baru -> CREATE
+            // Brand new email -> create the user.
+            // No existing account for this email yet, so storing the real
+            // password immediately is safe — it still can't be used to log
+            // in until email_verified_at is set below.
             $user = User::query()->create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'password' => $request->password,
+                'password' => $request->password, // hashed automatically via 'hashed' cast
                 'otp' => $otp,
                 'otp_expires_at' => now()->addMinutes(10),
             ]);
         }
 
-        // Kirim Email via Brevo
         Mail::to($user->email)->send(new OtpVerificationMail($otp));
 
         return response()->json([
-            'message' => 'Registrasi berhasil. Silakan cek email untuk kode OTP.',
+            'message' => 'Registration successful. Please check your email for the OTP code.',
             'email' => $user->email
         ], 201);
     }
 
-    // 2. FUNGSI BARU: Verifikasi OTP setelah Register
+    // 2. Verify OTP after registration
     public function verifyRegisterOtp(Request $request): JsonResponse
     {
         $request->validate([
@@ -75,22 +81,28 @@ class AuthController extends Controller
 
         $user = User::query()->where('email', $request->email)->first();
 
-        // Cek apakah OTP salah atau sudah lewat dari 10 menit
         if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
-            return response()->json(['message' => 'Kode OTP tidak valid atau sudah kadaluarsa.'], 400);
+            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
         }
 
-        // Jika valid, bersihkan kolom OTP dan berikan token login
-        $user->update([
+        $updateData = [
             'otp' => null,
             'otp_expires_at' => null,
-            'email_verified_at' => now(), // Opsional: jika kamu punya kolom ini di database
-        ]);
+            'email_verified_at' => now(),
+        ];
+
+        // Only now do we promote the staged password to the real one.
+        if ($user->pending_password) {
+            $updateData['password'] = $user->pending_password;
+            $updateData['pending_password'] = null;
+        }
+
+        $user->update($updateData);
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Email berhasil diverifikasi.',
+            'message' => 'Email verified successfully.',
             'token' => $token,
             'user' => $user,
         ]);
@@ -105,8 +117,19 @@ class AuthController extends Controller
 
         $user = User::query()->where('email', $credentials['email'])->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials.'], 422);
+        if (! $user) {
+            return response()->json(['message' => 'This email is not registered. Please check your email or create a new account.'], 404);
+        }
+
+        if (! Hash::check($credentials['password'], $user->password)) {
+            return response()->json(['message' => 'The password does not match the registered email.'], 401);
+        }
+
+        // Block login until the account has completed OTP verification.
+        if (is_null($user->email_verified_at)) {
+            return response()->json([
+                'message' => 'This email has not been verified yet. Please check your email for the OTP code.'
+            ], 403);
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -122,7 +145,7 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
-    // 3. FUNGSI BARU: Request OTP untuk Lupa Password
+    // 3. Request OTP for forgot password
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate([
@@ -140,11 +163,11 @@ class AuthController extends Controller
         Mail::to($user->email)->send(new OtpVerificationMail($otp));
 
         return response()->json([
-            'message' => 'Kode OTP untuk reset password telah dikirim ke email kamu.'
+            'message' => 'An OTP code to reset your password has been sent to your email.'
         ]);
     }
 
-    // 4. FUNGSI BARU: Ganti Password menggunakan OTP
+    // 4. Reset password using OTP
     public function resetPasswordWithOtp(Request $request): JsonResponse
     {
         $request->validate([
@@ -156,26 +179,26 @@ class AuthController extends Controller
         $user = User::query()->where('email', $request->email)->first();
 
         if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
-            return response()->json(['message' => 'Kode OTP tidak valid atau sudah kadaluarsa.'], 400);
+            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
         }
 
-        // Karena kamu menggunakan casts 'hashed' di Model, kita bisa langsung update
+        // 'hashed' cast on the model will hash this automatically.
         $user->update([
-            'password' => $request->password, 
+            'password' => $request->password,
             'otp' => null,
             'otp_expires_at' => null,
         ]);
 
         return response()->json([
-            'message' => 'Password berhasil diubah. Silakan login kembali dengan password baru.'
+            'message' => 'Password reset successfully. Please log in with your new password.'
         ]);
     }
 
-    // Fungsi ganti password saat user sedang login (dipertahankan)
+    // Change password while logged in (matches PUT /user/password route)
     public function updatePassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'current_password' => ['required', 'current_password'], 
+            'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', 'min:6'],
         ]);
 
@@ -192,6 +215,6 @@ class AuthController extends Controller
     {
         $request->user()?->currentAccessToken()?->delete();
 
-        return response()->json(['message' => 'Logged out.']);
+        return response()->json(['message' => 'Logged out successfully.']);
     }
 }
