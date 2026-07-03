@@ -377,9 +377,16 @@ function Cart() {
         <div className="mt-6">
           <button
             disabled={selectedIds.length === 0}
+            onClick={() => {
+              // (Opsional) Ambil hanya item yang dicentang
+              const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
+              
+              // Arahkan ke halaman checkout dan bawa data item yang dipilih
+              navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
+            }}
             className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
               selectedIds.length > 0
-                ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000]'
+                ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] hover:bg-red-700 active:translate-y-1 active:shadow-none transition-all'
                 : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
             }`}
           >
