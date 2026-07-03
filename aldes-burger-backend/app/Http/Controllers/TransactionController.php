@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Transaction; // Sesuaikan dengan nama model transaksi Anda
-// use App\Models\TransactionDetail; // Jika Anda menyimpan detail item di tabel terpisah
+use App\Models\Transaction; 
+use App\Models\TransactionDetail; 
 
 class TransactionController extends Controller
 {
@@ -19,12 +19,13 @@ class TransactionController extends Controller
                                     ->where('user_id', auth()->id())
                                     ->firstOrFail();
 
+            // Karena data token sudah disimpan di database, 
+            // token otomatis akan ikut terkirim dalam response JSON ini!
             return response()->json($transaction);
+            
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Jika tidak ditemukan, kembalikan response 404
             return response()->json(['message' => 'Transaction not found'], 404);
         } catch (\Exception $e) {
-            // Jika ada error lain, kembalikan response 500 beserta pesan errornya
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
         }
     }
@@ -32,12 +33,11 @@ class TransactionController extends Controller
     public function index()
     {
         // 1. Ambil data transaksi milik user yang sedang login
-        // Diurutkan dari yang paling baru (descending)
         $transactions = Transaction::where('user_id', auth()->id())
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-        // 2. Kirim datanya ke Frontend React dalam bentuk JSON
+        // 2. Kirim datanya ke Frontend React
         return response()->json($transactions);
     }
 
@@ -54,13 +54,14 @@ class TransactionController extends Controller
             'items.*.qty'    => 'required|integer|min:1',
             'items.*.price'  => 'required|numeric',
             'items.*.name'   => 'nullable|string',
-            'items.*.ingredients' => 'nullable|array' // <--- TAMBAHKAN VALIDASI INI
+            'items.*.ingredients' => 'nullable|array' 
         ]);
 
         try {
             $paymentId = ($validatedData['payment_method'] === 'cash') ? 2 : 1;
+            
+            // 1. Buat Transaksi
             $transaction = Transaction::create([
-                // UBAH BARIS INI: Ganti Str::uuid() menjadi format TRX-
                 'id'                  => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999), 
                 'user_id'             => auth()->id(),
                 'amount'              => $validatedData['amount'],
@@ -70,22 +71,56 @@ class TransactionController extends Controller
                 'payment_id'          => $paymentId,
             ]);
 
+            // 2. Simpan Detail Item
             foreach ($validatedData['items'] as $item) {
-                \App\Models\TransactionDetail::create([
-                    'transaction_id' => $transaction->id,
-                    'menu_id'        => $item['id'],
-                    'quantity'       => $item['qty'],
-                    'snapshot_price' => $item['price'],
-                    'snapshot_name'  => $item['name'] ?? 'Menu Item',
-                    // SIMPAN URUTAN BAHAN KE DALAM SNAPSHOT MODIFIERS:
+                TransactionDetail::create([
+                    'transaction_id'     => $transaction->id,
+                    'menu_id'            => $item['id'],
+                    'quantity'           => $item['qty'],
+                    'snapshot_price'     => $item['price'],
+                    'snapshot_name'      => $item['name'] ?? 'Menu Item',
                     'snapshot_modifiers' => isset($item['ingredients']) && count($item['ingredients']) > 0 ? $item['ingredients'] : null
                 ]);
             }
 
+            $snapToken = null;
+
+            // 3. Jika bukan Cash, minta Token ke Midtrans dan Simpan ke DB
+            if ($validatedData['payment_method'] !== 'cash') {
+                // Konfigurasi Midtrans
+                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+                \Midtrans\Config::$isProduction = false; // Sandbox
+                \Midtrans\Config::$isSanitized = true;
+                \Midtrans\Config::$is3ds = true;
+
+                $midtransParams = [
+                    'transaction_details' => [
+                        'order_id' => $transaction->id,
+                        'gross_amount' => (int) $validatedData['amount'],
+                    ],
+                    'customer_details' => [
+                        'first_name' => auth()->user()->name ?? 'Customer',
+                        'email' => auth()->user()->email ?? 'customer@aldesburger.com',
+                    ],
+                ];
+
+                // Generate Token
+                $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
+                
+                // Simpan token ke database Aldes Burger
+                $transaction->snap_token = $snapToken;
+                $transaction->save();
+            }
+
+            // Load relasi agar data lengkap saat dikirim ke frontend
+            $transaction->load(['details', 'payment']);
+
             return response()->json([
-                'message' => 'Transaction created successfully',
-                'transaction' => $transaction
+                'message'     => 'Transaction created successfully',
+                'transaction' => $transaction,
+                'snap_token'  => $snapToken // Dioper ke frontend untuk popup payment
             ], 201); 
+
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to create transaction: ' . $e->getMessage()], 500);
         }

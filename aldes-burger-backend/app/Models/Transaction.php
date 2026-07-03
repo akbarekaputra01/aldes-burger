@@ -22,6 +22,7 @@ class Transaction extends Model
         'user_id',
         'amount',
         'status',
+        'snap_token'
     ];
 
     public function address(): BelongsTo

@@ -183,6 +183,8 @@ class CheckoutController extends Controller
             $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
             // dd(env('MIDTRANS_SERVER_KEY'));
             // Return array berisi data transaksi dan snap token
+            $transaction->snap_token = $snapToken;
+            $transaction->save();
             return [
                 'transaction' => $transaction->load(['details', 'payment']),
                 'snap_token' => $snapToken
