@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MidtransController;
 
 // Endpoint Autentikasi Publik
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,6 +21,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPasswordWithOtp']);
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
+Route::post('/midtrans/callback', [MidtransController::class, 'callback']);
 // Endpoint yang membutuhkan Token (Login)
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);

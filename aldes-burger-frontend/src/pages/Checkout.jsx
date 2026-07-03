@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Home,
   Briefcase,
+  Loader2
 } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
@@ -201,7 +202,9 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (checkoutItems.length === 0 || !selectedAddressId) return;
-    setLoading(true);
+    
+    setLoading(true); // Memunculkan loading overlay
+
     try {
       const payload = {
         payment_method: paymentMethod,
@@ -214,18 +217,20 @@ function Checkout() {
         })),
       };
 
-      // Tembak API checkout di Laravel
       const response = await api.post('/checkout', payload);
-      
-      // Ambil snap_token dari response
       const snapToken = response.data.snap_token;
+      
+      // Mengambil ID transaksi (sesuaikan jika struktur JSON backend Anda berbeda)
+      const transactionId = response.data.transaction?.id || response.data.id || response.data.order_id;
 
-      // Jika metode pembayaran cash, tidak perlu Midtrans
       if (paymentMethod === 'cash') {
         checkoutItems.forEach(item => removeFromCart(item.id));
+        setLoading(false);
         navigate('/payment-status?status=success');
       } else if (snapToken) {
-        // Jika pakai Midtrans, panggil popup
+        // Matikan loading animasi karena popup Midtrans sudah siap dipanggil
+        setLoading(false);
+
         window.snap.pay(snapToken, {
           onSuccess: function(result){
             checkoutItems.forEach(item => removeFromCart(item.id));
@@ -236,29 +241,42 @@ function Checkout() {
             navigate('/transactions'); 
           },
           onError: function(result){
+            checkoutItems.forEach(item => removeFromCart(item.id));
             navigate('/payment-status?status=failed');
           },
           onClose: function(){
-            alert('Pembayaran ditunda. Pesanan Anda tersimpan dan dapat dilanjutkan nanti.');
-            
-            // Kosongkan keranjang agar user tidak membuat order ganda
+            // Kosongkan keranjang agar tidak double order
             checkoutItems.forEach(item => removeFromCart(item.id));
             
-            // Arahkan ke halaman Transaksi
-            navigate('/transactions');
+            // Arahkan ke detail transaksi untuk dilanjutkan nanti
+            if (transactionId) {
+              navigate(`/transactions/${transactionId}`);
+            } else {
+              navigate('/transactions');
+            }
           }
         });
       }
     } catch (error) {
       console.error('Checkout error:', error.response?.data);
       alert(error.response?.data?.message || 'Failed to place order. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream font-sans text-black pb-20">
+    <main className="min-h-screen w-full bg-aldesCream font-sans text-black pb-20 relative">
+      
+      {/* ── Overlay Animasi Loading ── */}
+      {loading && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm">
+          <Loader2 className="animate-spin text-aldesYellow w-16 h-16 mb-4" />
+          <p className="text-white font-black text-xl tracking-widest animate-pulse uppercase">
+            {paymentMethod === 'cash' ? 'Memproses Pesanan...' : 'Menyiapkan Pembayaran...'}
+          </p>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-8">
 
         {/* ── Delivery Address ── */}

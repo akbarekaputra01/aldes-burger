@@ -1,103 +1,256 @@
-import { ReceiptText, Truck, Loader2 } from 'lucide-react'
+import { ReceiptText, Truck, Loader2, MapPin, CreditCard } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 
 const toIDR = (price) =>
-  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(price)
 
 const statusClass = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  cooking: 'bg-orange-100 text-orange-700',
-  done: 'bg-emerald-100 text-emerald-700',
+  pending: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  cooking: 'bg-orange-100 text-orange-700 border-orange-300',
+  done: 'bg-emerald-100 text-emerald-700 border-emerald-300',
 }
 
 function TransactionDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [transaction, setTransaction] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    let pollingTimer = null
+
+    const fetchTransactionDetails = () => {
+      api.get(`/transactions/${id}`)
+        .then(({ data }) => {
+          if (!isMounted) return
+          const txData = data.data || data
+          setTransaction(txData)
+          setIsLoading(false)
+
+          // AMAN & REAL-TIME: Jika status di database Vercel masih pending,
+          // cek kembali otomatis ke server setiap 3 detik untuk mendeteksi Webhook Midtrans.
+          if (txData && txData.status === 'pending') {
+            pollingTimer = setTimeout(fetchTransactionDetails, 3000)
+          }
+        })
+        .catch((err) => {
+          if (!isMounted) return
+          console.error(err)
+          setTransaction(null)
+          setIsLoading(false)
+        })
+    }
+
     setIsLoading(true)
-    api.get(`/transactions/${id}`)
-      .then(({ data }) => setTransaction(data))
-      .catch(() => setTransaction(null))
-      .finally(() => setIsLoading(false))
+    fetchTransactionDetails()
+
+    // Bersihkan timer saat berpindah halaman agar tidak memory leak
+    return () => {
+      isMounted = false
+      if (pollingTimer) clearTimeout(pollingTimer)
+    }
   }, [id])
+
+  // --- Fungsi untuk memunculkan kembali popup Midtrans Snap ---
+  const handleContinuePayment = () => {
+    if (transaction?.snap_token) {
+      window.snap.pay(transaction.snap_token, {
+        onSuccess: () => {
+          navigate('/payment-status?status=success')
+        },
+        onPending: () => {
+          alert('Pembayaran Anda sedang diproses. Silakan tunggu.')
+        },
+        onError: () => {
+          navigate('/payment-status?status=failed')
+        },
+        onClose: () => {
+          alert('Anda menutup jendela pembayaran. Status pesanan tetap menunggu pembayaran.')
+        }
+      })
+    } else {
+      alert('Gagal memuat token pembayaran. Pastikan API backend Vercel menyertakan kolom snap_token.')
+    }
+  }
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-aldesCream p-6">
-        <section className="flex flex-col items-center justify-center rounded-3xl bg-white p-8 text-center shadow-sm">
-          <Loader2 className="mb-2 h-8 w-8 animate-spin text-aldesRed-600" />
-          <p className="text-lg font-semibold text-gray-800">Memuat detail transaksi...</p>
-        </section>
+      <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
+          <Loader2 className="h-8 w-8 animate-spin text-aldesRed" />
+          <p className="font-black uppercase text-gray-700 tracking-wider">Memuat transaksi...</p>
+        </div>
       </main>
     )
   }
 
   if (!transaction) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-aldesCream p-6">
-        <section className="rounded-3xl bg-white p-8 text-center shadow-sm">
-          <p className="text-lg font-semibold text-gray-800">Transaksi tidak ditemukan.</p>
-        </section>
+      <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
+        <div className="rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
+          <p className="font-black uppercase text-gray-800">
+            Transaksi tidak ditemukan.
+          </p>
+        </div>
       </main>
     )
   }
 
-  const subtotal = transaction.details.aldesReduce((sum, item) => sum + item.snapshot_price * item.quantity, 0)
+  const subtotal = (transaction.details || []).reduce(
+    (sum, item) => sum + item.snapshot_price * item.quantity,
+    0
+  )
 
   return (
-    <main className="min-h-screen bg-aldesCream px-4 py-8">
-      <section className="mx-auto w-full max-w-2xl rounded-3xl bg-white p-6 shadow-md sm:p-8">
-        <div className="mb-6 flex items-start justify-between gap-4 border-b border-dashed border-aldesRed-200 pb-5">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-gray-500">Aldes Burger • Struk Digital Resmi</p>
-            <h1 className="mt-1 flex items-center gap-2 text-2xl font-black text-gray-900">
-              <ReceiptText className="h-6 w-6 text-aldesRed-600" />
-              {transaction.id}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">Waktu Transaksi: {transaction.created_at}</p>
+    <main className="min-h-screen bg-aldesCream font-sans text-black px-4 py-10 pb-20">
+      <section className="mx-auto max-w-3xl space-y-6">
+
+        {/* Header Transaksi */}
+        <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase text-aldesRed tracking-widest">
+                Aldes Burger
+              </p>
+
+              <h1 className="mt-2 flex items-center gap-2 text-2xl font-black text-gray-900">
+                <ReceiptText className="h-6 w-6 text-aldesRed" strokeWidth={3} />
+                {transaction.id}
+              </h1>
+
+              <p className="mt-2 text-sm font-bold text-gray-500 uppercase">
+                {transaction.created_at}
+              </p>
+            </div>
+
+            <span
+              className={`self-start rounded-full border-2 px-4 py-2 text-xs font-black uppercase ${
+                statusClass[transaction.status] || 'bg-gray-100 text-gray-700 border-gray-300'
+              }`}
+            >
+              {transaction.status === 'pending' ? 'Menunggu Pembayaran' : transaction.status}
+            </span>
           </div>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass[transaction.status]}`}>
-            {transaction.status}
-          </span>
         </div>
 
-        <div className="rounded-2xl bg-amber-50/70 p-4">
-          <p className="mb-1 flex items-center gap-2 font-semibold text-gray-900">
-            <Truck className="h-4 w-4 text-aldesRed/50" />
-            Alamat Pengiriman
-          </p>
-          <p className="text-sm text-gray-600">{transaction.destination_address}</p>
-          <p className="mt-2 text-sm text-gray-600">Metode Pembayaran: {transaction.payment?.method}</p>
-        </div>
+        {/* Informasi Pengiriman & Kotak Pembayaran */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Kotak Alamat */}
+          <div className="rounded-3xl bg-white p-5 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
+            <div className="mb-3 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-aldesRed" strokeWidth={3} />
+              <p className="font-black uppercase text-gray-900 text-sm">Alamat Pengiriman</p>
+            </div>
 
-        <div className="mt-5 space-y-3">
-          {transaction.details.map((item) => (
-            <article key={item.id} className="rounded-2xl border border-aldesRed/50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-gray-900">{item.quantity}x {item.snapshot_name}</p>
-                  <p className="text-sm text-gray-500">Harga Satuan: {toIDR(item.snapshot_price)}</p>
-                </div>
-                <p className="font-semibold text-gray-800">{toIDR(item.snapshot_price * item.quantity)}</p>
+            <p className="text-sm font-bold text-gray-600 leading-relaxed uppercase">
+              {transaction.destination_address}
+            </p>
+          </div>
+
+          {/* Kotak Pembayaran + Tombol Lanjutkan Pembayaran Terintegrasi */}
+          <div className="flex flex-col justify-between rounded-3xl bg-white p-5 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-aldesRed" strokeWidth={3} />
+                <p className="font-black uppercase text-gray-900 text-sm">Pembayaran</p>
               </div>
-            </article>
-          ))}
+
+              <p className="text-sm font-bold text-gray-600 uppercase">
+                {transaction.payment?.method?.replace('_', ' ') || '-'}
+              </p>
+            </div>
+
+            {/* Area Aksi Status Khusus */}
+            <div className="mt-4 pt-3 border-t-2 border-dashed border-black/20 flex items-center justify-between gap-2">
+              <span className="text-[10px] font-black uppercase text-gray-400">Status</span>
+              
+              {transaction.status === 'pending' ? (
+                transaction.payment?.method !== 'cash' ? (
+                  <button 
+                    onClick={handleContinuePayment}
+                    className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1"
+                  >
+                    Lanjutkan Pembayaran
+                  </button>
+                ) : (
+                  <span className="rounded-lg bg-orange-100 px-3 py-1 text-[10px] font-black uppercase text-orange-700 border-2 border-orange-700">
+                    Menunggu Pembayaran
+                  </span>
+                )
+              ) : transaction.status === 'cancelled' ? (
+                <span className="rounded-lg bg-red-100 px-3 py-1 text-[10px] font-black uppercase text-red-700 border-2 border-red-700">
+                  Dibatalkan
+                </span>
+              ) : (
+                <span className="rounded-lg bg-green-100 px-3 py-1 text-[10px] font-black uppercase text-green-700 border-2 border-green-700 shadow-[2px_2px_0_0_#15803d]">
+                  Lunas / Paid
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 space-y-2 border-t border-dashed border-aldesRed-200 pt-4 text-sm">
-          <p className="flex justify-between text-gray-600">
-            <span>Subtotal Item</span>
-            <span>{toIDR(subtotal)}</span>
-          </p>
-          <p className="flex justify-between border-t border-dashed border-aldesRed-200 pt-2 text-lg font-black text-gray-900">
-            <span>Total Pembayaran</span>
-            <span>{toIDR(transaction.amount)}</span>
-          </p>
+        {/* Detail Item Pesanan */}
+        <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
+          <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
+            Detail Pesanan
+          </h2>
+
+          <div className="space-y-3">
+            {(transaction.details || []).map((item) => (
+              <article
+                key={item.id}
+                className="rounded-2xl border-2 border-black/10 bg-aldesCream/30 p-4 transition hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-black uppercase text-gray-900 text-sm">
+                      {item.quantity}x {item.snapshot_name}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-gray-500 uppercase">
+                      {toIDR(item.snapshot_price)} / item
+                    </p>
+                  </div>
+
+                  <p className="font-black text-aldesRed italic text-lg">
+                    {toIDR(item.snapshot_price * item.quantity)}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
+
+        {/* Ringkasan Jumlah Pembayaran */}
+        <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
+          <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
+            Ringkasan Pembayaran
+          </h2>
+
+          <div className="space-y-3">
+            <div className="flex justify-between text-gray-600 font-bold uppercase text-sm">
+              <span>Subtotal</span>
+              <span>{toIDR(subtotal)}</span>
+            </div>
+
+            <div className="border-t-2 border-dashed border-black/20 pt-3">
+              <div className="flex justify-between items-end text-xl font-black text-gray-900 uppercase">
+                <span>Total</span>
+                <span className="text-aldesRed text-2xl italic">
+                  {toIDR(transaction.amount)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
     </main>
   )
