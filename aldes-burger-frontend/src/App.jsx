@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './components/AdminLayout'
 import Layout from './components/Layout'
 import { CartProvider } from './context/CartContext'
@@ -25,30 +26,43 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <Routes>
+          {/* 🔴 PUBLIC ROUTES: Bisa diakses siapa saja (tanpa Layout) */}
           <Route path="/login" element={<Auth />} />
           <Route path="/signup" element={<SignUp />} />
 
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="menu" element={<AdminMenuManagement />} />
-            <Route path="inventory" element={<AdminInventory />} />
+          {/* 🔴 ADMIN ROUTES: Wajib Login (Dilindungi) */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="menu" element={<AdminMenuManagement />} />
+              <Route path="inventory" element={<AdminInventory />} />
+            </Route>
           </Route>
 
-          {/* Grup Layout Utama (Otomatis dapat Navbar & Footer) */}
+          {/* 🔴 MAIN LAYOUT ROUTES (Mendapatkan Navbar & Footer) */}
           <Route element={<Layout />}>
+            
+            {/* Bebas diakses tanpa perlu login (Bisa lihat menu & merakit burger) */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/menu" element={<Menu />} />
-            <Route path="/kitchen" element={<Kitchen />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/transactions/:id" element={<TransactionDetail />} />
-            <Route path="/address-book" element={<AddressBook />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/payment-status" element={<PaymentStatus />} />
+            
+
+            {/* Wajib Login (Dilindungi oleh ProtectedRoute) */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/kitchen" element={<Kitchen />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/transactions/:id" element={<TransactionDetail />} />
+              <Route path="/address-book" element={<AddressBook />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/payment-status" element={<PaymentStatus />} />
+            </Route>
+            
           </Route>
 
+          {/* 🔴 404 NOT FOUND */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

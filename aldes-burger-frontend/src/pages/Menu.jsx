@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
 import api from '../lib/api'
+import useSWR from 'swr' 
 
 // Import gambar Carousel
 import promo1 from '../assets/promo1.jpg'
@@ -82,12 +83,15 @@ const bannerSlides = [
 
 const extendedSlides = [...bannerSlides, { ...bannerSlides[0], id: 'clone' }]
 
+const fetcher = (url) => api.get(url).then((res) => res.data)
+
 function Menu() {
   const navigate = useNavigate()
   const { addToCart } = useCart()
 
-  const [menu, setMenu] = useState([])
-  const [isFetching, setIsFetching] = useState(true)
+  const { data: menu = [], isLoading: isFetching } = useSWR('/menus', fetcher, {
+    revalidateOnFocus: true, 
+  })
   
   const [activeBannerIndex, setActiveBannerIndex] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -117,19 +121,6 @@ function Menu() {
     }
   }, [activeActionId])
 
-  useEffect(() => {
-    const loadMenu = async () => {
-      setIsFetching(true)
-      const { data } = await api.get('/menus')
-      setMenu(data)
-      setIsFetching(false)
-    }
-
-    loadMenu()
-      .catch(() => setMenu([]))
-      .finally(() => setIsFetching(false))
-  }, [])
-
   const menuBySection = useMemo(() => {
     const grouped = {
       burgers: [],
@@ -137,8 +128,8 @@ function Menu() {
       drinks: [],
     }
 
-    menu.forEach((menu) => {
-      grouped[resolveSectionKey(menu)].push(menu)
+    menu.forEach((item) => {
+      grouped[resolveSectionKey(item)].push(item)
     })
 
     return grouped
@@ -150,6 +141,13 @@ function Menu() {
   )
 
   const handleInitialClick = (item) => {
+    // Pengecekan Login
+    const isAuthenticated = localStorage.getItem('aldes_token');
+    if (!isAuthenticated) {
+      navigate('/login');
+      return; 
+    }
+
     const sectionKey = resolveSectionKey(item)
 
     if (sectionKey === 'burgers') {
@@ -172,6 +170,13 @@ function Menu() {
   }
 
   const handleDirectAddToCart = (item, qty) => {
+    // Pengecekan Login
+    const isAuthenticated = localStorage.getItem('aldes_token');
+    if (!isAuthenticated) {
+      navigate('/login');
+      return; 
+    }
+
     const sectionKey = resolveSectionKey(item)
 
     let itemIngredients = []

@@ -348,27 +348,26 @@ function Cart() {
                   Total Selected ({selectedIds.length})
                 </span>
 
-                <span className="font-black text-lg">
-                  {formatCurrency(grandTotal)}
-                </span>
-              </div>
-
-              <button
-                onClick={handleCheckout}
-                disabled={selectedIds.length === 0}
-                className={`w-full py-5 rounded-2xl border-[4px] border-black font-black text-lg uppercase flex justify-center items-center gap-3 transition-all ${
-                  selectedIds.length > 0
-                    ? 'bg-aldesRed text-aldesYellow shadow-[0_8px_0_0_#000] active:translate-y-[4px] active:shadow-[0_4px_0_0_#000]'
-                    : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <ShoppingBag size={24} />
-                PROCEED TO CHECKOUT
-                <ArrowRight strokeWidth={4} size={24} />
-              </button>
-            </div>
-          </>
-        )}
+        {/* Checkout */}
+        <div className="mt-6">
+          <button
+            disabled={selectedIds.length === 0}
+            onClick={() => {
+              // (Opsional) Ambil hanya item yang dicentang
+              const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
+              
+              // Arahkan ke halaman checkout dan bawa data item yang dipilih
+              navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
+            }}
+            className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
+              selectedIds.length > 0
+                ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] hover:bg-red-700 active:translate-y-1 active:shadow-none transition-all'
+                : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
+            }`}
+          >
+            PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
+          </button>
+        </div>
       </section>
     </main>
   )
