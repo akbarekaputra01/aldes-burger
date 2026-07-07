@@ -80,7 +80,6 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [postalCodeOptions, setPostalCodeOptions] = useState([])
 
   useEffect(() => {
-    // Gunakan sessionStorage cache wilayah jika tersedia demi kecepatan form
     const cachedProvinces = sessionStorage.getItem('aldes_province_options')
     if (cachedProvinces) {
       setProvinceOptions(JSON.parse(cachedProvinces))
@@ -234,23 +233,30 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     if (showMapLayer || !previewMapElRef.current || !hasStreet) return
     let mounted = true
     let map = null
+    
     loadLeaflet().then((L) => {
       if (!mounted || !previewMapElRef.current) return
+      
+      // BERSIHKAN LEAFLET ID SEBELUM MEMBUAT MAP BARU (Mencegah Reuse Error)
+      if (previewMapElRef.current) {
+        previewMapElRef.current._leaflet_id = null;
+      }
+
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
       map = L.map(previewMapElRef.current, {
         zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, keyboard: false
       }).setView([lat, lng], 15)
-             
+            
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
       const marker = L.marker([lat, lng]).addTo(map)
-             
+            
       previewMapRef.current = map
       previewMarkerRef.current = marker
-             
+            
       setTimeout(() => { if (map) map.invalidateSize() }, 100)
     }).catch(() => {})
-         
+        
     return () => { 
       mounted = false
       if (map) {
@@ -341,23 +347,22 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmitAddress(form)) return setError('Lengkapi data alamat dulu.')
+    if (!canSubmitAddress(form)) return setError('Please complete all address fields first.')
     setIsSaving(true)
     try {
       if (isEdit) await api.put(`/addresses/${initialAddress.id}`, form)
       else await api.post('/addresses', form)
       
-      // Hapus cache agar pemanggil memicu pembaruan data
       sessionStorage.removeItem('aldes_addresses_cache')
       onSaved()
       onClose()
     } catch {
-      setError('Gagal menyimpan alamat.')
+      setError('Failed to save the address details.')
     } finally { setIsSaving(false) }
   }
 
   const inputClassName = "w-full rounded-xl border-4 border-black bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold"
-  const labelClassName = "pointer-events-none absolute left-3 -top-3 bg-white px-2 text-xs font-black uppercase text-black border-2 border-black rounded-lg transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-transparent peer-placeholder-shown:border-transparent peer-focus:-top-3 peer-focus:text-xs peer-focus:text-aldesRed peer-focus:border-black peer-focus:border-2 peer-focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+  const labelClassName = "pointer-events-none absolute left-3 -top-3 bg-white px-2 text-xs font-black uppercase text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
 
   if (!open) return null
 
@@ -392,7 +397,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
              
              <div className="absolute right-4 top-4 z-[1000] flex flex-col gap-2">
                  <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomIn()}><span className="text-xl leading-none block font-black text-black">+</span></button>
-                 <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-black text-black"> </span></button>
+                 <button type="button" className="rounded-xl border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none hover:bg-aldesCream transition-all" onClick={() => mapRef.current?.zoomOut()}><span className="text-xl leading-none block font-black text-black">-</span></button>
              </div>
              
              <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-3">
@@ -406,7 +411,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
           </div>
           <div className="flex justify-end gap-4 bg-aldesCream p-4 sm:p-5">
             <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all uppercase">Cancel</button>
-            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">Confirm</button>
+            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">Confirm</button>
           </div>
         </div>
       </div>
@@ -430,21 +435,21 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             
             {/* 1. RECIPIENT INFO */}
             <div className="relative z-50 grid grid-cols-1 gap-5 sm:grid-cols-2 pt-2">
-              <div className="relative">
+              <div className="relative pt-1.5">
                 <input 
                   id="recipient_name"
-                  className={`${inputClassName} peer`}
-                  placeholder="Full Name" 
+                  className={inputClassName}
+                  placeholder="e.g. Sam Raimi" 
                   value={form.recipient_name || ''} 
                   onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))}
                 />
                 <label htmlFor="recipient_name" className={labelClassName}>Full Name</label>
               </div>
-              <div className="relative">
+              <div className="relative pt-1.5">
                 <input 
                   id="phone_number"
-                  className={`${inputClassName} peer`}
-                  placeholder="Phone Number" 
+                  className={inputClassName}
+                  placeholder="e.g. 081317539933" 
                   value={form.phone_number || ''} 
                   onFocus={() => setShowPhoneReco(true)} 
                   onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))}
@@ -466,7 +471,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             {/* 2. REGION SELECTOR */}
             <div className="relative z-40" ref={regionSelectorRef}>
               <div 
-                className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform ${showRegionSelector ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : 'border-black'}`}
+                className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform border-black ${showRegionSelector ? 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : ''}`}
                 onClick={() => {
                   setShowRegionSelector(!showRegionSelector)
                   if (!showRegionSelector) {
@@ -477,18 +482,13 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                   }
                 }}
               >
-                <span className={form.province ? 'text-black uppercase' : 'text-gray-400 opacity-0'}>
-                  {[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ') || 'Placeholder'}
+                <span className={form.province ? 'text-black uppercase' : 'text-gray-400 font-bold'}>
+                  {[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ') || 'Select location points below'}
                 </span>
                 <ChevronDown className={`h-5 w-5 text-black stroke-[3] transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
               </div>
               
-              <label className={`pointer-events-none absolute left-3 transition-all font-black uppercase rounded-lg px-2 border-2 ${
-                  form.province || showRegionSelector 
-                    ? '-top-3 text-xs bg-white text-black border-black ' + (showRegionSelector ? 'shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : '') 
-                    : 'top-3.5 text-sm bg-transparent border-transparent text-gray-400'
-                }`}
-              >
+              <label className="pointer-events-none absolute left-3 -top-3 text-xs bg-white text-black border-black border-2 font-black uppercase rounded-lg px-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 Province, City, District, Postal Code
               </label>
 
@@ -553,16 +553,16 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <textarea 
                 id="street_address"
                 disabled={!isRegionFilled}
-                className={`peer w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black placeholder-transparent focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
+                className={`w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
                 placeholder="Street Name, Building, House No." 
                 value={form.street_address || ''} 
                 onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))}
               />
               <label 
                 htmlFor="street_address" 
-                className={`pointer-events-none absolute left-3 -top-3 px-2 text-xs font-black uppercase rounded-lg border-2 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:border-transparent peer-placeholder-shown:bg-transparent peer-focus:-top-3 peer-focus:text-xs peer-focus:border-black peer-focus:bg-white peer-focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${!isRegionFilled ? 'bg-gray-100 text-gray-400 border-gray-300 peer-placeholder-shown:text-gray-400' : 'bg-white text-black border-black peer-focus:text-aldesRed'}`}
+                className="pointer-events-none absolute left-3 -top-3 px-2 text-xs font-black uppercase rounded-lg border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white border-black text-black z-10"
               >
-                {isRegionFilled ? 'Street Name, Building, House No.' : 'Select Region first'}
+                {isRegionFilled ? 'Street Name, Building, House No.' : 'Select Region First'}
               </label>
 
               {suggestions.length > 0 && (
@@ -627,7 +627,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             <div className="relative z-0">
               <textarea 
                 id="detail_address"
-                className={`${inputClassName} min-h-[50px] peer resize-y`}
+                className={inputClassName}
                 placeholder="Other Details (e.g. Block / Unit No., Landmarks)" 
                 value={form.detail_address || ''} 
                 onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))}

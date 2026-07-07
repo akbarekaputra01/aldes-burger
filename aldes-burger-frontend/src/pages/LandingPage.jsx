@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChefHat, Flame, ArrowRight, Sliders, Truck, Star, CheckCircle2, ChevronDown } from 'lucide-react'
+import { ChefHat, Flame, ArrowRight, Sliders, Truck, Star, CheckCircle2, ChevronDown, Sparkles, ShoppingBag, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../utils/auth'
 
@@ -12,19 +12,44 @@ import imgCheese from '../assets/cheese.png'
 import imgLettuce from '../assets/lettuce.png'
 import imgTomato from '../assets/tomato.png'
 
-const crazyStacks = [
-  { id: 1, name: 'The Heart Attack', creator: 'Bima', review: "I couldn't finish it, but no regrets. Best custom burger ever!", bgColor: 'bg-aldesYellow', rotation: '-rotate-2' },
-  { id: 2, name: 'Sauce Boss', creator: 'Rachel', review: "Messy. Juicy. Absolutely perfect. The secret sauce is magic.", bgColor: 'bg-aldesRed', textColor: 'text-white', rotation: 'rotate-2' },
-  { id: 3, name: 'Keto Monster', creator: 'Sarah', review: "Diet-friendly but still tastes like a cheat meal. So fresh!", bgColor: 'bg-blue-500', textColor: 'text-white', rotation: '-rotate-1' }
+// --- TESTIMONIAL DATA WITH CUSTOM ORDER DETAILS ---
+const customerReviews = [
+  {
+    id: 1,
+    name: "Alex Johnson",
+    stack: "Custom: Double Beef + Extra Cheddar + Smokey BBQ",
+    comment: "Absolutely incredible! The burger arrived piping hot and the cheese was perfectly melted on the first bite. Will definitely customize my recipe again next week.",
+    rating: 5,
+    time: "24 Mins Delivery"
+  },
+  {
+    id: 2,
+    name: "Clarissa Vance",
+    stack: "Custom: Crispy Chicken + Melted Mozzarella + No Onions",
+    comment: "As someone who hates onions, this custom builder is a lifesaver. Delivery was incredibly fast and the chicken patty was still super crispy!",
+    rating: 5,
+    time: "19 Mins Delivery"
+  },
+  {
+    id: 3,
+    name: "Ryan Gallagher",
+    stack: "Preset: Spicy Monster Stack",
+    comment: "The volcano sauce really brings the heat! The beef patty was thick, rich, and juicy. Neatly packed so nothing fell apart during transit.",
+    rating: 5,
+    time: "28 Mins Delivery"
+  }
 ]
 
 function LandingPage() {
   const navigate = useNavigate()
   const isAuthenticated = Boolean(getToken())
 
-  // STATE & REF UNTUK ANIMASI SCROLL-TO-STACK
+  // STATE & REF FOR BURGER STACK ANIMATION (UNTOUCHED)
   const [progress, setProgress] = useState(0)
   const stickySectionRef = useRef(null)
+
+  // STATE FOR TESTIMONIAL SLIDER
+  const [activeReview, setActiveReview] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,36 +59,28 @@ function LandingPage() {
       const height = stickySectionRef.current.offsetHeight
       const windowHeight = window.innerHeight
       
-      // Animasi dimulai saat area kuning ini menyentuh bawah Navbar (estimasi tinggi navbar 80px)
       const start = offsetTop - 80
-      // Animasi selesai saat user hampir mencapai akhir area kuning
       const end = start + height - windowHeight
       
-      // Hitung persentase scroll (0.0 sampai 1.0)
       let p = (window.scrollY - start) / (end - start)
       
-      // Kunci nilai agar tidak kurang dari 0 atau lebih dari 1
       p = Math.max(0, Math.min(p, 1))
       setProgress(p)
     }
     
     window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // Trigger sekali saat pertama render
+    handleScroll()
     
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Kalkulasi CSS dinamis berdasarkan posisi Scroll (Progress 0.0 -> 1.0)
-  // Format: (startX, startY, startRot, endX, endY, endRot)
   const getStyle = (sx, sy, sr, ex, ey, er) => {
     const currentX = sx + (ex - sx) * progress
     const currentY = sy + (ey - sy) * progress
     const currentRot = sr + (er - sr) * progress
     
     return {
-      // Posisi dasar di tengah layar (top-1/2 left-1/2), lalu di-offset sesuai scroll
       transform: `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) rotate(${currentRot}deg)`,
-      // Efek pegas/transisi halus agar tidak patah-patah
       transition: 'transform 0.1s ease-out'
     }
   }
@@ -76,7 +93,7 @@ function LandingPage() {
   return (
     <main className="bg-aldesCream text-black font-sans selection:bg-aldesRed selection:text-white">
       
-      {/* --- HERO SECTION (STATIS & CLEAN) --- */}
+      {/* --- HERO SECTION (STATIS & CLEAN) - UNTOUCHED --- */}
       <section className="relative mx-auto flex w-full max-w-7xl flex-col lg:flex-row gap-12 px-6 py-16 lg:py-24 items-center min-h-[90vh]">
         <div className="flex-1 space-y-8 relative z-20">
           <div className="inline-block bg-black text-aldesYellow px-4 py-1.5 rounded-full font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#D52518]">
@@ -118,13 +135,24 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* --- STICKY SCROLL PARALLAX SECTION (INTERAKTIF) --- */}
+      {/* --- STICKY SCROLL PARALLAX SECTION (SWISS CHEESE TEXTURE) - UNTOUCHED --- */}
       <section ref={stickySectionRef} className="h-[200vh] w-full bg-aldesYellow border-y-[6px] border-black relative z-30">
         
-        {/* Sticky Container yang mengunci seluruh konten agar tetap di viewport */}
+        {/* SWISS CHEESE VECTOR TEXTURE BACKGROUND */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.25]" style={{
+          backgroundImage: `
+            radial-gradient(circle at 15% 20%, #e6b219 40px, transparent 41px),
+            radial-gradient(circle at 85% 15%, #e6b219 55px, transparent 56px),
+            radial-gradient(circle at 50% 45%, #e6b219 30px, transparent 31px),
+            radial-gradient(circle at 10% 75%, #e6b219 60px, transparent 61px),
+            radial-gradient(circle at 90% 80%, #e6b219 45px, transparent 46px),
+            radial-gradient(circle at 70% 60%, #e6b219 35px, transparent 36px),
+            radial-gradient(circle at 30% 90%, #e6b219 50px, transparent 51px)
+          `,
+          backgroundSize: '100% 100%'
+        }} />
+
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-          
-          {/* Teks Petunjuk - Sekarang benar-benar diam di tengah/atas */}
           <div className="absolute top-[15%] text-center z-50 px-4 w-full">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">
               See How It Comes Together
@@ -134,127 +162,153 @@ function LandingPage() {
             </p>
           </div>
 
-          {/* Area Burger - Tetap di posisi yang sama meskipun progress scroll berjalan */}
           <div className="relative w-full h-[400px] max-w-2xl mt-16">
-            
-            {/* Price Tag muncul hanya jika progress sudah 1 (selesai) */}
             <div className={`absolute top-[10%] right-4 md:right-16 bg-white border-[4px] border-black px-5 py-3 rounded-2xl shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                 <p className="text-[10px] font-black uppercase text-gray-500">Your Masterpiece</p>
-                <p className="text-2xl font-black italic text-black">Rp 58.000</p>
+                <p className="text-2xl font-black italic text-black">Rp 36.500</p>
                 <button onClick={handleStartCustomizing} className="mt-2 bg-aldesRed text-white text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:bg-black transition-colors">Order Now</button>
             </div>
 
             {/* INGREDIENTS LAYERS */}
-            {/* Gunakan CSS `transform` untuk menggerakkan bahan ke titik akhir (0,0) */}
-            <img src={imgBottom} alt="Bottom Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-10 drop-shadow-2xl" 
-                  style={getStyle(0, 150, 0, 0, 150, 0)} />
-
-            <img src={imgBeef} alt="Patty" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-20 drop-shadow-2xl" 
-                  style={getStyle(-250, 150, -30, 0, 115, 0)} />
-
-            <img src={imgCheese} alt="Cheese" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-30 drop-shadow-2xl" 
-                  style={getStyle(250, 80, 45, 0, 109, 0)} />
-
-            <img src={imgLettuce} alt="Lettuce" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" 
-                  style={getStyle(-200, 0, -20, 0, 79, 0)} />
-
-            <img src={imgTomato} alt="Tomato" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" 
-                  style={getStyle(200, -80, 60, 0, 82, 0)} />
-
-            <img src={imgTop} alt="Top Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-50 drop-shadow-2xl" 
-                  style={getStyle(0, -400, -15, 0, 58, 0)} />
+            <img src={imgBottom} alt="Bottom Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-10 drop-shadow-2xl" style={getStyle(0, 150, 0, 0, 150, 0)} />
+            <img src={imgBeef} alt="Patty" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-20 drop-shadow-2xl" style={getStyle(-250, 150, -30, 0, 115, 0)} />
+            <img src={imgCheese} alt="Cheese" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-30 drop-shadow-2xl" style={getStyle(250, 80, 45, 0, 109, 0)} />
+            <img src={imgLettuce} alt="Lettuce" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" style={getStyle(-200, 0, -20, 0, 79, 0)} />
+            <img src={imgTomato} alt="Tomato" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" style={getStyle(200, -80, 60, 0, 82, 0)} />
+            <img src={imgTop} alt="Top Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-50 drop-shadow-2xl" style={getStyle(0, -400, -15, 0, 58, 0)} />
           </div>
         </div>
       </section>
 
-      {/* --- STATS SECTION --- */}
-      <section className="bg-black text-white py-16 lg:py-24 border-b-[6px] border-black relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #D52518 2px, transparent 2px)', backgroundSize: '40px 40px' }}></div>
-        <div className="mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-4 gap-8 px-6 text-center relative z-10">
-          {[
-            { label: 'Burgers Built', val: '50K+' },
-            { label: 'Avg Rating', val: '4.9★' },
-            { label: 'Ingredients', val: '20+' },
-            { label: 'Avg Delivery', val: '15m' }
-          ].map((s, i) => (
-            <div key={i} className="flex flex-col items-center justify-center p-4">
-              <div className="text-4xl md:text-6xl font-black text-aldesYellow mb-2 drop-shadow-[2px_2px_0_#D52518]">{s.val}</div>
-              <div className="text-xs md:text-sm uppercase font-bold tracking-widest text-gray-400">{s.label}</div>
+      {/* --- HOW IT WORKS (CLEAN & PROFESSIONAL ENGLISH CONTEXT) --- */}
+      <section className="bg-white py-24 px-6 border-b-[6px] border-black relative z-40">
+        <div className="max-w-6xl mx-auto">
+          
+          <div className="text-center mb-20 space-y-3">
+            <div className="inline-flex items-center gap-2 bg-aldesYellow border-2 border-black px-4 py-1 rounded-full font-black text-xs uppercase tracking-wider">
+              <Truck size={14} /> Fresh Kitchen Logistics
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* --- HOW IT WORKS (Timeline) --- */}
-      <section className="bg-white py-24 px-6 border-b-[6px] border-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 lg:mb-24">
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">How It Works</h2>
-            <p className="mt-2 text-aldesRed font-bold uppercase tracking-widest text-sm">4 Steps to perfection</p>
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
+              FROM KITCHEN TO YOUR DOORSTEP
+            </h2>
+            <p className="text-gray-500 font-bold max-w-xl mx-auto text-sm">
+              See exactly how your custom burger goes from our grills straight to your hands.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 relative">
-            <div className="hidden md:block absolute top-12 left-24 right-24 h-1 border-t-[4px] border-dashed border-black/20 z-0"></div>
-
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
-              { num: 1, title: 'Choose Base', desc: 'Start with a signature menu or a blank canvas.', bg: 'bg-aldesCream' },
-              { num: 2, title: 'Customize', desc: 'Add, remove, or double up any ingredients.', bg: 'bg-aldesYellow' },
-              { num: 3, title: 'Checkout', desc: 'Review your crazy stack and complete payment.', bg: 'bg-aldesCream' },
-              { num: 4, title: 'Delivered', desc: 'Hot, fresh, and exactly how you built it.', bg: 'bg-aldesRed', text: 'text-white' }
+              { icon: <Sliders size={28} />, title: "1. Design Your Order", desc: "Pick your base canvas, stack your favorite patties, cheese types, and signature house sauces inside the builder." },
+              { icon: <ChefHat size={28} />, title: "2. Grilled on Demand", desc: "Our chefs immediately grill your premium beef patties over an open flame according to your exact specifications." },
+              { icon: <ShoppingBag size={28} />, title: "3. Heat-Sealed Packing", desc: "Your burger is packed into dedicated insulative foils to fully preserve the warmth and melted cheese texture." },
+              { icon: <Truck size={28} />, title: "4. Fast Dispatch", desc: "Our delivery network is dispatched to get your order to your physical location in under 30 minutes." }
             ].map((step, i) => (
-              <div key={i} className="relative z-10 flex flex-col items-center text-center group">
-                <div className={`w-24 h-24 ${step.bg} ${step.text || 'text-black'} border-[5px] border-black rounded-[2rem] flex items-center justify-center text-3xl font-black shadow-[6px_6px_0_0_#000] mb-8 group-hover:-translate-y-2 group-hover:shadow-[10px_10px_0_0_#000] transition-all duration-300 rotate-3 group-hover:rotate-0`}>
-                  {step.num}
+              <div key={i} className="bg-aldesCream border-[4px] border-black p-6 rounded-2xl shadow-[5px_5px_0_0_#000] flex flex-col justify-between hover:-translate-y-1 transition-transform group">
+                <div>
+                  <div className="w-14 h-14 bg-black text-aldesYellow border-2 border-black rounded-xl flex items-center justify-center mb-6 shadow-[3px_3px_0_0_#D52518] group-hover:bg-aldesRed group-hover:text-white transition-colors">
+                    {step.icon}
+                  </div>
+                  <h3 className="text-lg font-black uppercase mb-3 border-b-2 border-black/10 pb-2 tracking-tight">{step.title}</h3>
+                  <p className="text-gray-600 font-bold text-xs leading-relaxed">{step.desc}</p>
                 </div>
-                <h3 className="text-2xl font-black uppercase mb-3 bg-white px-4 py-1.5 border-4 border-black rounded-lg shadow-[4px_4px_0_0_#000]">{step.title}</h3>
-                <p className="text-gray-600 font-bold text-sm max-w-[200px] mt-2">{step.desc}</p>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* --- CAROUSEL REVIEWS --- */}
-      <section className="bg-aldesCream py-24 px-6 border-b-[6px] border-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end border-b-[6px] border-dashed border-black pb-6 mb-12">
-            <div>
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-black">Loved by the Crowd</h2>
-              <p className="mt-2 text-base font-bold uppercase tracking-widest text-aldesRed">Actual creations by our hungry customers.</p>
+      {/* --- DELIVERY RECEIPT REVIEWS (CLEAN RETRO STYLE) --- */}
+      <section className="bg-aldesRed py-24 px-6 border-b-[6px] border-black relative z-40 overflow-hidden">
+        
+        {/* Subtle Dots Background */}
+        <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle, #fff 2.5px, transparent 2.5px)', backgroundSize: '30px 30px' }} />
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          
+          <div className="text-center mb-16 space-y-2">
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white drop-shadow-[4px_4px_0_#000]">
+              WHAT THEY SAY ABOUT US
+            </h2>
+            <p className="text-aldesYellow font-black text-sm uppercase tracking-wider">
+              Real community feedback from our custom burger architects
+            </p>
+          </div>
+
+          {/* RECEIPT BOX ACCORDION TICKET */}
+          <div className="bg-white border-[6px] border-black rounded-2xl p-6 md:p-10 shadow-[12px_12px_0_0_#000] relative border-t-[14px] border-t-black">
+            
+            {/* Top Bar Receipt Info */}
+            <div className="flex justify-between items-center border-b-2 border-dashed border-black pb-4 mb-6 text-xs font-mono font-black text-gray-400">
+              <span>ORDER VERIFIED ✔</span>
+              <span className="flex items-center gap-1"><Clock size={12} /> {customerReviews[activeReview].time}</span>
             </div>
+
+            {/* Main Content Review */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-1 text-aldesYellow">
+                {Array(customerReviews[activeReview].rating).fill(null).map((_, i) => (
+                  <Star key={i} size={20} className="fill-current text-black" />
+                ))}
+              </div>
+
+              <div className="text-[11px] font-mono uppercase bg-aldesCream p-2 rounded border border-black/10 text-gray-600 font-black">
+                {customerReviews[activeReview].stack}
+              </div>
+
+              <p className="text-lg md:text-xl font-bold text-gray-800 italic leading-relaxed pt-2">
+                "{customerReviews[activeReview].comment}"
+              </p>
+              
+              <div className="pt-4 font-black text-base uppercase text-aldesRed">
+                — {customerReviews[activeReview].name}
+              </div>
+            </div>
+
+            {/* Pagination Selector Buttons */}
+            <div className="flex justify-center items-center gap-3 mt-10 pt-6 border-t border-black/10">
+              {customerReviews.map((rev, idx) => (
+                <button 
+                  key={rev.id}
+                  onClick={() => setActiveReview(idx)}
+                  className={`h-4 border-2 border-black transition-all ${activeReview === idx ? 'w-10 bg-black' : 'w-4 bg-gray-200'}`}
+                  title={`See review from ${rev.name}`}
+                />
+              ))}
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* --- CLEAN & JUICY DELIVERY HERO CTA --- */}
+      <section className="bg-aldesYellow py-32 px-6 text-center relative z-40 border-t-2 border-black">
+        <div className="max-w-2xl mx-auto space-y-6">
+          
+          <div className="inline-block bg-black text-white px-4 py-1.5 rounded-full border-2 border-black font-black uppercase text-xs tracking-wider shadow-[3px_3px_0_0_#D52518]">
+            🔥 Hunger Alert Sequence Detected
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {crazyStacks.map((t) => (
-              <div key={t.id} className={`border-[6px] border-black rounded-[2.5rem] p-10 shadow-[12px_12px_0_0_#000] ${t.bgColor} ${t.textColor || 'text-black'} ${t.rotation} hover:rotate-0 hover:-translate-y-2 hover:shadow-[16px_16px_0_0_#000] transition-all duration-300`}>
-                <div className="flex text-black mb-6 gap-1">
-                  <Star className="fill-current w-6 h-6 drop-shadow-md" /><Star className="fill-current w-6 h-6 drop-shadow-md" /><Star className="fill-current w-6 h-6 drop-shadow-md" /><Star className="fill-current w-6 h-6 drop-shadow-md" /><Star className="fill-current w-6 h-6 drop-shadow-md" />
-                </div>
-                <p className="text-xl md:text-2xl font-black italic mb-8 leading-snug">"{t.review}"</p>
-                <div className={`font-black uppercase text-sm border-t-[3px] ${t.textColor ? 'border-white/40' : 'border-black/20'} pt-4`}>
-                  — Chef {t.creator}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- HUGE CTA SECTION --- */}
-      <section className="py-24 px-6 text-center bg-white">
-        <div className="bg-white max-w-4xl mx-auto p-12 md:p-20 rounded-[4rem] border-[8px] border-black shadow-[20px_20px_0_0_#D52518] relative overflow-hidden group">
-          <div className="absolute inset-0 opacity-[0.05] transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: 'radial-gradient(#000 3px, transparent 3px)', backgroundSize: '40px 40px' }}></div>
-          <div className="relative z-10">
-            <h2 className="text-5xl md:text-[5.5rem] font-black uppercase tracking-tighter mb-6 leading-none">
-              READY TO BUILD?
-            </h2>
-            <p className="text-xl md:text-2xl font-bold uppercase tracking-widest text-gray-500 mb-12">
-              Fresh. Fast. Fully Yours.
-            </p>
-            <button onClick={handleStartCustomizing} className="inline-flex items-center gap-4 bg-aldesRed text-white px-10 py-5 rounded-2xl font-black uppercase text-xl md:text-3xl border-[6px] border-black shadow-[10px_10px_0_0_#000] hover:-translate-y-2 hover:shadow-[14px_14px_0_0_#000] active:translate-y-2 active:shadow-none transition-all">
-              START YOUR MASTERPIECE <ArrowRight strokeWidth={4} className="w-8 h-8" />
+          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-black">
+            SERVED HOT. <br />
+            <span className="text-aldesRed italic drop-shadow-[4px_4px_0_#fff]">DELIVERED FAST.</span>
+          </h2>
+          
+          <p className="text-sm md:text-lg font-bold text-black/70 max-w-md mx-auto leading-relaxed">
+            Thick juicy patties, melted cheddar blankets, and your customized signature ingredients delivered fresh to your doorstep right now.
+          </p>
+          
+          <div className="pt-4">
+            <button 
+              onClick={handleStartCustomizing} 
+              className="inline-flex items-center gap-3 bg-black text-aldesYellow px-10 py-5 rounded-2xl font-black uppercase text-lg md:text-2xl border-4 border-black shadow-[8px_8px_0_0_#D52518] hover:-translate-y-1 hover:shadow-[10px_10px_0_0_#000] active:translate-y-1 active:shadow-none transition-all duration-150"
+            >
+              <span>ORDER NOW</span>
+              <ArrowRight strokeWidth={4} size={22} />
             </button>
           </div>
+
         </div>
       </section>
 
