@@ -70,7 +70,23 @@ class AuthController extends Controller
             'email' => $user->email
         ], 201);
     }
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+            'otp' => ['required', 'string'],
+        ]);
 
+        $user = User::query()->where('email', $request->email)->first();
+
+        // Validasi OTP tanpa menghapusnya (set to null)
+        if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
+            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
+        }
+
+        // OTP Valid, kirim response sukses agar frontend bisa pindah ke step 'reset'
+        return response()->json(['message' => 'OTP verified successfully.']);
+    }
     // 2. Verify OTP after registration
     public function verifyRegisterOtp(Request $request): JsonResponse
     {
@@ -168,21 +184,17 @@ class AuthController extends Controller
     }
 
     // 4. Reset password using OTP
-    public function resetPasswordWithOtp(Request $request): JsonResponse
+   // Ubah metode ini agar tidak lagi melakukan validasi OTP (atau sesuai kebutuhan alur Anda)
+    public function resetPassword(Request $request): JsonResponse
     {
         $request->validate([
             'email' => ['required', 'email', 'exists:users,email'],
-            'otp' => ['required', 'string'],
             'password' => ['required', 'confirmed', 'min:6'],
         ]);
 
         $user = User::query()->where('email', $request->email)->first();
 
-        if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
-            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
-        }
-
-        // 'hashed' cast on the model will hash this automatically.
+        // Langsung update password dan hapus OTP di sini (karena ini adalah langkah terakhir)
         $user->update([
             'password' => $request->password,
             'otp' => null,

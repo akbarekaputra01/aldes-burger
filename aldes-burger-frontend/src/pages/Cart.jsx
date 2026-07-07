@@ -88,17 +88,30 @@ const getVisualOffset = (name) => {
 }
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
-  let currentBottom = 4
+  // 1. Skala dinamis agar burger tinggi tidak menabrak batas atas
   const scaleValue =
-    ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1
+    ingredients.length > 8 ? 0.6 : ingredients.length > 5 ? 0.75 : 0.9
+
+  // 2. Kalkulasi tinggi total tumpukan burger INI saja
+  let totalThickness = 0
+  ingredients.forEach((name) => {
+    totalThickness += getIngredientThickness(name)
+  })
+  // Angka 30 adalah kompensasi visual untuk ketebalan gambar roti paling atas
+  const containerHeight = totalThickness + 30 
+
+  let currentBottom = 0
 
   return (
     <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
+      
+      {/* 3. Container relative dengan height spesifik, sehingga Flexbox (items-center) parent bisa meratakannya tepat di tengah */}
       <div
-        className="absolute bottom-2 w-full flex justify-center items-end"
+        className="relative w-full flex justify-center"
         style={{
+          height: `${containerHeight}px`,
           transform: `scale(${scaleValue})`,
-          transformOrigin: 'bottom',
+          transformOrigin: 'center', // Pastikan skala terpusat, bukan dari bawah
         }}
       >
         {ingredients.map((name, index) => {
@@ -116,7 +129,13 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
                 zIndex: index,
               }}
             >
-              {img && <img src={img} alt={name} className="w-full h-auto" />}
+              {img && (
+                <img 
+                  src={img} 
+                  alt={name} 
+                  className="w-full h-auto drop-shadow-sm" 
+                />
+              )}
             </div>
           )
         })}
