@@ -16,7 +16,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Endpoint Lupa Password
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']); // Request OTP
-Route::post('/reset-password', [AuthController::class, 'resetPasswordWithOtp']); // Submit OTP & Password Baru
+Route::post('/reset-password', [AuthController::class, 'resetPassword']); // Submit OTP & Password Baru
 
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);

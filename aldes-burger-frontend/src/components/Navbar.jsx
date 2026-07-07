@@ -1,17 +1,34 @@
+import { useState } from 'react'
 import {
   ReceiptText,
   ShoppingCart,
   User,
+  UtensilsCrossed,
+  Search, // <-- Import icon Search
+  X,      // <-- Import icon X (close)
 } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate} from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import aldesLogo from '../assets/logo-aldes-burger.png'
-
 function Navbar({ isLoggedIn }) {
   const { cartCount } = useCart()
   const location = useLocation()
+  const navigate = useNavigate();
+
+  
+  // State khusus untuk Expandable Search
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Cek apakah user sedang di halaman Menu
+  const isMenuPage = location.pathname === '/menu'
 
   const navItems = [
+    {
+      name: 'Menu',
+      path: '/menu',
+      icon: UtensilsCrossed,
+    },
     {
       name: 'Transactions',
       path: '/transactions',
@@ -28,6 +45,17 @@ function Navbar({ isLoggedIn }) {
       icon: User,
     },
   ]
+  
+  // Fungsi saat user mengetik atau menekan Enter
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      // Ubah URL dan bawa kata kuncinya (contoh: /menu?q=ayam)
+      navigate(`/menu?q=${encodeURIComponent(searchQuery.trim())}`)
+    } else {
+      navigate(`/menu`) // Reset jika kosong
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-aldesRed shadow-[0_2px_10px_rgba(0,0,0,0.15)]">
@@ -48,6 +76,60 @@ function Navbar({ isLoggedIn }) {
         {/* Slider Navigation */}
         {isLoggedIn ? (
           <nav className="flex items-center gap-2 rounded-full bg-white/15 p-2 backdrop-blur-sm">
+            
+            {/* --- FITUR EXPANDABLE SEARCH (HANYA MUNCUL DI /MENU) --- */}
+            {isMenuPage && (
+              <div 
+                className={`relative flex items-center overflow-hidden transition-all duration-300 ease-out ${
+                  showSearch 
+                    ? 'w-[200px] sm:w-[250px] bg-aldesYellow border-2 border-black rounded-full shadow-[3px_3px_0_0_#000] ml-1' 
+                    : 'w-10 bg-transparent rounded-full hover:bg-white/10'
+                }`}
+              >
+                {showSearch ? (
+                  <form onSubmit={handleSearchSubmit} className="flex w-full items-center px-3 py-1.5">
+                    <Search className="h-4 w-4 text-black shrink-0" strokeWidth={3} />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSearchQuery(val); // Update state lokal
+                        // Update URL secara real-time
+                        if (val.trim()) {
+                          navigate(`/menu?q=${encodeURIComponent(val.trim())}`);
+                        } else {
+                          navigate(`/menu`); // Hapus query jika input kosong
+                        }
+                      }}
+                      placeholder="CARI MENU..."
+                      className="w-full bg-transparent px-2 text-sm font-black uppercase text-black placeholder-black/50 outline-none"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setShowSearch(false);
+                        setSearchQuery(''); // Kosongkan input
+                        navigate('/menu');   // Balik ke menu awal
+                      }}
+                      className="text-black hover:text-aldesRed shrink-0"
+                    >
+                      <X className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setShowSearch(true)}
+                    className="flex h-10 w-10 items-center justify-center text-white"
+                    title="Search Menu"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            )}
+            {/* -------------------------------------------------------- */}
+
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.path

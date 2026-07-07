@@ -17,7 +17,8 @@ import {
   ChevronUp,
   Home,
   Briefcase,
-  Loader2
+  Loader2,
+  ChefHat
 } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
@@ -267,13 +268,37 @@ function Checkout() {
   return (
     <main className="min-h-screen w-full bg-aldesCream font-sans text-black pb-20 relative">
       
-      {/* ── Overlay Animasi Loading ── */}
+      {/* ── Overlay Animasi Loading (Neo-Brutalist & English) ── */}
       {loading && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm">
-          <Loader2 className="animate-spin text-aldesYellow w-16 h-16 mb-4" />
-          <p className="text-white font-black text-xl tracking-widest animate-pulse uppercase">
-            {paymentMethod === 'cash' ? 'Memproses Pesanan...' : 'Menyiapkan Pembayaran...'}
-          </p>
+        <div className="fixed inset-0 z-[9999] bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border-4 border-black rounded-[2rem] p-8 flex flex-col items-center shadow-[12px_12px_0_0_#FFC926] max-w-sm w-[90%] text-center relative overflow-hidden animate-in zoom-in duration-300">
+            
+            <div className="relative mb-6 mt-4">
+              {/* Glowing effect */}
+              <div className="absolute inset-0 bg-aldesRed/20 rounded-full blur-xl animate-pulse scale-150"></div>
+              
+              {/* Main Icon Circle */}
+              <div className="relative bg-aldesRed border-4 border-black w-24 h-24 rounded-full flex items-center justify-center shadow-[6px_6px_0_0_#000]">
+                 {paymentMethod === 'cash' ? (
+                   <ChefHat className="text-white w-12 h-12" />
+                 ) : (
+                   <CreditCard className="text-white w-12 h-12" />
+                 )}
+              </div>
+              
+              {/* Spinning Loader */}
+              <div className="absolute -bottom-3 -right-3 bg-white border-4 border-black rounded-full w-12 h-12 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
+                <Loader2 className="animate-spin text-aldesRed w-7 h-7" />
+              </div>
+            </div>
+            
+            <h3 className="text-black font-black text-2xl tracking-tighter uppercase mb-2">
+              {paymentMethod === 'cash' ? 'Processing Order' : 'Preparing Payment'}
+            </h3>
+            <p className="text-gray-500 font-bold text-xs uppercase tracking-widest animate-pulse">
+              Please wait a moment...
+            </p>
+          </div>
         </div>
       )}
 
