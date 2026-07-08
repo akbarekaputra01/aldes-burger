@@ -17,24 +17,24 @@ const customerReviews = [
   {
     id: 1,
     name: "Alex Johnson",
-    stack: "Custom: Double Beef + Extra Cheddar + Smokey BBQ",
+    stack: "Custom: Double Beef + Cheddar Cheese + Secret Sauce",
     comment: "Absolutely incredible! The burger arrived piping hot and the cheese was perfectly melted on the first bite. Will definitely customize my recipe again next week.",
     rating: 5,
-    time: "24 Mins Delivery"
+    time: "30 Mins Delivery"
   },
   {
     id: 2,
     name: "Clarissa Vance",
-    stack: "Custom: Crispy Chicken + Melted Mozzarella + No Onions",
+    stack: "Custom: Crispy Chicken + Pickles + Cheddar Cheese + Ketchup",
     comment: "As someone who hates onions, this custom builder is a lifesaver. Delivery was incredibly fast and the chicken patty was still super crispy!",
     rating: 5,
-    time: "19 Mins Delivery"
+    time: "32 Mins Delivery"
   },
   {
     id: 3,
     name: "Ryan Gallagher",
-    stack: "Preset: Spicy Monster Stack",
-    comment: "The volcano sauce really brings the heat! The beef patty was thick, rich, and juicy. Neatly packed so nothing fell apart during transit.",
+    stack: "Preset: Beef Burger + No Onion",
+    comment: "The Secret sauce really brings the heat! The beef patty was thick, rich, and juicy. Neatly packed so nothing fell apart during transit.",
     rating: 5,
     time: "28 Mins Delivery"
   }
@@ -153,7 +153,7 @@ function LandingPage() {
         }} />
 
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-          <div className="absolute top-[15%] text-center z-50 px-4 w-full">
+          <div className="absolute top-[20%] text-center z-50 px-4 w-full">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">
               See How It Comes Together
             </h2>
@@ -163,7 +163,7 @@ function LandingPage() {
           </div>
 
           <div className="relative w-full h-[400px] max-w-2xl mt-16">
-            <div className={`absolute top-[10%] right-4 md:right-16 bg-white border-[4px] border-black px-5 py-3 rounded-2xl shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div className={`absolute top-[17%] right-4 md:right-16 bg-white border-[4px] border-black px-5 py-3 rounded-2xl shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                 <p className="text-[10px] font-black uppercase text-gray-500">Your Masterpiece</p>
                 <p className="text-2xl font-black italic text-black">Rp 36.500</p>
                 <button onClick={handleStartCustomizing} className="mt-2 bg-aldesRed text-white text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:bg-black transition-colors">Order Now</button>
@@ -175,7 +175,7 @@ function LandingPage() {
             <img src={imgCheese} alt="Cheese" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-30 drop-shadow-2xl" style={getStyle(250, 80, 45, 0, 109, 0)} />
             <img src={imgLettuce} alt="Lettuce" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" style={getStyle(-200, 0, -20, 0, 79, 0)} />
             <img src={imgTomato} alt="Tomato" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-40 drop-shadow-2xl" style={getStyle(200, -80, 60, 0, 82, 0)} />
-            <img src={imgTop} alt="Top Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-50 drop-shadow-2xl" style={getStyle(0, -400, -15, 0, 58, 0)} />
+            <img src={imgTop} alt="Top Bun" className="absolute top-1/2 left-1/2 w-48 md:w-56 object-contain z-50 drop-shadow-2xl" style={getStyle(0, -330, -15, 0, 58, 0)} />
           </div>
         </div>
       </section>

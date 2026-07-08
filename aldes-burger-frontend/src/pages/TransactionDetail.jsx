@@ -80,17 +80,17 @@ function TransactionDetail() {
           navigate('/payment-status?status=success')
         },
         onPending: () => {
-          alert('Pembayaran Anda sedang diproses. Silakan tunggu.')
+          alert('Your payment is being processed. Please wait.')
         },
         onError: () => {
           navigate('/payment-status?status=failed')
         },
         onClose: () => {
-          alert('Anda menutup jendela pembayaran. Status pesanan tetap menunggu pembayaran.')
+          alert('You closed the payment window. The order status remains pending.')
         }
       })
     } else {
-      alert('Gagal memuat token pembayaran. Pastikan API backend Vercel menyertakan kolom snap_token.')
+      alert('Failed to load payment token. Please ensure the backend includes snap_token.')
     }
   }
 
@@ -99,7 +99,7 @@ function TransactionDetail() {
       <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
         <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
           <Loader2 className="h-8 w-8 animate-spin text-aldesRed" />
-          <p className="font-black uppercase text-gray-700 tracking-wider">Memuat transaksi...</p>
+          <p className="font-black uppercase text-gray-700 tracking-wider">Loading transaction...</p>
         </div>
       </main>
     )
@@ -110,7 +110,7 @@ function TransactionDetail() {
       <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
         <div className="rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
           <p className="font-black uppercase text-gray-800">
-            Transaksi tidak ditemukan.
+            Transaction not found.
           </p>
         </div>
       </main>
@@ -145,7 +145,7 @@ function TransactionDetail() {
                 statusClass[transaction.status] || 'bg-gray-100 text-gray-700 border-gray-300'
               }`}
             >
-              {transaction.status === 'pending' ? 'Menunggu Pembayaran' : transaction.status}
+              {transaction.status === 'pending' ? 'Pending Payment' : transaction.status}
             </span>
           </div>
         </div>
@@ -156,7 +156,7 @@ function TransactionDetail() {
           <div className="rounded-3xl bg-white p-5 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
             <div className="mb-3 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-aldesRed" strokeWidth={3} />
-              <p className="font-black uppercase text-gray-900 text-sm">Alamat Pengiriman</p>
+              <p className="font-black uppercase text-gray-900 text-sm">Delivery Address</p>
             </div>
             <p className="text-sm font-bold text-gray-600 leading-relaxed uppercase">
               {transaction.destination_address}
@@ -168,7 +168,7 @@ function TransactionDetail() {
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-aldesRed" strokeWidth={3} />
-                <p className="font-black uppercase text-gray-900 text-sm">Pembayaran</p>
+                <p className="font-black uppercase text-gray-900 text-sm">Payment Method</p>
               </div>
               <p className="text-sm font-bold text-gray-600 uppercase">
                 {transaction.payment?.method?.replace('_', ' ') || '-'}
@@ -185,20 +185,20 @@ function TransactionDetail() {
                      onClick={handleContinuePayment}
                     className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1"
                   >
-                    Lanjutkan Pembayaran
+                    Continue Payment
                   </button>
                 ) : (
                   <span className="rounded-lg bg-orange-100 px-3 py-1 text-[10px] font-black uppercase text-orange-700 border-2 border-orange-700">
-                    Menunggu Pembayaran
+                    Pending Payment
                   </span>
                 )
               ) : transaction.status === 'cancelled' ? (
                 <span className="rounded-lg bg-red-100 px-3 py-1 text-[10px] font-black uppercase text-red-700 border-2 border-red-700">
-                  Dibatalkan
+                  Cancelled
                 </span>
               ) : (
                 <span className="rounded-lg bg-green-100 px-3 py-1 text-[10px] font-black uppercase text-green-700 border-2 border-green-700 shadow-[2px_2px_0_0_#15803d]">
-                  Lunas / Paid
+                  Paid
                 </span>
               )}
             </div>
@@ -208,7 +208,7 @@ function TransactionDetail() {
         {/* Detail Item Pesanan */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
-            Detail Pesanan
+            Order Details
           </h2>
           <div className="space-y-3">
             {(transaction.details || []).map((item) => (
@@ -236,7 +236,7 @@ function TransactionDetail() {
         {/* Ringkasan Jumlah Pembayaran */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
-            Ringkasan Pembayaran
+            Payment Summary
           </h2>
           <div className="space-y-3">
             <div className="flex justify-between text-gray-600 font-bold uppercase text-sm">

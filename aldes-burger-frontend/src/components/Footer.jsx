@@ -168,7 +168,7 @@ function Footer() {
                 <a href="/kitchen" className="transition-colors hover:text-white hover:underline underline-offset-4">Build Your Burger</a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-white hover:underline underline-offset-4">Promo & Offers</a>
+                <a href="/transactions" className="transition-colors hover:text-white hover:underline underline-offset-4">Check Transaction</a>
               </li>
               <li>
                 <a href="/profile" className="transition-colors hover:text-white hover:underline underline-offset-4">My Account</a>
