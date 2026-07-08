@@ -266,7 +266,7 @@ function Checkout() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream font-sans text-black pb-20 relative">
+    <main className="min-h-screen w-full bg-aldesCream text-black pb-20 relative">
       
       {/* ── Overlay Animasi Loading (Neo-Brutalist & English) ── */}
       {loading && (

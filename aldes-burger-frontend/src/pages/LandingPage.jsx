@@ -91,7 +91,7 @@ function LandingPage() {
   }
 
   return (
-    <main className="bg-aldesCream text-black font-sans selection:bg-aldesRed selection:text-white">
+    <main className="bg-aldesCream text-black selection:bg-aldesRed selection:text-white">
       
       {/* --- HERO SECTION (STATIS & CLEAN) - UNTOUCHED --- */}
       <section className="relative mx-auto flex w-full max-w-7xl flex-col lg:flex-row gap-12 px-6 py-16 lg:py-24 items-center min-h-[90vh]">
@@ -99,14 +99,14 @@ function LandingPage() {
           <div className="inline-block bg-black text-aldesYellow px-4 py-1.5 rounded-full font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#D52518]">
             Freshly Grilled Daily 🔥
           </div>
-          <h1 className="text-[3.5rem] md:text-8xl font-black uppercase tracking-tighter leading-[0.9]">
+          <h1 className="text-[3.5rem] md:text-8xl font-black uppercase tracking-tighter leading-[1.05]">
             YOUR BURGER<br />
             <span className="text-aldesRed italic border-b-[8px] border-aldesRed pb-1">YOUR RULES.</span>
           </h1>
-          <p className="text-xl font-bold text-gray-700 max-w-lg">
+          <p className="text-xl font-bold text-gray-700 max-w-lg pt-6">
             Build every layer exactly how you like it. Extra cheese? No onions? Double patty? It's all in your hands.
           </p>
-          <div className="flex flex-wrap gap-4 pt-4">
+          <div className="flex flex-wrap gap-4">
             <button onClick={handleStartCustomizing} className="bg-aldesRed text-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
               Start Building
             </button>

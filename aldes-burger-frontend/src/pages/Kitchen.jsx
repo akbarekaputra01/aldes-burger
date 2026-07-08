@@ -466,7 +466,7 @@ function Kitchen() {
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 font-sans select-none overflow-x-hidden">
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 select-none overflow-x-hidden">
       <style>
         {`
           @keyframes dropBounce {

@@ -147,7 +147,7 @@ function Auth() {
   };
 
   return (
-    <main className="min-h-screen w-full overflow-hidden bg-[#F3E8CC] font-sans selection:bg-[#FFC926] selection:text-black relative">
+    <main className="min-h-screen w-full overflow-hidden bg-[#F3E8CC] selection:bg-[#FFC926] selection:text-black relative">
       {/* Background Burger Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.06]">
         <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="1"><path d="M32 54C32 43.5066 40.5066 35 51 35H69C79.4934 35 88 43.5066 88 54V56H32V54Z" stroke="#D52518" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 60H92" stroke="#D52518" stroke-width="3" stroke-linecap="round"/><path d="M31 64H89" stroke="#D52518" stroke-width="3" stroke-linecap="round"/><path d="M36 71H84" stroke="#D52518" stroke-width="3" stroke-linecap="round"/><path d="M34 76V77C34 83.0751 38.9249 88 45 88H75C81.0751 88 86 83.0751 86 77V76" stroke="#D52518" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="47" r="1.7" fill="#FFC926"/><circle cx="56" cy="43" r="1.7" fill="#FFC926"/><circle cx="66" cy="46" r="1.7" fill="#FFC926"/><circle cx="76" cy="44" r="1.7" fill="#FFC926"/></g></svg>`)}")`, backgroundSize: '120px 120px', backgroundPosition: '0 0' }} />

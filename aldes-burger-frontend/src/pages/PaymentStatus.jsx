@@ -14,7 +14,7 @@ function PaymentStatus() {
   const isSuccess = status !== 'failed'
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10 font-sans">
+    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10">
       <section className="relative w-full max-w-lg rounded-[2.5rem] border-[6px] border-black bg-white p-8 md:p-12 text-center shadow-[12px_12px_0_0_#000] animate-in fade-in zoom-in duration-300">
         
         {/* Badge Status Melayang */}
