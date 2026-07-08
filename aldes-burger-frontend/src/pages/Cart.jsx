@@ -224,7 +224,7 @@ function Cart() {
         {/* Badge */}
         <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
           <span className="font-black text-aldesYellow text-base md:text-xl uppercase italic tracking-tighter">
-            CART
+            <h3>CART</h3>
           </span>
         </div>
 
@@ -232,7 +232,7 @@ function Cart() {
         <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight flex items-center gap-3">
             <ReceiptText size={40} />
-            MY ORDERS
+            <h3>MY ORDERS</h3>
           </h2>
 
           <p className="text-gray-400 font-bold text-xs md:text-sm uppercase mt-2 tracking-wide">
@@ -363,7 +363,7 @@ function Cart() {
         {/* Add More */}
         <button
           onClick={() => navigate('/menu')}
-          className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-wide flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000]"
+          className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-wide flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000] hover:bg-aldesRed hover:text-aldesYellow hover:shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-none transition-all duration-150"
         >
           <Plus size={20} strokeWidth={4} />
           ADD MORE ORDERS

@@ -66,7 +66,7 @@ function Transactions() {
   );
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream pb-24 pt-10 font-sans text-[#2D2D2D]">
+    <main className="min-h-screen w-full bg-aldesCream pb-24 pt-10 text-[#2D2D2D]">
       <div className="mx-auto max-w-xl px-6">
         
         <section className="py-10 text-center">
@@ -169,9 +169,9 @@ function Transactions() {
               <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[40px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                  <Clock3 size={48} className="text-aldesRed" />
               </div>
-              <h3 className="text-3xl font-black uppercase italic tracking-tighter">
+              <h2 className="text-3xl font-black uppercase italic tracking-tighter">
                 {activeTab === 'on_progress' ? 'Kitchen is Quiet!' : 'No History Yet'}
-              </h3>
+              </h2>
               <p className="mb-8 mt-2 text-xs font-bold text-gray-500 px-10">
                 {activeTab === 'on_progress' 
                   ? "You haven't ordered anything yet. Let's get some burgers!" 

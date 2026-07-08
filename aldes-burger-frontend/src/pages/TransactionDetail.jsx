@@ -123,7 +123,7 @@ function TransactionDetail() {
   )
 
   return (
-    <main className="min-h-screen bg-aldesCream font-sans text-black px-4 py-10 pb-20">
+    <main className="min-h-screen bg-aldesCream text-black px-4 py-10 pb-20">
       <section className="mx-auto max-w-3xl space-y-6">
         {/* Header Transaksi */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
