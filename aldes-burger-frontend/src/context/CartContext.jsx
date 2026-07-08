@@ -1,10 +1,24 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const CartContext = createContext(null)
-const CART_STORAGE_KEY = 'aldes_cart'
+
+// --- DYNAMIC STORAGE KEY RESOLUTION BASED ON USER IDENTIFIER ---
+const getCartStorageKey = () => {
+  try {
+    const rawUser = localStorage.getItem('aldes_user')
+    if (rawUser) {
+      const user = JSON.parse(rawUser)
+      if (user?.id) return `aldes_cart_user_${user.id}`
+    }
+  } catch (e) {
+    console.error('Failed to resolve dynamic user storage key:', e)
+  }
+  return 'aldes_cart_guest'
+}
 
 const loadStoredCart = () => {
-  const rawCart = localStorage.getItem(CART_STORAGE_KEY)
+  const dynamicKey = getCartStorageKey()
+  const rawCart = localStorage.getItem(dynamicKey)
   if (!rawCart) return []
   try {
     const parsed = JSON.parse(rawCart)
@@ -69,9 +83,27 @@ const normalizeCartItem = (inputItem) => {
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(loadStoredCart)
 
+  // Sync state mutation into the corresponding active dynamic key partition
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
+    const dynamicKey = getCartStorageKey()
+    localStorage.setItem(dynamicKey, JSON.stringify(cart))
   }, [cart])
+
+  // Monitor framework or session level alterations (e.g., login, signup, logout context modifications)
+  useEffect(() => {
+    const handleSessionalRealignment = () => {
+      setCart(loadStoredCart())
+    }
+
+    window.addEventListener('storage', handleSessionalRealignment)
+    // Custom trigger event hook for local execution flows moving within identical single tab windows
+    window.addEventListener('aldes_auth_sync', handleSessionalRealignment)
+
+    return () => {
+      window.removeEventListener('storage', handleSessionalRealignment)
+      window.removeEventListener('aldes_auth_sync', handleSessionalRealignment)
+    }
+  }, [])
 
   const cartCount = useMemo(() => cart.length, [cart])
 

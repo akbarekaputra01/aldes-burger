@@ -41,7 +41,7 @@ function Transactions() {
         setTransactions(data);
         sessionStorage.setItem('aldes_transactions_cache', JSON.stringify(data));
       } catch (error) {
-        console.error("Gagal memuat transaksi:", error);
+        console.error("Failed to load transactions:", error);
       } finally {
         setIsFetching(false);
       }
@@ -150,11 +150,11 @@ function Transactions() {
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total Bill</p>
                       <p className={`text-2xl font-black text-black ${order.status?.toLowerCase() === 'cancelled' ? 'opacity-50' : ''}`}>
-                        Rp {order.amount?.toLocaleString('id-ID')}
+                        Rp {order.amount?.toLocaleString('en-US')}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] font-bold italic">{new Date(order.created_at).toLocaleDateString('id-ID')}</p>
+                      <p className="text-[9px] font-bold italic">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                       <div className="mt-1 flex items-center gap-1 rounded-lg border border-black bg-[#FDF8EE] px-2 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                         <Ticket size={10} />
                         <span className="text-[8px] font-black uppercase">Promo Applied</span>
