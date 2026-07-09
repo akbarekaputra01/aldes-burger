@@ -317,7 +317,7 @@ function Profile() {
                       className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-4 border-black bg-aldesRed py-3.5 text-base font-black tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
                     >
                       {pwdStatus.loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-5 w-5" />}
-                      {t('profile.save')}
+                      {t('profile.savePassword')}
                     </button>
                     <button
                       type="button"
