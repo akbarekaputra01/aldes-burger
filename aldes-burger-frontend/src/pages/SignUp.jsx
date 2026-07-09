@@ -17,9 +17,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import MascotBurger from '../assets/mascot-burger.png';
+import { useTranslation } from '../context/LanguageContext';
 
 function SignUp() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,18 +40,18 @@ function SignUp() {
     const email = form.email.trim();
     const phone = form.phone.trim();
 
-    if (!email.endsWith('@gmail.com')) return setError('Please use a valid Gmail address ending with @gmail.com.');
+    if (!email.endsWith('@gmail.com')) return setError(t('auth.errGmail'));
     if (!/^08\d{8,11}$/.test(phone)) return setError('Phone number must start with 08 and contain 10 to 13 digits.');
-    if (form.password !== form.password_confirmation) return setError('Password confirmation does not match your password.');
+    if (form.password !== form.password_confirmation) return setError(t('auth.errPasswordMismatch'));
 
     setError(''); setSuccess(''); setIsLoading(true);
 
     try {
       await api.post('/register', form);
-      setSuccess('Account created! Please check your email for the verification code.');
+      setSuccess(t('auth.successOtpSent'));
       setStep('otp'); // Berpindah ke tahap OTP
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.message || t('common.error'));
     } finally {
       setIsLoading(false);
     }
@@ -57,17 +59,17 @@ function SignUp() {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (otp.length !== 6) return setError('OTP must be exactly 6 digits.');
+    if (otp.length !== 6) return setError(t('auth.errOtpDigits'));
 
     setError(''); setSuccess(''); setIsLoading(true);
 
     try {
       await api.post('/verify-otp', { email: form.email, otp: otp });
-      setSuccess('Email verified successfully! Redirecting to login...');
+      setSuccess(t('auth.successOtpVerified'));
       setTimeout(() => setIsFlippingOut(true), 900);
       setTimeout(() => navigate('/login'), 1650);
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid OTP or expired. Please try again.');
+      setError(err.response?.data?.message || t('auth.errInvalidOtp'));
     } finally {
       setIsLoading(false);
     }
@@ -108,16 +110,16 @@ function SignUp() {
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-aldesYellow drop-shadow-[4px_4px_0_#000]">
-                {step === 'register' ? (<>Join The<br /><span className="text-white">Burger Club</span></>) : (<>Verify<br /><span className="text-white">Your Email</span></>)}
+                {step === 'register' ? (<>{t('signup.title')}</>) : (<>{t('auth.verifyOtp')} <span className="text-white">{t('auth.verifyOtp2')}</span></>)}
               </h1>
               <p className="mt-4 max-w-sm text-white font-bold text-sm md:text-[15px] leading-relaxed">
-                {step === 'register' ? 'Create your account and get closer to tasty deals and Aldes Burger specials.' : 'Enter the code we sent to your email to activate your account.'}
+                {step === 'register' ? t('signup.subtitle') : t('auth.verifyDesc')}
               </p>
             </div>
             <div className="relative z-10 grid grid-cols-3 gap-3 text-center">
-              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">Fast</p><p className="text-white text-[9px] font-bold uppercase mt-1">Order</p></div>
-              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">Hot</p><p className="text-white text-[9px] font-bold uppercase mt-1">Deals</p></div>
-              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">Fresh</p><p className="text-white text-[9px] font-bold uppercase mt-1">Taste</p></div>
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">{t('auth.fast')}</p><p className="text-white text-[9px] font-bold uppercase mt-1">Order</p></div>
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">{t('auth.hot')}</p><p className="text-white text-[9px] font-bold uppercase mt-1">{t('auth.hotSub')}</p></div>
+              <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3"><p className="text-aldesYellow font-black text-base md:text-lg leading-none">{t('auth.fresh')}</p><p className="text-white text-[9px] font-bold uppercase mt-1">{t('auth.freshSub')}</p></div>
             </div>
           </section>
 
@@ -128,11 +130,11 @@ function SignUp() {
                 <div className="inline-flex items-center gap-2 bg-aldesYellow border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
                   <Sparkles size={15} className="fill-black" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
-                    {step === 'register' ? 'Create New Account' : 'Security Check'}
+                    {step === 'register' ? t('signup.title') : t('auth.otpValidation')}
                   </span>
                 </div>
                 <h2 className="text-4xl md:text-[46px] font-black text-black uppercase tracking-tighter leading-none">
-                  {step === 'register' ? 'Sign Up' : 'Verify'}
+                  {step === 'register' ? t('navbar.signup') : t('auth.verify')}
                   <span className="text-aldesRed">.</span>
                 </h2>
               </div>
@@ -154,22 +156,22 @@ function SignUp() {
               {step === 'register' ? (
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">Full Name</label>
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">{t('signup.name')}</label>
                     <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <User size={19} className="mr-3 text-aldesRed shrink-0" />
-                      <input className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="Enter your full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                      <input className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder={t('signup.name')} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="group">
-                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">Email</label>
+                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">{t('signup.email')}</label>
                       <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                         <Mail size={18} className="mr-3 text-aldesRed shrink-0" />
                         <input type="email" className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="mail@gmail.com" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                       </div>
                     </div>
                     <div className="group">
-                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">Phone</label>
+                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">{t('signup.phone')}</label>
                       <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                         <Phone size={18} className="mr-3 text-aldesRed shrink-0" />
                         <input className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="0812..." required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })} />
@@ -178,7 +180,7 @@ function SignUp() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="group">
-                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">Password</label>
+                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">{t('signup.password')}</label>
                       <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                         <Lock size={18} className="mr-3 text-aldesRed shrink-0" />
                         <input type={showPassword ? 'text' : 'password'} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal" placeholder="Password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
@@ -186,7 +188,7 @@ function SignUp() {
                       </div>
                     </div>
                     <div className="group">
-                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">Confirm Password</label>
+                      <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-aldesRed transition-colors">{t('signup.confirmPassword')}</label>
                       <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                         <Lock size={18} className="mr-3 text-aldesRed shrink-0" />
                         <input type={showConfirmPassword ? 'text' : 'password'} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal" placeholder="Confirm Password" required value={form.password_confirmation} onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })} />
@@ -196,14 +198,14 @@ function SignUp() {
                   <button type="submit" disabled={isLoading} className="w-full bg-aldesRed text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-aldesYellow -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Processing...</> : <><ArrowRight strokeWidth={4} size={23} /> Register Account</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('common.loading')}</> : <><ArrowRight strokeWidth={4} size={23} /> {t('signup.createAccount')}</>}
                     </span>
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-6 mt-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-3 text-gray-500 tracking-wider text-center group-focus-within:text-aldesRed transition-colors">Enter 6-Digit Code</label>
+                    <label className="block text-[11px] font-black uppercase mb-3 text-gray-500 tracking-wider text-center group-focus-within:text-aldesRed transition-colors">{t('auth.enterSixDigit')}</label>
                     <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-6 py-4 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all max-w-[300px] mx-auto">
                       <KeyRound size={24} className="mr-4 text-aldesRed shrink-0" />
                       <input type="text" maxLength="6" className="bg-transparent w-full outline-none font-black text-3xl tracking-[0.5em] text-center placeholder:text-gray-300 placeholder:tracking-normal placeholder:font-bold" placeholder="------" required value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />
@@ -212,7 +214,7 @@ function SignUp() {
                   <button type="submit" disabled={isLoading || otp.length < 6} className="w-full bg-black text-aldesYellow py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#FFC926] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#FFC926] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-aldesYellow -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Verifying...</> : success ? <><CheckCircle size={23} /> Check</> : <><Sparkles size={23} /> Verify OTP</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('auth.verifying')}</> : success ? <><CheckCircle size={23} /> {t('common.success')}</> : <><Sparkles size={23} /> {t('auth.verifyOtpBtn')}</>}
                     </span>
                   </button>
                   <div className="text-center">
@@ -222,12 +224,12 @@ function SignUp() {
               )}
 
               {step === 'register' && (
-                <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
-                  <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
-                    Already have an account?{' '}
-                    <Link to="/login" className="text-aldesRed hover:bg-aldesYellow px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4">Login here</Link>
-                  </p>
-                </div>
+                  <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
+                    <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
+                      {t('signup.alreadyHave')}{' '}
+                      <Link to="/login" className="text-aldesRed hover:bg-aldesYellow px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4">{t('signup.loginHere')}</Link>
+                    </p>
+                  </div>
               )}
             </div>
           </section>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
+import { useTranslation } from '../context/LanguageContext';
 import AddressBookModal from '../components/AddressBookModal';
 
 // --- Burger ingredient image assets ---
@@ -158,6 +159,7 @@ function Checkout() {
 
   const checkoutItems = location.state?.checkoutItems || [];
   const { removeFromCart, cartCount } = useCart();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
@@ -293,10 +295,10 @@ function Checkout() {
             </div>
             
             <h3 className="text-black font-black text-2xl tracking-tighter uppercase mb-2">
-              {paymentMethod === 'cash' ? 'Processing Order' : 'Preparing Payment'}
+              {paymentMethod === 'cash' ? t('checkout.processingOrder') : t('checkout.preparingPayment')}
             </h3>
             <p className="text-gray-500 font-bold text-xs uppercase tracking-widest animate-pulse">
-              Please wait a moment...
+              {t('checkout.pleaseWait')}
             </p>
           </div>
         </div>
@@ -310,19 +312,19 @@ function Checkout() {
           <div className="p-6">
             <div className="flex items-center gap-2 text-aldesRed mb-4">
               <MapPin size={16} fill="currentColor" />
-              <h2 className="font-black uppercase text-[11px] tracking-widest">Delivery Address</h2>
+              <h2 className="font-black uppercase text-[11px] tracking-widest">{t('checkout.deliveryAddress')}</h2>
             </div>
 
             {loadingAddresses ? (
-              <p className="text-sm text-gray-400 italic">Loading addresses...</p>
+              <p className="text-sm text-gray-400 italic">{t('checkout.loadingAddresses')}</p>
             ) : addresses.length === 0 ? (
               <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-gray-500">No address found. Please add one.</p>
+                <p className="text-sm text-gray-500">{t('checkout.noAddress')}</p>
                 <button
                   onClick={() => setShowAddressModal(true)}
                   className="text-aldesRed font-black text-[10px] uppercase underline underline-offset-4 decoration-2 flex items-center gap-1"
                 >
-                  <Plus size={12} /> Add Address
+                  <Plus size={12} /> {t('checkout.addAddress')}
                 </button>
               </div>
             ) : (
@@ -338,7 +340,7 @@ function Checkout() {
                           </span>
                         )}
                         {selectedAddress.is_default && (
-                          <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-green-200">Default</span>
+                          <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-green-200">{t('checkout.default')}</span>
                         )}
                       </div>
                       <p className="text-[11px] font-bold text-gray-500 uppercase leading-relaxed max-w-2xl">
@@ -349,7 +351,7 @@ function Checkout() {
                       onClick={() => setShowAddressPicker(v => !v)}
                       className="text-aldesRed font-black text-[10px] uppercase underline underline-offset-4 decoration-2 flex items-center gap-1 flex-shrink-0"
                     >
-                      Change {showAddressPicker ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      {t('checkout.change')} {showAddressPicker ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                     </button>
                   </div>
                 )}
@@ -370,7 +372,7 @@ function Checkout() {
                             </span>
                           )}
                           {addr.is_default && (
-                            <span className="px-1.5 py-0.5 bg-green-100 border border-green-300 text-[8px] font-black uppercase rounded text-green-700">Default</span>
+                            <span className="px-1.5 py-0.5 bg-green-100 border border-green-300 text-[8px] font-black uppercase rounded text-green-700">{t('checkout.default')}</span>
                           )}
                         </div>
                         <p className="text-[10px] text-gray-500 font-bold leading-relaxed">{addr.phone_number} | {addr.address}</p>
@@ -380,7 +382,7 @@ function Checkout() {
                       onClick={() => setShowAddressModal(true)}
                       className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 font-bold text-xs hover:border-aldesRed hover:text-aldesRed transition-all"
                     >
-                      <Plus size={14} /> Add New Address
+                      <Plus size={14} /> {t('checkout.addNewAddress')}
                     </button>
                   </div>
                 )}
@@ -395,13 +397,13 @@ function Checkout() {
             {/* ── Payment Method ── */}
             <div className="space-y-4">
               <h2 className="text-xl font-black uppercase flex items-center gap-3">
-                <CreditCard size={22} strokeWidth={3} /> Payment Method
+                <CreditCard size={22} strokeWidth={3} /> {t('checkout.paymentMethod')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div onClick={() => setPaymentMethod('bank_transfer')} className={`cursor-pointer p-5 border-[3px] border-black rounded-2xl flex items-center justify-between shadow-[4px_4px_0_0_#000] ${paymentMethod === 'bank_transfer' ? 'bg-aldesYellow' : 'bg-white'}`}>
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-white border-2 border-black rounded-xl"><CreditCard size={20} /></div>
-                    <div><p className="font-black uppercase text-xs">Bank Transfer</p></div>
+                    <div><p className="font-black uppercase text-xs">{t('checkout.bankTransfer')}</p></div>
                   </div>
                   <div className={`w-5 h-5 border-2 border-black rounded-full flex items-center justify-center ${paymentMethod === 'bank_transfer' ? 'bg-black' : 'bg-white'}`}>
                     {paymentMethod === 'bank_transfer' && <div className="w-2 h-2 bg-aldesYellow rounded-full" />}
@@ -410,7 +412,7 @@ function Checkout() {
                 <div onClick={() => setPaymentMethod('cash')} className={`cursor-pointer p-5 border-[3px] border-black rounded-2xl flex items-center justify-between shadow-[4px_4px_0_0_#000] ${paymentMethod === 'cash' ? 'bg-aldesYellow' : 'bg-white'}`}>
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-white border-2 border-black rounded-xl"><Banknote size={20} /></div>
-                    <div><p className="font-black uppercase text-xs">Cash</p></div>
+                    <div><p className="font-black uppercase text-xs">{t('checkout.cash')}</p></div>
                   </div>
                   <div className={`w-5 h-5 border-2 border-black rounded-full flex items-center justify-center ${paymentMethod === 'cash' ? 'bg-black' : 'bg-white'}`}>
                     {paymentMethod === 'cash' && <div className="w-2 h-2 bg-aldesYellow rounded-full" />}
@@ -422,7 +424,7 @@ function Checkout() {
             {/* ── Order Summary ── */}
             <div className="space-y-4">
               <h2 className="text-xl font-black uppercase flex items-center gap-3">
-                <ShoppingBag size={22} strokeWidth={3} /> Order Summary
+                <ShoppingBag size={22} strokeWidth={3} /> {t('checkout.orderSummary')}
               </h2>
               <div className="space-y-4">
                 {checkoutItems.map((item) => {
@@ -468,7 +470,7 @@ function Checkout() {
                         )}
 
                         <div className="mt-3 text-right">
-                          <p className="text-[10px] font-black text-gray-400">Subtotal</p>
+                          <p className="text-[10px] font-black text-gray-400">{t('checkout.subtotal')}</p>
                           <p className="font-black text-xl italic">
                             IDR {((item.unit_price ?? 0) * (item.qty ?? 1)).toLocaleString('id-ID')}
                           </p>
@@ -486,18 +488,18 @@ function Checkout() {
             <div className="bg-white text-aldesRed rounded-[2rem] p-7 border-4 border-black shadow-[8px_8px_0_0_#000] sticky top-28">
               <div className="space-y-3 mb-6 text-[10px] font-black uppercase text-aldesRed/60">
                 <div className="flex justify-between items-center">
-                  <span>Subtotal</span>
+                  <span>{t('checkout.subtotal')}</span>
                   <span className="text-aldesRed text-xs">IDR {subtotal.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b-2 border-black/10">
-                  <span>Delivery</span>
-                  <span className="text-aldesRed text-xs">FREE</span>
+                  <span>{t('checkout.delivery')}</span>
+                  <span className="text-aldesRed text-xs">{t('checkout.free')}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-end mb-8">
                 <div>
-                  <p className="text-[10px] font-black uppercase text-aldesRed">Grand Total</p>
+                  <p className="text-[10px] font-black uppercase text-aldesRed">{t('checkout.grandTotal')}</p>
                   <p className="text-3xl font-black italic">IDR {total.toLocaleString('id-ID')}</p>
                 </div>
                 <Flame className="text-aldesRed animate-pulse" size={32} fill="currentColor" />
@@ -505,7 +507,7 @@ function Checkout() {
 
               {!selectedAddressId && !loadingAddresses && (
                 <p className="text-[10px] text-red-500 font-bold mb-3 text-center uppercase">
-                  ⚠ Please select a delivery address
+                  {t('checkout.selectAddressWarning')}
                 </p>
               )}
 
@@ -514,7 +516,7 @@ function Checkout() {
                 disabled={checkoutItems.length === 0 || loading || !selectedAddressId}
                 className="w-full py-4 rounded-xl bg-aldesRed text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Ordering...' : 'Place Order'} <CheckCircle2 size={20} strokeWidth={4} />
+                {loading ? t('checkout.ordering') : t('checkout.placeOrder')} <CheckCircle2 size={20} strokeWidth={4} />
               </button>
             </div>
           </aside>

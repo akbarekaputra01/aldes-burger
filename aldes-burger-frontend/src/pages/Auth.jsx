@@ -17,9 +17,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { setAuthSession } from '../utils/auth';
 import MascotBurger from '../assets/mascot-burger.png';
+import { useTranslation } from '../context/LanguageContext';
 
 function Auth() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     email: '',
     password: ''
@@ -42,9 +44,9 @@ function Auth() {
     const email = form.email.trim().toLowerCase();
     const password = form.password;
 
-    if (!email) return setError('Please enter your registered email address.');
-    if (!email.endsWith('@gmail.com')) return setError('Please use a valid Gmail address ending with @gmail.com.');
-    if (!password) return setError('Please enter your password.');
+    if (!email) return setError(t('auth.errEmail'));
+    if (!email.endsWith('@gmail.com')) return setError(t('auth.errGmail'));
+    if (!password) return setError(t('auth.errPassword'));
 
     setError('');
     setIsLoading(true);
@@ -55,9 +57,9 @@ function Auth() {
       navigate(data.user?.role === 'admin' ? '/admin' : '/menu');
     } catch (err) {
       const status = err.response?.status;
-      if (status === 404) setError('This email is not registered. Please check your email or create a new account.');
-      else if (status === 401 || status === 422) setError('The password does not match the registered email.');
-      else setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      if (status === 404) setError(t('auth.errNotRegistered'));
+      else if (status === 401 || status === 422) setError(t('auth.errWrongPassword'));
+      else setError(err.response?.data?.message || t('auth.errLoginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -76,18 +78,18 @@ function Auth() {
     e.preventDefault();
     const email = form.email.trim().toLowerCase();
 
-    if (!email) return setError('Please enter your registered email address.');
-    if (!email.endsWith('@gmail.com')) return setError('Please use a valid Gmail address.');
+    if (!email) return setError(t('auth.errEmail'));
+    if (!email.endsWith('@gmail.com')) return setError(t('auth.errGmail'));
 
     setError(''); setSuccess(''); setIsLoading(true);
 
     try {
       await api.post('/forgot-password', { email });
-      setSuccess('An OTP code has been sent to your email.');
+      setSuccess(t('auth.successOtpSent'));
       setStep('verify_otp'); // Pindah ke tahap validasi OTP Dulu
     } catch (err) {
-      if (err.response?.status === 404) setError('This email is not registered.');
-      else setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+      if (err.response?.status === 404) setError(t('auth.errEmailNotRegistered'));
+      else setError(err.response?.data?.message || t('auth.errSendOtp'));
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +98,7 @@ function Auth() {
   // --- 3. VERIFY OTP (SEBELUM GANTI PASSWORD) ---
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (otp.length !== 6) return setError('OTP must be exactly 6 digits.');
+    if (otp.length !== 6) return setError(t('auth.errOtpDigits'));
 
     setError(''); setSuccess(''); setIsLoading(true);
 
@@ -104,7 +106,7 @@ function Auth() {
       // Validasi OTP murni ke backend
       await api.post('/verify-otp', { email: form.email.trim().toLowerCase(), otp });
       localStorage.setItem('reset_otp', otp);
-      setSuccess('OTP Verified! Please enter your new password.');
+      setSuccess(t('auth.successOtpVerified'));
       
       // Jika sukses, baru munculkan form ganti password
       setTimeout(() => {
@@ -112,7 +114,7 @@ function Auth() {
         setSuccess('');
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid OTP code. Please try again.');
+      setError(err.response?.data?.message || t('auth.errInvalidOtp'));
     } finally {
       setIsLoading(false);
     }
@@ -121,8 +123,8 @@ function Auth() {
   // --- 4. EXECUTE RESET PASSWORD ---
   const handleReset = async (e) => {
     e.preventDefault();
-    if (!newPassword) return setError('Please enter a new password.');
-    if (newPassword !== passwordConfirmation) return setError('Password confirmation does not match.');
+    if (!newPassword) return setError(t('auth.errNewPassword'));
+    if (newPassword !== passwordConfirmation) return setError(t('auth.errPasswordMismatch'));
     // const savedOtp = localStorage.getItem('reset_otp');
     setError(''); setSuccess(''); setIsLoading(true);
 
@@ -132,7 +134,7 @@ function Auth() {
       password: newPassword,
       password_confirmation: passwordConfirmation
       });
-      setSuccess('Your password has been reset successfully. Please log in.');
+      setSuccess(t('auth.successReset'));
       localStorage.removeItem('reset_otp');
       setOtp(''); setNewPassword(''); setPasswordConfirmation('');
       setTimeout(() => {
@@ -140,7 +142,7 @@ function Auth() {
         setSuccess('');
       }, 1800);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+      setError(err.response?.data?.message || t('auth.errResetFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -182,34 +184,34 @@ function Auth() {
                   <img src={MascotBurger} alt="Aldes Burger Mascot" className="relative z-10 w-[82%] h-[82%] object-contain drop-shadow-[0_12px_10px_rgba(0,0,0,0.22)]" />
                 </div>
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2 rounded-full border-[3px] border-[#FFC926] font-black text-[10px] uppercase whitespace-nowrap rotate-[-2deg]">
-                  Fresh. Juicy. Crispy.
+                  {t('auth.freshJuicyCrispy')}
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-[#FFC926] drop-shadow-[4px_4px_0_#000]">
-                {step === 'login' && (<>Welcome<br /><span className="text-white">Back!</span></>)}
-                {step === 'forgot' && (<>Reset<br /><span className="text-white">Password</span></>)}
-                {step === 'verify_otp' && (<>Verify<br /><span className="text-white">OTP Code</span></>)}
-                {step === 'reset' && (<>Almost<br /><span className="text-white">There!</span></>)}
+                {step === 'login' && (<>{t('auth.welcomeBack')}<br /><span className="text-white">{t('auth.welcomeBack2')}</span></>)}
+                {step === 'forgot' && (<>{t('auth.resetPassword')}<br /><span className="text-white">{t('auth.resetPassword2')}</span></>)}
+                {step === 'verify_otp' && (<>{t('auth.verifyOtp')}<br /><span className="text-white">{t('auth.verifyOtp2')}</span></>)}
+                {step === 'reset' && (<>{t('auth.almostThere')}<br /><span className="text-white">{t('auth.almostThere2')}</span></>)}
               </h1>
               <p className="mt-4 max-w-sm text-white font-bold text-sm md:text-[15px] leading-relaxed">
-                {step === 'login' && 'Log in with your registered email to continue your order.'}
-                {step === 'forgot' && "Enter your registered email and we'll send you an OTP code."}
-                {step === 'verify_otp' && 'Enter the OTP code we sent you to proceed.'}
-                {step === 'reset' && 'Create a new secure password for your account.'}
+                {step === 'login' && t('auth.loginDesc')}
+                {step === 'forgot' && t('auth.forgotDesc')}
+                {step === 'verify_otp' && t('auth.verifyDesc')}
+                {step === 'reset' && t('auth.resetDesc')}
               </p>
             </div>
             <div className="relative z-10 grid grid-cols-3 gap-3 text-center">
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fast</p>
-                <p className="text-white text-[9px] font-bold uppercase mt-1">Login</p>
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">{t('auth.fast')}</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">{t('auth.fastSub')}</p>
               </div>
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Hot</p>
-                <p className="text-white text-[9px] font-bold uppercase mt-1">Deals</p>
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">{t('auth.hot')}</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">{t('auth.hotSub')}</p>
               </div>
               <div className="bg-white/15 border-2 border-white/30 rounded-2xl px-2 py-3">
-                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">Fresh</p>
-                <p className="text-white text-[9px] font-bold uppercase mt-1">Taste</p>
+                <p className="text-[#FFC926] font-black text-base md:text-lg leading-none">{t('auth.fresh')}</p>
+                <p className="text-white text-[9px] font-bold uppercase mt-1">{t('auth.freshSub')}</p>
               </div>
             </div>
           </section>
@@ -222,17 +224,17 @@ function Auth() {
                 <div className="inline-flex items-center gap-2 bg-[#FFC926] border-[3px] border-black rounded-full px-4 py-2 mb-4 shadow-[4px_4px_0_0_#000]">
                   <Sparkles size={15} className="fill-black" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
-                    {step === 'login' && 'Member Login'}
-                    {step === 'forgot' && 'Forgot Password'}
-                    {step === 'verify_otp' && 'OTP Validation'}
-                    {step === 'reset' && 'Create New Pass'}
+                    {step === 'login' && t('auth.memberLogin')}
+                    {step === 'forgot' && t('auth.forgotPassword')}
+                    {step === 'verify_otp' && t('auth.otpValidation')}
+                    {step === 'reset' && t('auth.createNewPass')}
                   </span>
                 </div>
                 <h2 className="text-4xl md:text-[46px] font-black text-black uppercase tracking-tighter leading-none">
-                  {step === 'login' && 'Log In'}
-                  {step === 'forgot' && 'Recover'}
-                  {step === 'verify_otp' && 'Verify'}
-                  {step === 'reset' && 'New Pass'}
+                  {step === 'login' && t('auth.logIn')}
+                  {step === 'forgot' && t('auth.recover')}
+                  {step === 'verify_otp' && t('auth.verify')}
+                  {step === 'reset' && t('auth.newPass')}
                   <span className="text-[#D52518]">.</span>
                 </h2>
               </div>
@@ -255,7 +257,7 @@ function Auth() {
               {step === 'login' && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">Registered Email</label>
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.registeredEmail')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
                       <input type="email" value={form.email} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="mail@gmail.com" required onChange={(e) => setForm({ ...form, email: e.target.value })} />
@@ -263,19 +265,19 @@ function Auth() {
                   </div>
                   <div className="group">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">Password</label>
+                      <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.password')}</label>
                     </div>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
-                      <input type={showPassword ? 'text' : 'password'} value={form.password} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal" placeholder="Enter your password" required onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                      <input type={showPassword ? 'text' : 'password'} value={form.password} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal" placeholder={t('auth.enterPassword')} required onChange={(e) => setForm({ ...form, password: e.target.value })} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                     </div>
-                    <button type="button" onClick={goToForgot} className="text-[11px] font-black uppercase text-[#D52518] hover:underline underline-offset-4 tracking-wider mt-2 block">Forgot?</button>
+                    <button type="button" onClick={goToForgot} className="text-[11px] font-black uppercase text-[#D52518] hover:underline underline-offset-4 tracking-wider mt-2 block">{t('auth.forgot')}</button>
                   </div>
                   <button type="submit" disabled={isLoading} className="w-full bg-[#D52518] text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Signing In...</> : <><ArrowRight strokeWidth={4} size={23} /> Log In</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('auth.signingIn')}</> : <><ArrowRight strokeWidth={4} size={23} /> {t('auth.logIn')}</>}
                     </span>
                   </button>
                 </form>
@@ -285,7 +287,7 @@ function Auth() {
               {step === 'forgot' && (
                 <form onSubmit={handleForgot} className="space-y-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">Registered Email</label>
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.registeredEmail')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Mail size={19} className="mr-3 text-[#D52518] shrink-0" />
                       <input type="email" value={form.email} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="mail@gmail.com" required onChange={(e) => setForm({ ...form, email: e.target.value })} />
@@ -294,10 +296,10 @@ function Auth() {
                   <button type="submit" disabled={isLoading} className="w-full bg-black text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#D52518] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#D52518] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Sending OTP...</> : <><ArrowRight strokeWidth={4} size={23} /> Send OTP</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('auth.sending')}</> : <><ArrowRight strokeWidth={4} size={23} /> {t('auth.sendOtp')}</>}
                     </span>
                   </button>
-                  <button type="button" onClick={backToLogin} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"><ArrowLeft size={14} strokeWidth={3} /> Back to Login</button>
+                  <button type="button" onClick={backToLogin} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"><ArrowLeft size={14} strokeWidth={3} /> {t('auth.backToLogin')}</button>
                 </form>
               )}
 
@@ -305,7 +307,7 @@ function Auth() {
               {step === 'verify_otp' && (
                 <form onSubmit={handleVerifyOtp} className="space-y-6 mt-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-3 text-gray-500 tracking-wider text-center group-focus-within:text-[#D52518] transition-colors">Enter 6-Digit Code</label>
+                    <label className="block text-[11px] font-black uppercase mb-3 text-gray-500 tracking-wider text-center group-focus-within:text-[#D52518] transition-colors">{t('auth.enterSixDigit')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-6 py-4 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all max-w-[300px] mx-auto">
                       <KeyRound size={24} className="mr-4 text-[#D52518] shrink-0" />
                       <input type="text" maxLength="6" className="bg-transparent w-full outline-none font-black text-3xl tracking-[0.5em] text-center placeholder:text-gray-300 placeholder:tracking-normal placeholder:font-bold" placeholder="------" required value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />
@@ -314,10 +316,10 @@ function Auth() {
                   <button type="submit" disabled={isLoading || otp.length < 6} className="w-full bg-black text-[#FFC926] py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#FFC926] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#FFC926] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Verifying...</> : <><Sparkles size={23} /> Verify OTP</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('auth.verifying')}</> : <><Sparkles size={23} /> {t('auth.verifyOtpBtn')}</>}
                     </span>
                   </button>
-                  <button type="button" onClick={backToLogin} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"><ArrowLeft size={14} strokeWidth={3} /> Cancel</button>
+                  <button type="button" onClick={backToLogin} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase text-gray-500 hover:text-[#D52518] transition-colors py-2"><ArrowLeft size={14} strokeWidth={3} /> {t('auth.cancelBtn')}</button>
                 </form>
               )}
 
@@ -325,24 +327,24 @@ function Auth() {
               {step === 'reset' && (
                 <form onSubmit={handleReset} className="space-y-4">
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">New Password</label>
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.newPasswordLabel')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
-                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="Enter new password" required onChange={(e) => setNewPassword(e.target.value)} />
+                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder={t('auth.enterNewPassword')} required onChange={(e) => setNewPassword(e.target.value)} />
                       <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0">{showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                     </div>
                   </div>
                   <div className="group">
-                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">Confirm Password</label>
+                    <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.confirmPassword')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
-                      <input type={showNewPassword ? 'text' : 'password'} value={passwordConfirmation} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder="Re-enter new password" required onChange={(e) => setPasswordConfirmation(e.target.value)} />
+                      <input type={showNewPassword ? 'text' : 'password'} value={passwordConfirmation} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder={t('auth.reEnterNewPassword')} required onChange={(e) => setPasswordConfirmation(e.target.value)} />
                     </div>
                   </div>
                   <button type="submit" disabled={isLoading} className="w-full bg-green-600 text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden">
                     <div className="absolute inset-0 bg-[#FFC926] -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                     <span className="relative z-10 group-hover:text-black flex items-center gap-2 tracking-tight">
-                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> Resetting...</> : <><ArrowRight strokeWidth={4} size={23} /> Update Password</>}
+                      {isLoading ? <><Loader2 className="animate-spin" size={23} /> {t('auth.resetting')}</> : <><ArrowRight strokeWidth={4} size={23} /> {t('auth.updatePassword')}</>}
                     </span>
                   </button>
                 </form>
@@ -352,8 +354,8 @@ function Auth() {
               {step === 'login' && (
                 <div className="mt-6 pt-5 border-t-[3px] border-dashed border-black text-center">
                   <p className="font-black text-xs md:text-[13px] text-gray-500 uppercase tracking-wider">
-                    New to Aldes Burger?{' '}
-                    <Link to="/signup" className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4">Create account</Link>
+                    {t('auth.newToAldes')}{' '}
+                    <Link to="/signup" className="text-[#D52518] hover:bg-[#FFC926] px-2 py-1 rounded-lg transition-colors underline decoration-[2px] underline-offset-4">{t('auth.createAccount')}</Link>
                   </p>
                 </div>
               )}

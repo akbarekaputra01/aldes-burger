@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useTranslation } from '../context/LanguageContext'
 
 // --- IMPORT ASSETS ---
 import imgBeefPatty from '../assets/beef_patty.png'
@@ -173,6 +174,7 @@ const MenuMiniPreview = ({ name }) => {
 
 function Cart() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const contextValue = useCart()
 
   const cart = contextValue?.cart ?? []
@@ -218,13 +220,13 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 font-sans flex justify-center items-start">
+    <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 flex justify-center items-start">
       <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
 
         {/* Badge */}
         <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
           <span className="font-black text-aldesYellow text-base md:text-xl uppercase italic tracking-tighter">
-            <h3>CART</h3>
+            {t('navbar.cart')}
           </span>
         </div>
 
@@ -232,11 +234,11 @@ function Cart() {
         <div className="mb-6 border-b-[6px] border-dashed border-black pb-6">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight flex items-center gap-3">
             <ReceiptText size={40} />
-            <h3>MY ORDERS</h3>
+            {t('cart.title')}
           </h2>
 
           <p className="text-gray-400 font-bold text-xs md:text-sm uppercase mt-2 tracking-wide">
-            CHECK AND MANAGE YOUR ITEMS BEFORE CHECKOUT! ✨
+            {t('cart.subtitle')}
           </p>
         </div>
 
@@ -263,7 +265,7 @@ function Cart() {
           </button>
 
           <span className="font-black text-sm md:text-base uppercase tracking-wide">
-            SELECT ALL ({cart.length} ITEMS)
+            {t('cart.selectAll', cart.length)}
           </span>
         </div>
 
@@ -360,20 +362,21 @@ function Cart() {
           })}
         </div>
 
-        {/* Add More */}
+         {/* Add More */}
         <button
           onClick={() => navigate('/menu')}
           className="w-full mt-8 bg-white border-4 border-black py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-wide flex items-center justify-center gap-2 shadow-[5px_5px_0_0_#000] hover:bg-aldesRed hover:text-aldesYellow hover:shadow-[0_6px_0_0_#000] active:translate-y-1 active:shadow-none transition-all duration-150"
         >
           <Plus size={20} strokeWidth={4} />
-          ADD MORE ORDERS
+          {t('cart.addMoreOrders')}
         </button>
+          
 
         {/* Payment */}
         <div className="mt-6 pt-5 border-t-[5px] border-dashed border-black space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-gray-400 font-bold text-xs md:text-sm tracking-wide">
-              TOTAL ITEMS SELECTED ({selectedIds.length})
+              {t('cart.totalItemsSelected', selectedIds.length)}
             </span>
 
             <span className="text-sm md:text-base font-black">
@@ -383,7 +386,7 @@ function Cart() {
 
           <div className="flex justify-between border-t-4 border-black pt-4 items-center">
             <span className="text-base md:text-lg font-black tracking-tight">
-              TOTAL PAYMENT
+              {t('cart.totalPayment')}
             </span>
 
             <span className="text-lg md:text-2xl font-black text-aldesRed bg-aldesYellow border-[3px] border-black px-3 py-1 rounded-xl shadow-[3px_3px_0_0_#000] italic">
@@ -409,7 +412,7 @@ function Cart() {
                 : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
             }`}
           >
-            PROCEED TO CHECKOUT <ArrowRight strokeWidth={4} size={24} />
+            {t('cart.proceedToCheckout')} <ArrowRight strokeWidth={4} size={24} />
           </button>
         </div>
       </section>

@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './components/AdminLayout'
 import Layout from './components/Layout'
 import { CartProvider } from './context/CartContext'
+import { LanguageProvider } from './context/LanguageContext'
 import AddressBook from './pages/AddressBook'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminInventory from './pages/AdminInventory'
@@ -23,8 +24,9 @@ import Transactions from './pages/Transactions'
 
 function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
+    <LanguageProvider>
+      <CartProvider>
+        <BrowserRouter>
         <Routes>
           {/* 🔴 PUBLIC ROUTES: Bisa diakses siapa saja (tanpa Layout) */}
           <Route path="/login" element={<Auth />} />
@@ -65,8 +67,9 @@ function App() {
           {/* 🔴 404 NOT FOUND */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </CartProvider>
+        </BrowserRouter>
+      </CartProvider>
+    </LanguageProvider>
   )
 }
 

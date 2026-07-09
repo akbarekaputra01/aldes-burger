@@ -14,9 +14,11 @@ import {
 } from 'lucide-react';
 import { ListItemSkeleton } from '../components/Skeletons';
 import api from '../lib/api';
+import { useTranslation } from '../context/LanguageContext';
 
 function Transactions() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState([]);
   const [activeTab, setActiveTab] = useState('on_progress');
   const [isFetching, setIsFetching] = useState(true);
@@ -72,13 +74,13 @@ function Transactions() {
         <section className="py-10 text-center">
           <div className="mb-4 inline-block rotate-[-2deg] rounded-full border-2 border-black bg-aldesRed px-4 py-1 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-              <Sparkles size={12} /> Status Update
+              <Sparkles size={12} /> {t('transactions.statusUpdate')}
             </p>
           </div>
           <h2 className="text-5xl font-black uppercase leading-none tracking-tighter text-black italic">
-            Order <br/> 
+            {t('transactions.orderJournal')} <br/> 
             <span className="text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] [-webkit-text-stroke:2px_black]">
-              Journal
+              {t('transactions.orderJournal2')}
             </span>
           </h2>
         </section>
@@ -90,14 +92,14 @@ function Transactions() {
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
               ${activeTab === 'on_progress' ? 'bg-aldesYellow border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
-            <UtensilsCrossed size={16} strokeWidth={3} /> On Going
+            <UtensilsCrossed size={16} strokeWidth={3} /> {t('transactions.onGoing')}
           </button>
           <button 
             onClick={() => setActiveTab('history')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-black text-xs uppercase transition-all rounded-full
               ${activeTab === 'history' ? 'bg-aldesYellow border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}
           >
-            <History size={16} strokeWidth={3} /> History
+            <History size={16} strokeWidth={3} /> {t('transactions.history')}
           </button>
         </div>
 
@@ -148,7 +150,7 @@ function Transactions() {
                   </div>
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total Bill</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t('transactions.totalBill')}</p>
                       <p className={`text-2xl font-black text-black ${order.status?.toLowerCase() === 'cancelled' ? 'opacity-50' : ''}`}>
                         Rp {order.amount?.toLocaleString('en-US')}
                       </p>
@@ -157,7 +159,7 @@ function Transactions() {
                       <p className="text-[9px] font-bold italic">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                       <div className="mt-1 flex items-center gap-1 rounded-lg border border-black bg-[#FDF8EE] px-2 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                         <Ticket size={10} />
-                        <span className="text-[8px] font-black uppercase">Promo Applied</span>
+                        <span className="text-[8px] font-black uppercase">{t('transactions.promoApplied')}</span>
                       </div>
                     </div>
                   </div>
@@ -169,19 +171,19 @@ function Transactions() {
               <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[40px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                  <Clock3 size={48} className="text-aldesRed" />
               </div>
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter">
-                {activeTab === 'on_progress' ? 'Kitchen is Quiet!' : 'No History Yet'}
-              </h2>
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">
+                {activeTab === 'on_progress' ? t('transactions.kitchenQuiet') : t('transactions.noHistory')}
+              </h3>
               <p className="mb-8 mt-2 text-xs font-bold text-gray-500 px-10">
                 {activeTab === 'on_progress' 
-                  ? "You haven't ordered anything yet. Let's get some burgers!" 
-                  : "Your past orders will appear here."}
+                  ? t('transactions.kitchenQuietDesc') 
+                  : t('transactions.noHistoryDesc')}
               </p>
               <button 
                 onClick={() => navigate('/menu')}
                 className="rounded-2xl border-4 border-black bg-aldesYellow px-10 py-4 text-sm font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
               >
-                Let's Cook Something!
+                {t('transactions.letsOrder')}
               </button>
             </div>
           )}
