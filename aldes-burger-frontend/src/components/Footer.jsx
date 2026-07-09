@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react'
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react'
 import mascotSprite from '../assets/1.jpg'
+import { useTranslation } from '../context/LanguageContext'
 function Footer() {
+  const { t } = useTranslation()
   const currentYear = new Date().getFullYear()
   const canvasRef = useRef(null)
 
@@ -140,7 +142,7 @@ function Footer() {
             <div>
               <h3 className="text-3xl font-black italic tracking-wide text-aldesYellow">ALDES BURGER</h3>
               <p className="mt-3 text-sm leading-relaxed text-white/80">
-                Enjoy the deliciousness of an authentic burger made with carefully selected premium ingredients. Your satisfaction is our top priority.
+                {t('footer.tagline')}
               </p>
             </div>
             
@@ -159,26 +161,26 @@ function Footer() {
 
           {/* Kolom 2: Quick Links */}
           <div>
-            <h4 className="mb-5 text-lg font-bold uppercase tracking-wider text-aldesYellow">Quick Links</h4>
+            <h4 className="mb-5 text-lg font-bold uppercase tracking-wider text-aldesYellow">{t('footer.quickLinks')}</h4>
             <ul className="space-y-3 text-sm font-medium text-white/80">
               <li>
-                <a href="/menu" className="transition-colors hover:text-white hover:underline underline-offset-4">Order Now</a>
+                <a href="/menu" className="transition-colors hover:text-white hover:underline underline-offset-4">{t('footer.orderNow')}</a>
               </li>
               <li>
-                <a href="/kitchen" className="transition-colors hover:text-white hover:underline underline-offset-4">Build Your Burger</a>
+                <a href="/kitchen" className="transition-colors hover:text-white hover:underline underline-offset-4">{t('footer.buildBurger')}</a>
               </li>
               <li>
-                <a href="/transactions" className="transition-colors hover:text-white hover:underline underline-offset-4">Check Transaction</a>
+                <a href="/transactions" className="transition-colors hover:text-white hover:underline underline-offset-4">{t('footer.checkTransaction')}</a>
               </li>
               <li>
-                <a href="/profile" className="transition-colors hover:text-white hover:underline underline-offset-4">My Account</a>
+                <a href="/profile" className="transition-colors hover:text-white hover:underline underline-offset-4">{t('footer.myAccount')}</a>
               </li>
             </ul>
           </div>
 
           {/* Kolom 3: Kontak & Informasi */}
           <div>
-            <h4 className="mb-5 text-lg font-bold uppercase tracking-wider text-aldesYellow">Contact Us</h4>
+            <h4 className="mb-5 text-lg font-bold uppercase tracking-wider text-aldesYellow">{t('footer.contactUs')}</h4>
             <ul className="space-y-4 text-sm text-white/80">
               <li className="flex items-start gap-3 transition-colors hover:text-white">
                 <MapPin size={18} className="shrink-0 text-aldesYellow" />
@@ -209,7 +211,7 @@ function Footer() {
 
         {/* Garis Pemisah & Copyright */}
         <div className="mx-auto w-full max-w-7xl border-t border-white/20 pt-8 text-center text-sm font-medium text-white/60">
-          <p>© {currentYear} Aldes Burger. All Rights Reserved.</p>
+          <p>© {currentYear} Aldes Burger. {t('footer.copyright')}</p>
         </div>
       </footer>
 

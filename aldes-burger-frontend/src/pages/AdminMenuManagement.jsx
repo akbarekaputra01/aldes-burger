@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
+import { useTranslation } from '../context/LanguageContext'
 
 // --- helpers ---
 function StockBadge({ stock }) {
@@ -39,6 +40,7 @@ function StockBadge({ stock }) {
 
 // --- component ---
 function AdminMenuManagement() {
+  const { t } = useTranslation()
   const [menu, setMenu] = useState([])
   const [allIngredients, setAllIngredients] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -354,7 +356,7 @@ function AdminMenuManagement() {
               </div>
 
               <h1 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl">
-                Menu Management
+                {t('adminMenu.title')}
               </h1>
 
               <p className="mt-1 text-sm text-gray-500">
@@ -403,7 +405,7 @@ function AdminMenuManagement() {
 
                       {!!item.is_custom && (
                         <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
-                          DIY / Custom
+                          {t('adminMenu.isCustom')}
                         </span>
                       )}
                     </div>
@@ -417,7 +419,7 @@ function AdminMenuManagement() {
                     className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit Price
+                    {t('adminMenu.editMenu')}
                   </button>
 
                   <button
@@ -426,7 +428,7 @@ function AdminMenuManagement() {
                     className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
                   >
                     <PlusCircle className="h-4 w-4" />
-                    Manage Recipe
+                    {t('adminMenu.manageIngredients')}
                   </button>
                 </div>
               </div>
@@ -434,7 +436,7 @@ function AdminMenuManagement() {
               {/* Ingredients row */}
               <div className="mt-5 border-t border-gray-100 pt-4">
                 <p className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
-                  Ingredients
+                  {t('adminMenu.ingredients')}
                 </p>
 
                 {item.ingredients?.length > 0 ? (
@@ -472,7 +474,7 @@ function AdminMenuManagement() {
             </div>
 
             <h2 className="text-lg font-bold text-gray-900">
-              No menu available
+              {t('adminMenu.noMenu')}
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
@@ -509,7 +511,7 @@ function AdminMenuManagement() {
               <div>
                 <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
                   <Pencil className="h-4 w-4" />
-                  Edit Menu Price
+                  {t('adminMenu.editMenu')}
                 </div>
 
                 <h2 className="text-xl font-black text-gray-900">
@@ -565,7 +567,7 @@ function AdminMenuManagement() {
                   disabled={isSavingPrice}
                   className="rounded-2xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
 
                 <button
@@ -576,10 +578,10 @@ function AdminMenuManagement() {
                   {isSavingPrice ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    'Save Price'
+                    t('common.save')
                   )}
                 </button>
               </div>
@@ -617,7 +619,7 @@ function AdminMenuManagement() {
                 <div>
                   <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
                     <Utensils className="h-4 w-4" />
-                    Manage Recipe
+                    {t('adminMenu.manageIngredients')}
                   </div>
 
                   <h2 className="text-2xl font-black leading-tight text-gray-900">
@@ -784,7 +786,7 @@ function AdminMenuManagement() {
                     onClick={closeRecipeModal}
                     className="h-12 rounded-2xl border border-gray-200 px-6 text-sm font-black text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
 
                   <button
@@ -795,10 +797,10 @@ function AdminMenuManagement() {
                     {isSavingRecipe ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Saving...
+                        {t('common.loading')}
                       </>
                     ) : (
-                      'Save Recipe'
+                      t('common.save')
                     )}
                   </button>
                 </div>

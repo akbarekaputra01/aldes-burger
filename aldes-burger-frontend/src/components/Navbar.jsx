@@ -9,10 +9,12 @@ import {
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useTranslation } from '../context/LanguageContext'
 import aldesLogo from '../assets/logo-aldes-burger.png'
 
 function Navbar({ isLoggedIn }) {
   const { cartCount } = useCart()
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate();
 
@@ -36,22 +38,22 @@ function Navbar({ isLoggedIn }) {
 
   const navItems = [
     {
-      name: 'Menu',
+      name: t('navbar.menu'),
       path: '/menu',
       icon: UtensilsCrossed,
     },
     {
-      name: 'Transactions',
+      name: t('navbar.transactions'),
       path: '/transactions',
       icon: ReceiptText,
     },
     {
-      name: 'Cart',
+      name: t('navbar.cart'),
       path: '/cart',
       icon: ShoppingCart,
     },
     {
-      name: 'Profile',
+      name: t('navbar.profile'),
       path: '/profile',
       icon: User,
     },
@@ -118,7 +120,7 @@ function Navbar({ isLoggedIn }) {
                           navigate(`/menu`);
                         }
                       }}
-                      placeholder="SEARCH..."
+                      placeholder={t('navbar.searchPlaceholder')}
                       className="w-full bg-transparent px-1.5 text-xs font-black uppercase text-black placeholder-black/50 outline-none"
                     />
                     <button 
@@ -137,7 +139,7 @@ function Navbar({ isLoggedIn }) {
                   <button
                     onClick={() => setShowSearch(true)}
                     className="flex h-full w-full items-center justify-center text-white"
-                    title="Search Menu"
+                    title={t('navbar.searchTitle')}
                   >
                     <Search className="h-4 sm:h-5 w-4 sm:w-5" />
                   </button>
@@ -149,11 +151,11 @@ function Navbar({ isLoggedIn }) {
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.path
-              const isCart = item.name === 'Cart'
+              const isCart = item.path === '/cart'
 
               return (
                 <Link
-                  key={item.name}
+                  key={item.path}
                   to={item.path}
                   className={`relative flex flex-row items-center gap-1.5 rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-black uppercase tracking-wide transition-all duration-200 shrink-0 whitespace-nowrap ${
                     isActive
@@ -182,13 +184,13 @@ function Navbar({ isLoggedIn }) {
               to="/login"
               className="rounded-xl bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:scale-105 border border-black shadow-[2px_2px_0_0_#000]"
             >
-              Login
+              {t('navbar.login')}
             </Link>
             <Link
               to="/signup"
               className="rounded-xl bg-aldesYellow px-3 sm:px-4 py-2 text-xs sm:text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:scale-105 border border-black shadow-[2px_2px_0_0_#000]"
             >
-              Sign Up
+              {t('navbar.signup')}
             </Link>
           </div>
         )}

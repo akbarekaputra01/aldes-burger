@@ -1,6 +1,7 @@
 import { ChartColumnBig, Clock3, Flame, Wallet, Loader2, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
+import { useTranslation } from '../context/LanguageContext'
 
 const statusClass = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -10,6 +11,7 @@ const statusClass = {
 }
 
 function AdminDashboard() {
+  const { t } = useTranslation()
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('all')
@@ -75,7 +77,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'all' ? 'text-red-100' : 'text-gray-500'}`}>Total Orders</p>
+              <p className={`text-sm font-medium ${statusFilter === 'all' ? 'text-red-100' : 'text-gray-500'}`}>{t('adminDashboard.totalOrders')}</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'all' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <ChartColumnBig className="h-5 w-5" />
               </div>
@@ -91,7 +93,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'pending' ? 'text-red-100' : 'text-gray-500'}`}>Pending</p>
+              <p className={`text-sm font-medium ${statusFilter === 'pending' ? 'text-red-100' : 'text-gray-500'}`}>{t('adminDashboard.pending')}</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <Clock3 className="h-5 w-5" />
               </div>
@@ -107,7 +109,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'cooking' ? 'text-red-100' : 'text-gray-500'}`}>Cooking</p>
+              <p className={`text-sm font-medium ${statusFilter === 'cooking' ? 'text-red-100' : 'text-gray-500'}`}>{t('adminDashboard.cooking')}</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'cooking' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <Flame className="h-5 w-5" />
               </div>
@@ -123,7 +125,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'cancelled' ? 'text-red-100' : 'text-gray-500'}`}>cancelled</p>
+              <p className={`text-sm font-medium ${statusFilter === 'cancelled' ? 'text-red-100' : 'text-gray-500'}`}>{t('adminDashboard.cancelled')}</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'cancelled' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <Trash2 className="h-5 w-5" />
               </div>
@@ -139,7 +141,7 @@ function AdminDashboard() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <p className={`text-sm font-medium ${statusFilter === 'revenue' ? 'text-red-100' : 'text-gray-500'}`}>Revenue (Done)</p>
+              <p className={`text-sm font-medium ${statusFilter === 'revenue' ? 'text-red-100' : 'text-gray-500'}`}>{t('adminDashboard.revenue')}</p>
               <div className={`rounded-xl p-2 ${statusFilter === 'revenue' ? 'bg-white/20 text-white' : 'bg-red-50 text-red-600'}`}>
                 <Wallet className="h-5 w-5" />
               </div>
@@ -155,9 +157,9 @@ function AdminDashboard() {
         <article className="rounded-3xl bg-white shadow-sm overflow-hidden">
           <div className="border-b border-red-100 px-5 py-4 flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900">
-              Showing: <span className="text-red-600 capitalize">
-                {statusFilter === 'revenue' ? 'Completed (Done)' : statusFilter}
-              </span> Orders
+              {t('adminDashboard.showing')} <span className="text-red-600 capitalize">
+                {statusFilter === 'revenue' ? t('adminDashboard.completed') : statusFilter === 'all' ? t('adminDashboard.totalOrders') : t(`adminDashboard.${statusFilter}`) || statusFilter}
+              </span> {t('adminDashboard.orders')}
             </h3>
           </div>
           
@@ -165,17 +167,17 @@ function AdminDashboard() {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] tracking-widest font-bold">
                 <tr>
-                  <th className="px-5 py-3">Order ID</th>
-                  <th className="px-5 py-3">Customer</th>
-                  <th className="px-5 py-3">Items</th>
-                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">{t('adminDashboard.orderId')}</th>
+                  <th className="px-5 py-3">{t('adminDashboard.customer')}</th>
+                  <th className="px-5 py-3">{t('adminDashboard.items')}</th>
+                  <th className="px-5 py-3">{t('adminDashboard.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {allFilteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-5 py-12 text-center text-gray-400 italic">
-                      No orders found for this category.
+                      {t('adminDashboard.noOrders')}
                     </td>
                   </tr>
                 ) : (
@@ -189,7 +191,7 @@ function AdminDashboard() {
                           #{order.id.includes('-') ? order.id.split('-')[0] : order.id}
                         </td>
                         <td className="px-5 py-4 font-bold text-gray-800">
-                          {order.user?.name || 'Guest'}
+                          {order.user?.name || t('common.guest')}
                         </td>
                         <td className="px-5 py-4 text-gray-600 max-w-xs truncate" title={itemNames}>
                           {itemNames}

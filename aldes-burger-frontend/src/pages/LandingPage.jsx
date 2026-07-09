@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ChefHat, Flame, ArrowRight, Sliders, Truck, Star, CheckCircle2, ChevronDown, Sparkles, ShoppingBag, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../utils/auth'
+import { useTranslation } from '../context/LanguageContext'
 
 // --- ASSETS ---
 import burgerImg from '../assets/menus/1.jpg'
@@ -42,6 +43,7 @@ const customerReviews = [
 
 function LandingPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const isAuthenticated = Boolean(getToken())
 
   // STATE & REF FOR BURGER STACK ANIMATION (UNTOUCHED)
@@ -91,27 +93,27 @@ function LandingPage() {
   }
 
   return (
-    <main className="bg-aldesCream text-black font-sans selection:bg-aldesRed selection:text-white">
+    <main className="bg-aldesCream text-black selection:bg-aldesRed selection:text-white">
       
       {/* --- HERO SECTION (STATIS & CLEAN) - UNTOUCHED --- */}
       <section className="relative mx-auto flex w-full max-w-7xl flex-col lg:flex-row gap-12 px-6 py-16 lg:py-24 items-center min-h-[90vh]">
         <div className="flex-1 space-y-8 relative z-20">
           <div className="inline-block bg-black text-aldesYellow px-4 py-1.5 rounded-full font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#D52518]">
-            Freshly Grilled Daily 🔥
+            {t('landing.badge')}
           </div>
-          <h1 className="text-[3.5rem] md:text-8xl font-black uppercase tracking-tighter leading-[0.9]">
-            YOUR BURGER<br />
-            <span className="text-aldesRed italic border-b-[8px] border-aldesRed pb-1">YOUR RULES.</span>
+          <h1 className="text-[3.5rem] md:text-8xl font-black uppercase tracking-tighter leading-[1.05]">
+            {t('landing.headline1')}<br />
+            <span className="text-aldesRed italic border-b-[8px] border-aldesRed pb-1">{t('landing.headline2')}</span>
           </h1>
           <p className="text-xl font-bold text-gray-700 max-w-lg">
-            Build every layer exactly how you like it. Extra cheese? No onions? Double patty? It's all in your hands.
+            {t('landing.subheadline')}
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
             <button onClick={handleStartCustomizing} className="bg-aldesRed text-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
-              Start Building
+              {t('landing.startBuilding')}
             </button>
             <button onClick={() => navigate('/menu')} className="bg-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black text-black">
-              Explore Menu
+              {t('landing.exploreMenu')}
             </button>
           </div>
         </div>
@@ -121,14 +123,14 @@ function LandingPage() {
           <div className="relative bg-white p-6 rounded-[2.5rem] border-[6px] border-black shadow-[15px_15px_0_0_#000] rotate-3 hover:rotate-0 transition-transform duration-500 max-w-md w-full">
              <img src={burgerImg} alt="Epic Burger" className="w-full object-cover rounded-[1.5rem] mb-6 border-4 border-black aspect-[4/3]" />
              <div className="space-y-3">
-                {['Double Patty', 'No Onion', 'Extra Cheese'].map(item => (
+                {['Beef Patty', 'No Onion', 'Extra Cheese'].map(item => (
                   <div key={item} className="flex items-center gap-2 font-black uppercase bg-aldesCream border-2 border-black/10 p-2.5 rounded-xl text-sm">
                     <CheckCircle2 className="text-green-600" size={18} /> {item}
                   </div>
                 ))}
              </div>
              <div className="mt-5 pt-5 border-t-[3px] border-dashed border-black flex justify-between items-center font-black text-xl uppercase">
-               <span>Est. Price</span>
+               <span>{t('landing.estPrice')}</span>
                <span className="text-aldesRed italic text-2xl">Rp 59.000</span>
              </div>
           </div>
@@ -155,18 +157,18 @@ function LandingPage() {
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute top-[20%] text-center z-50 px-4 w-full">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">
-              See How It Comes Together
+              {t('landing.seeHowTitle')}
             </h2>
             <p className="mt-2 text-sm font-bold uppercase tracking-widest text-black/60">
-              Scroll to assemble your master stack
+              {t('landing.seeHowSub')}
             </p>
           </div>
 
           <div className="relative w-full h-[400px] max-w-2xl mt-16">
             <div className={`absolute top-[17%] right-4 md:right-16 bg-white border-[4px] border-black px-5 py-3 rounded-2xl shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <p className="text-[10px] font-black uppercase text-gray-500">Your Masterpiece</p>
+                <p className="text-[10px] font-black uppercase text-gray-500">{t('landing.yourMasterpiece')}</p>
                 <p className="text-2xl font-black italic text-black">Rp 36.500</p>
-                <button onClick={handleStartCustomizing} className="mt-2 bg-aldesRed text-white text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:bg-black transition-colors">Order Now</button>
+                 <button onClick={handleStartCustomizing} className="mt-2 bg-aldesRed text-white text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:bg-black transition-colors">{t('landing.orderNow')}</button>
             </div>
 
             {/* INGREDIENTS LAYERS */}
@@ -186,22 +188,22 @@ function LandingPage() {
           
           <div className="text-center mb-20 space-y-3">
             <div className="inline-flex items-center gap-2 bg-aldesYellow border-2 border-black px-4 py-1 rounded-full font-black text-xs uppercase tracking-wider">
-              <Truck size={14} /> Fresh Kitchen Logistics
+              <Truck size={14} /> {t('landing.fromKitchenBadge')}
             </div>
             <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
-              FROM KITCHEN TO YOUR DOORSTEP
+              {t('landing.fromKitchenTitle')}
             </h2>
             <p className="text-gray-500 font-bold max-w-xl mx-auto text-sm">
-              See exactly how your custom burger goes from our grills straight to your hands.
+              {t('landing.fromKitchenSub')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
-              { icon: <Sliders size={28} />, title: "1. Design Your Order", desc: "Pick your base canvas, stack your favorite patties, cheese types, and signature house sauces inside the builder." },
-              { icon: <ChefHat size={28} />, title: "2. Grilled on Demand", desc: "Our chefs immediately grill your premium beef patties over an open flame according to your exact specifications." },
-              { icon: <ShoppingBag size={28} />, title: "3. Heat-Sealed Packing", desc: "Your burger is packed into dedicated insulative foils to fully preserve the warmth and melted cheese texture." },
-              { icon: <Truck size={28} />, title: "4. Fast Dispatch", desc: "Our delivery network is dispatched to get your order to your physical location in under 30 minutes." }
+              { icon: <Sliders size={28} />, title: t('landing.step1Title'), desc: t('landing.step1Desc') },
+              { icon: <ChefHat size={28} />, title: t('landing.step2Title'), desc: t('landing.step2Desc') },
+              { icon: <ShoppingBag size={28} />, title: t('landing.step3Title'), desc: t('landing.step3Desc') },
+              { icon: <Truck size={28} />, title: t('landing.step4Title'), desc: t('landing.step4Desc') }
             ].map((step, i) => (
               <div key={i} className="bg-aldesCream border-[4px] border-black p-6 rounded-2xl shadow-[5px_5px_0_0_#000] flex flex-col justify-between hover:-translate-y-1 transition-transform group">
                 <div>
@@ -228,10 +230,10 @@ function LandingPage() {
           
           <div className="text-center mb-16 space-y-2">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white drop-shadow-[4px_4px_0_#000]">
-              WHAT THEY SAY ABOUT US
+              {t('landing.reviewsTitle')}
             </h2>
             <p className="text-aldesYellow font-black text-sm uppercase tracking-wider">
-              Real community feedback from our custom burger architects
+              {t('landing.reviewsSub')}
             </p>
           </div>
 
@@ -240,7 +242,7 @@ function LandingPage() {
             
             {/* Top Bar Receipt Info */}
             <div className="flex justify-between items-center border-b-2 border-dashed border-black pb-4 mb-6 text-xs font-mono font-black text-gray-400">
-              <span>ORDER VERIFIED ✔</span>
+              <span>{t('landing.orderVerified')}</span>
               <span className="flex items-center gap-1"><Clock size={12} /> {customerReviews[activeReview].time}</span>
             </div>
 
@@ -287,16 +289,16 @@ function LandingPage() {
         <div className="max-w-2xl mx-auto space-y-6">
           
           <div className="inline-block bg-black text-white px-4 py-1.5 rounded-full border-2 border-black font-black uppercase text-xs tracking-wider shadow-[3px_3px_0_0_#D52518]">
-            🔥 Hunger Alert Sequence Detected
+            {t('landing.ctaBadge')}
           </div>
           
           <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-black">
-            SERVED HOT. <br />
-            <span className="text-aldesRed italic drop-shadow-[4px_4px_0_#fff]">DELIVERED FAST.</span>
+            {t('landing.ctaTitle1')} <br />
+            <span className="text-aldesRed italic drop-shadow-[4px_4px_0_#fff]">{t('landing.ctaTitle2')}</span>
           </h2>
           
           <p className="text-sm md:text-lg font-bold text-black/70 max-w-md mx-auto leading-relaxed">
-            Thick juicy patties, melted cheddar blankets, and your customized signature ingredients delivered fresh to your doorstep right now.
+            {t('landing.ctaSub')}
           </p>
           
           <div className="pt-4">
@@ -304,7 +306,7 @@ function LandingPage() {
               onClick={handleStartCustomizing} 
               className="inline-flex items-center gap-3 bg-black text-aldesYellow px-10 py-5 rounded-2xl font-black uppercase text-lg md:text-2xl border-4 border-black shadow-[8px_8px_0_0_#D52518] hover:-translate-y-1 hover:shadow-[10px_10px_0_0_#000] active:translate-y-1 active:shadow-none transition-all duration-150"
             >
-              <span>ORDER NOW</span>
+              <span>{t('landing.ctaButton')}</span>
               <ArrowRight strokeWidth={4} size={22} />
             </button>
           </div>

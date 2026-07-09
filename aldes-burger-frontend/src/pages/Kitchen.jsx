@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ListItemSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
+import { useTranslation } from '../context/LanguageContext'
 import api from '../lib/api'
 
 // --- IMPORT ASSETS ---
@@ -120,6 +121,7 @@ function Kitchen() {
   const navigate = useNavigate()
   const location = useLocation()
   const { addToCart } = useCart()
+  const { t } = useTranslation()
 
   const [menu, setMenu] = useState([])
   const [ingredients, setIngredients] = useState([])
@@ -466,7 +468,7 @@ function Kitchen() {
   const canCheckout = isBottomBunValid && isTopBunValid;
 
   return (
-    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 font-sans select-none overflow-x-hidden">
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 select-none overflow-x-hidden">
       <style>
         {`
           @keyframes dropBounce {
@@ -496,10 +498,10 @@ function Kitchen() {
             Digital Kitchen
           </p>
           <h1 className="mt-3 sm:mt-4 text-2xl sm:text-4xl md:text-5xl font-black text-black uppercase tracking-tighter leading-tight">
-            {selectedMenu?.name ?? 'Build your burger'}
+            {selectedMenu?.name ?? t('kitchen.title')}
           </h1>
           <p className="mt-1.5 text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wide leading-relaxed">
-            Drag ingredients from the Pantry, or reorder layers in the Stack List (buns are locked)!
+            {t('kitchen.subtitle')}
           </p>
 
           <div className="mt-6 sm:mt-8 grid gap-6 lg:grid-cols-2">
@@ -507,7 +509,7 @@ function Kitchen() {
             {/* --- VISUAL STACK CONTAINER --- */}
             <div className="flex flex-col h-[400px] sm:h-[480px] lg:h-[550px] overflow-hidden min-w-0">
               <h2 className="mb-2 sm:mb-3 text-lg sm:text-xl font-black text-black uppercase tracking-tight text-center">
-                Visual Stack
+                {t('kitchen.yourStack')}
               </h2>
               <div
                 className={`flex-1 rounded-2xl sm:rounded-3xl border-[3px] sm:border-[4px] border-black relative overflow-hidden transition-all duration-300 flex justify-center items-end pb-4 bg-cover bg-center 
@@ -587,9 +589,9 @@ function Kitchen() {
                       setQty(1);
                     }}
                     className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-white text-[#D52518] rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 border-2 sm:border-[3px] border-black shadow-[3px_3px_0_0_#000] sm:shadow-[4px_4px_0_0_#000] flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase hover:bg-[#D52518] hover:text-[#FFC926] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
-                    title="Clear all layers"
+                    title={t('kitchen.clearStack')}
                   >
-                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[3]" /> CLEAR ALL
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[3]" /> {t('kitchen.clearStack')}
                   </button>
                 )}
 
@@ -600,16 +602,14 @@ function Kitchen() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pt-16 z-20 transition-all">
                     <Loader2 className="h-12 w-12 sm:h-16 sm:w-16 text-[#D52518] animate-spin mb-3 drop-shadow-md" />
                     <div className="bg-white border-2 sm:border-[4px] border-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-[4px_4px_0_0_#000] sm:shadow-[6px_6px_0_0_#000] flex flex-col items-center anonymity-pulse">
-                      <span className="font-black text-sm sm:text-lg text-black uppercase tracking-wide text-center">Preparing Your Burger...</span>
-                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase mt-0.5">Loading recipe from kitchen</span>
+                      <span className="font-black text-sm sm:text-lg text-black uppercase tracking-wide text-center">{t('common.loading')}</span>
                     </div>
                   </div>
                 ) : burgerStack.length === 0 ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pt-16 z-20 transition-all">
                     <img src={imgBottomBurger} alt="placeholder" className="w-28 sm:w-40 grayscale opacity-40 drop-shadow-xl animate-pulse" />
                     <div className="mt-4 sm:mt-6 bg-[#D52518] border-2 sm:border-[4px] border-black text-[#FFC926] px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-[4px_4px_0_0_#000] sm:shadow-[6px_6px_0_0_#000] flex flex-col items-center animate-bounce">
-                      <span className="font-black text-base sm:text-xl uppercase tracking-tighter">Empty Stack!</span>
-                      <span className="text-[10px] sm:text-xs font-bold text-white uppercase mt-0.5">Add Bottom Bun First</span>
+                      <span className="font-black text-base sm:text-xl uppercase tracking-tighter">{t('kitchen.emptyStack')}</span>
                     </div>
                   </div>
                 ) : (
@@ -673,7 +673,7 @@ function Kitchen() {
             {/* PANTRY */}
             <aside className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 border-[3px] sm:border-[4px] border-black shadow-[6px_6px_0_0_#000] sm:shadow-[8px_8px_0_0_#000] h-[400px] sm:h-[480px] lg:h-[550px] flex flex-col min-w-0">
               <h2 className="text-xl sm:text-2xl font-black text-black uppercase tracking-tight mb-3 flex items-center gap-2">
-                <Flame size={22} className="text-[#D52518] fill-current" /> Pantry
+                <Flame size={22} className="text-[#D52518] fill-current" /> {t('kitchen.ingredients')}
               </h2>
 
               {!selectedMenu?.is_custom ? (
@@ -787,7 +787,7 @@ function Kitchen() {
         {/* BOTTOM: ORDER SUMMARY */}
         <article className="rounded-3xl sm:rounded-[2.5rem] bg-white p-4 sm:p-6 shadow-[8px_8px_0_0_#000] md:shadow-[10px_10px_0_0_#000] border-4 sm:border-[5px] border-black lg:p-8">
           <h2 className="text-xl sm:text-3xl font-black text-black uppercase tracking-tighter mb-4 sm:mb-6 border-b-4 sm:border-b-[5px] border-dashed border-black pb-3 sm:pb-4">
-            Order Summary
+            {t('checkout.orderSummary')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
@@ -862,12 +862,14 @@ function Kitchen() {
 
             {/* 2. Price & Qty */}
             <div className="flex flex-col gap-4 sm:gap-5 md:col-span-1 lg:col-span-3 justify-center">
-              <div className="flex flex-col border-b-2 sm:border-b-[4px] border-dashed border-black pb-3 sm:pb-4">
-                <p className="text-[10px] sm:text-[11px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Unit Price</p>
-                <p className="text-xl sm:text-3xl font-black text-[#D52518] italic">IDR {unitPrice.toLocaleString('id-ID')}</p>
+              <div className="flex justify-between items-end border-b-[3px] border-black/10 pb-4 mb-4">
+                <span className="text-sm sm:text-base font-black text-gray-500 uppercase">{t('kitchen.totalPrice')}</span>
+                <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#D52518] tracking-tighter italic">
+                  IDR {(unitPrice * qty).toLocaleString('id-ID')}
+                </span>
               </div>
               <div>
-                <p className="text-[10px] sm:text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Quantity</p>
+                <p className="text-[10px] sm:text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">{t('kitchen.quantity')}</p>
                 <div className="flex items-center justify-between bg-white border-2 sm:border-[4px] border-black rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-[3px_3px_0_0_#000] sm:shadow-[4px_4px_0_0_#000]">
                   <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} className="p-2 sm:p-3 rounded-xl bg-white border border-black text-black hover:bg-[#FFC926] active:scale-95 transition-all"><Minus className="h-4 w-4 sm:h-5 sm:w-5 stroke-[4]" /></button>
                   <span className="text-xl sm:text-2xl font-black text-black w-10 text-center">{qty}</span>
@@ -894,7 +896,7 @@ function Kitchen() {
                   </span>
                 ) : (
                   <>
-                    <span className="text-[11px] sm:text-sm font-black text-white uppercase tracking-widest">Finalize & Cart</span>
+                    <span className="text-[11px] sm:text-sm font-black text-white uppercase tracking-widest">{t('kitchen.addToCart')}</span>
                     <span className="italic tracking-tighter text-sm sm:text-base">IDR {(unitPrice * qty).toLocaleString('id-ID')}</span>
                   </>
                 )}

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MenuCardSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
+import { useTranslation } from '../context/LanguageContext'
 import api from '../lib/api'
 import useSWR from 'swr' 
 
@@ -32,9 +33,9 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const sectionDefinitions = [
-  { key: 'burgers', label: 'BURGERS' },
-  { key: 'sides', label: 'SIDE DISHES' },
-  { key: 'drinks', label: 'DRINKS' },
+  { key: 'burgers', labelKey: 'menu.burgers' },
+  { key: 'sides', labelKey: 'menu.sideDishes' },
+  { key: 'drinks', labelKey: 'menu.drinks' },
 ]
 
 const sideKeywords = ['fries', 'side', 'nugget', 'onion ring', 'salad']
@@ -72,6 +73,7 @@ const fetcher = (url) => api.get(url).then((res) => res.data)
 function Menu() {
   const navigate = useNavigate()
   const { addToCart } = useCart()
+  const { t } = useTranslation()
 
   // --- AMBIL QUERY SEARCH DARI URL ---
   const [searchParams, setSearchParams] = useSearchParams()
@@ -187,7 +189,7 @@ function Menu() {
     })
     
     setActiveActionId(null)
-    setToastMessage(`Successfully added ${qty}x ${item.name}`)
+    setToastMessage(t('menu.addedToCart', qty, item.name))
     setTimeout(() => setToastMessage(null), 3000)
   }
 
@@ -302,15 +304,15 @@ function Menu() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-aldesYellow border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full">
           <div className="break-words w-full sm:w-auto">
             <h2 className="text-lg sm:text-xl font-black uppercase text-black leading-tight">
-              Showing Results For: <span className="text-aldesRed">"{searchQuery}"</span>
+              {t('menu.showingResultsFor')} <span className="text-aldesRed">"{searchQuery}"</span>
             </h2>
-            <p className="text-xs sm:text-sm font-bold text-black/70 mt-0.5">Found {filteredMenu.length} items</p>
+            <p className="text-xs sm:text-sm font-bold text-black/70 mt-0.5">{t('menu.foundItems', filteredMenu.length)}</p>
           </div>
           <button 
             onClick={() => setSearchParams({})} 
             className="flex items-center justify-center gap-2 bg-white border-2 border-black px-4 py-2 rounded-xl font-black uppercase text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all w-full sm:w-auto"
           >
-            <X size={16} strokeWidth={3} /> Clear Search
+            <X size={16} strokeWidth={3} /> {t('menu.clearSearch')}
           </button>
         </div>
       )}
@@ -319,7 +321,7 @@ function Menu() {
       {isFetching ? (
         sectionDefinitions.map((section) => (
           <section key={section.key} className="w-full">
-            <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{section.label}</h2>
+            <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{t(section.labelKey)}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {Array.from({ length: 3 }).map((_, index) => <MenuCardSkeleton key={`${section.key}-skeleton-${index}`} />)}
             </div>
@@ -328,7 +330,7 @@ function Menu() {
       ) : visibleSections.length > 0 ? (
         visibleSections.map((section) => (
           <section key={section.key} className="w-full">
-            <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{section.label}</h2>
+            <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{t(section.labelKey)}</h2>
             
             {/* Optimized Responsive Grid Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -346,7 +348,7 @@ function Menu() {
                       <img src={menuImages[item.id]} alt={item.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-in-out sm:group-hover:scale-105" />
                     ) : (
                       <div className="absolute inset-0 h-full w-full bg-white flex items-center justify-center">
-                        <span className="text-black text-xs font-black uppercase">Image Not Found</span>
+                        <span className="text-black text-xs font-black uppercase">{t('menu.imageNotFound')}</span>
                       </div>
                     )}
                   </div>
@@ -354,7 +356,7 @@ function Menu() {
                   {/* Content Info Box */}
                   <div className="p-4 flex flex-col flex-1 min-w-0">
                     <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
-                      {item.is_custom ? <><Flame className="h-3.5 w-3.5" /> Kitchen</> : section.key === 'sides' ? 'Tasty Side' : section.key === 'drinks' ? 'Refreshment' : 'Signature Burger'}
+                      {item.is_custom ? <><Flame className="h-3.5 w-3.5" />{t('menu.kitchen')}</> : section.key === 'sides' ? t('menu.tastySide') : section.key === 'drinks' ? t('menu.refreshment') : t('menu.signatureBurger')}
                     </div>
                     
                     <h3 className="text-base sm:text-lg font-black text-aldesRed uppercase tracking-tight truncate">{item.name}</h3>
@@ -370,12 +372,12 @@ function Menu() {
                           <button type="button" onClick={() => setTempQty((p) => p + 1)} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3.5 w-3.5" /></button>
                         </div>
                         <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-xs sm:text-sm text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
-                          Confirm <ChevronRight className="h-4 w-4 shrink-0" />
+                          {t('menu.confirm')} <ChevronRight className="h-4 w-4 shrink-0" />
                         </button>
                       </div>
                     ) : (
                       <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-4 font-black uppercase text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
-                        {section.key === 'burgers' ? (item.is_custom ? 'Customize' : 'Add') : 'Add'} <ChevronRight className="h-4 w-4 shrink-0" />
+                        {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-4 w-4 shrink-0" />
                       </button>
                     )}
                   </div>
@@ -388,15 +390,15 @@ function Menu() {
         /* Empty Search State Responsive */
         <section className="flex flex-col items-center justify-center text-center py-16 px-4 w-full">
           <div className="bg-white border-4 border-black p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-sm sm:max-w-md w-full">
-            <h2 className="text-2xl sm:text-3xl font-black uppercase text-aldesRed mb-2">Oops!</h2>
+            <h2 className="text-2xl sm:text-3xl font-black uppercase text-aldesRed mb-2">{t('menu.noItemsFound')}</h2>
             <p className="text-sm sm:text-base font-bold text-black uppercase leading-snug">
-              No items found for <span className="bg-aldesYellow px-1.5 py-0.5 rounded break-all inline-block">"{searchQuery}"</span>
+              {t('menu.noItemsDesc', searchQuery)}
             </p>
             <button 
               onClick={() => setSearchParams({})} 
               className="mt-5 w-full bg-aldesRed text-white border-2 border-black px-5 py-3 rounded-xl font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
             >
-              See All Menu
+              {t('menu.seeAllMenu')}
             </button>
           </div>
         </section>

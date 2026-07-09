@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api'
+import { useTranslation } from '../context/LanguageContext'
 
 // helpers
 function StockBadge({ stock }) {
@@ -32,6 +33,7 @@ function StockBadge({ stock }) {
 
 // component
 function AdminInventory() {
+  const { t } = useTranslation()
   const [inventory, setInventory] = useState([])
   const [isLoadingInventory, setIsLoadingInventory] = useState(true)
 
@@ -156,7 +158,7 @@ function AdminInventory() {
               </div>
 
               <h1 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl">
-                Inventory Management
+                {t('adminInventory.title')}
               </h1>
 
               <p className="mt-1 text-sm text-gray-500">
@@ -184,7 +186,7 @@ function AdminInventory() {
               {!isLoadingInventory && lowStockCount > 0 && (
                 <div className="rounded-2xl bg-red-50 px-4 py-3 text-center">
                   <p className="text-xs font-medium text-red-500">
-                    Low Stock
+                    {t('adminInventory.lowStock')}
                   </p>
 
                   <p className="text-2xl font-black text-red-600">
@@ -203,13 +205,13 @@ function AdminInventory() {
               <thead>
                 <tr className="border-b border-red-100 bg-red-50">
                   <th className="px-4 py-3 font-bold text-gray-600">
-                    Ingredient
+                    {t('adminInventory.ingredientName')}
                   </th>
                   <th className="px-4 py-3 font-bold text-gray-600">
-                    Stock
+                    {t('adminInventory.stock')}
                   </th>
                   <th className="px-4 py-3 font-bold text-gray-600">
-                    Price / unit
+                    {t('adminInventory.price')}
                   </th>
                   <th className="px-4 py-3 font-bold text-gray-600">
                     Used in Menus
@@ -307,7 +309,7 @@ function AdminInventory() {
                           className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
                         >
                           <PencilLine className="h-3.5 w-3.5" />
-                          Update Stock
+                          {t('adminInventory.editIngredient')}
                         </button>
                       </td>
                     </tr>
@@ -319,7 +321,7 @@ function AdminInventory() {
                       colSpan={5}
                       className="px-4 py-10 text-center text-sm text-gray-400"
                     >
-                      No inventory data available.
+                      {t('adminInventory.noIngredients')}
                     </td>
                   </tr>
                 )}
@@ -356,7 +358,7 @@ function AdminInventory() {
               <div>
                 <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
                   <Package className="h-4 w-4" />
-                  Update Stock
+                  {t('adminInventory.editIngredient')}
                 </div>
 
                 <h2 className="text-xl font-black text-gray-900">
@@ -441,7 +443,7 @@ function AdminInventory() {
                   disabled={isSavingStock}
                   className="rounded-2xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
 
                 <button
@@ -452,10 +454,10 @@ function AdminInventory() {
                   {isSavingStock ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    'Save Stock'
+                    t('adminInventory.save')
                   )}
                 </button>
               </div>

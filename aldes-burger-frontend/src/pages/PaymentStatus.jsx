@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { CircleX, TicketCheck, ArrowRight, Home, LayoutList } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from '../context/LanguageContext'
 
 // --- IMPORT ASSETS ---
 import imgBurgerCooking from '../assets/burger_cooking.gif'
@@ -12,15 +13,16 @@ function PaymentStatus() {
   // Default ke 'success' jika tidak ada param status
   const status = useMemo(() => searchParams.get('status') ?? 'success', [searchParams])
   const isSuccess = status !== 'failed'
+  const { t } = useTranslation()
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10 font-sans">
+    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-10">
       <section className="relative w-full max-w-lg rounded-[2.5rem] border-[6px] border-black bg-white p-8 md:p-12 text-center shadow-[12px_12px_0_0_#000] animate-in fade-in zoom-in duration-300">
         
         {/* Badge Status Melayang */}
         <div className={`absolute -top-6 left-1/2 -translate-x-1/2 -rotate-2 border-[4px] border-black px-6 py-2 rounded-xl shadow-[4px_4px_0_0_#000] z-20 ${isSuccess ? 'bg-aldesYellow' : 'bg-aldesRed'}`}>
           <span className={`font-black uppercase italic tracking-tighter text-lg ${isSuccess ? 'text-black' : 'text-white'}`}>
-            {isSuccess ? 'ORDER CONFIRMED!' : 'PAYMENT ERROR!'}
+            {isSuccess ? t('paymentStatus.success') : t('paymentStatus.failed')}
           </span>
         </div>
 
@@ -41,13 +43,13 @@ function PaymentStatus() {
         )}
 
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black leading-none">
-          {isSuccess ? 'YUMMY! IT\'S ON THE WAY' : 'OH NO! STOP RIGHT THERE'}
+          {isSuccess ? t('paymentStatus.success') : t('paymentStatus.failed')}
         </h1>
         
         <p className="mt-4 font-bold uppercase text-gray-500 text-xs md:text-sm tracking-wide">
           {isSuccess
-            ? 'Your burger is now in our kitchen queue. Track your order in real time.'
-            : 'Your transaction could not be completed. Please retry the payment method.'}
+            ? t('paymentStatus.successDesc')
+            : t('paymentStatus.failedDesc')}
         </p>
 
         <div className="mt-10 space-y-4">
@@ -60,9 +62,9 @@ function PaymentStatus() {
             onClick={() => navigate('/transactions')}
           >
             {isSuccess ? (
-              <>TRACK ORDER <TicketCheck size={28} strokeWidth={3} /></>
+              <>{t('paymentStatus.viewOrders')} <TicketCheck size={28} strokeWidth={3} /></>
             ) : (
-              <>BACK TO TRANSACTIONS <LayoutList size={28} strokeWidth={3} /></>
+              <>{t('paymentStatus.viewOrders')} <LayoutList size={28} strokeWidth={3} /></>
             )}
           </button>
           
@@ -73,7 +75,7 @@ function PaymentStatus() {
               className="flex w-full items-center justify-center gap-2 rounded-2xl border-[5px] border-black bg-white py-4 text-xl font-black uppercase text-black transition-all hover:bg-gray-50 active:translate-y-1 active:shadow-[0_4px_0_0_#000] shadow-[0_8px_0_0_#000]" 
               onClick={() => navigate('/checkout')}
             >
-              TRY AGAIN <ArrowRight size={24} strokeWidth={4} />
+              {t('common.back')} <ArrowRight size={24} strokeWidth={4} />
             </button>
           )}
           
@@ -83,7 +85,7 @@ function PaymentStatus() {
               className="flex w-full items-center justify-center gap-2 rounded-2xl border-[5px] border-black bg-white py-4 text-xl font-black uppercase text-black transition-all hover:bg-gray-50 active:translate-y-1 active:shadow-[0_4px_0_0_#000] shadow-[0_8px_0_0_#000]" 
               onClick={() => navigate('/menu')}
             >
-              <Home size={24} strokeWidth={4} className="text-aldesRed" /> BACK TO HOME
+              <Home size={24} strokeWidth={4} className="text-aldesRed" /> {t('paymentStatus.backToMenu')}
             </button>
           )}
         </div>

@@ -2,6 +2,7 @@ import { ReceiptText, Truck, Loader2, MapPin, CreditCard } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import { useTranslation } from '../context/LanguageContext'
 
 const toIDR = (price) =>
   new Intl.NumberFormat('id-ID', {
@@ -19,6 +20,7 @@ const statusClass = {
 function TransactionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [transaction, setTransaction] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -99,7 +101,7 @@ function TransactionDetail() {
       <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
         <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
           <Loader2 className="h-8 w-8 animate-spin text-aldesRed" />
-          <p className="font-black uppercase text-gray-700 tracking-wider">Loading transaction...</p>
+          <p className="font-black uppercase text-gray-700 tracking-wider">{t('common.loading')}</p>
         </div>
       </main>
     )
@@ -110,7 +112,7 @@ function TransactionDetail() {
       <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
         <div className="rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
           <p className="font-black uppercase text-gray-800">
-            Transaction not found.
+            {t('common.noData')}
           </p>
         </div>
       </main>
@@ -123,7 +125,7 @@ function TransactionDetail() {
   )
 
   return (
-    <main className="min-h-screen bg-aldesCream font-sans text-black px-4 py-10 pb-20">
+    <main className="min-h-screen bg-aldesCream text-black px-4 py-10 pb-20">
       <section className="mx-auto max-w-3xl space-y-6">
         {/* Header Transaksi */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
@@ -145,7 +147,7 @@ function TransactionDetail() {
                 statusClass[transaction.status] || 'bg-gray-100 text-gray-700 border-gray-300'
               }`}
             >
-              {transaction.status === 'pending' ? 'Pending Payment' : transaction.status}
+              {transaction.status === 'pending' ? t('paymentStatus.pending') : transaction.status}
             </span>
           </div>
         </div>
@@ -156,7 +158,7 @@ function TransactionDetail() {
           <div className="rounded-3xl bg-white p-5 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
             <div className="mb-3 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-aldesRed" strokeWidth={3} />
-              <p className="font-black uppercase text-gray-900 text-sm">Delivery Address</p>
+              <p className="font-black uppercase text-gray-900 text-sm">{t('transactionDetail.deliveryAddress')}</p>
             </div>
             <p className="text-sm font-bold text-gray-600 leading-relaxed uppercase">
               {transaction.destination_address}
@@ -168,7 +170,7 @@ function TransactionDetail() {
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-aldesRed" strokeWidth={3} />
-                <p className="font-black uppercase text-gray-900 text-sm">Payment Method</p>
+                <p className="font-black uppercase text-gray-900 text-sm">{t('transactionDetail.paymentMethod')}</p>
               </div>
               <p className="text-sm font-bold text-gray-600 uppercase">
                 {transaction.payment?.method?.replace('_', ' ') || '-'}
@@ -177,7 +179,7 @@ function TransactionDetail() {
             
             {/* Area Aksi Status Khusus */}
             <div className="mt-4 pt-3 border-t-2 border-dashed border-black/20 flex items-center justify-between gap-2">
-              <span className="text-[10px] font-black uppercase text-gray-400">Status</span>
+              <span className="text-[10px] font-black uppercase text-gray-400">{t('transactionDetail.status')}</span>
               
               {transaction.status === 'pending' ? (
                 transaction.payment?.method !== 'cash' ? (
@@ -185,11 +187,11 @@ function TransactionDetail() {
                      onClick={handleContinuePayment}
                     className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1"
                   >
-                    Continue Payment
+                    {t('transactionDetail.payNow')}
                   </button>
                 ) : (
                   <span className="rounded-lg bg-orange-100 px-3 py-1 text-[10px] font-black uppercase text-orange-700 border-2 border-orange-700">
-                    Pending Payment
+                    {t('paymentStatus.pending')}
                   </span>
                 )
               ) : transaction.status === 'cancelled' ? (
@@ -208,7 +210,7 @@ function TransactionDetail() {
         {/* Detail Item Pesanan */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
-            Order Details
+            {t('transactionDetail.orderItems')}
           </h2>
           <div className="space-y-3">
             {(transaction.details || []).map((item) => (
@@ -236,16 +238,16 @@ function TransactionDetail() {
         {/* Ringkasan Jumlah Pembayaran */}
         <div className="rounded-3xl bg-white p-6 shadow-[5px_5px_0_0_#000] border-[3px] border-black">
           <h2 className="mb-4 text-lg font-black uppercase text-gray-900">
-            Payment Summary
+            {t('checkout.orderSummary')}
           </h2>
           <div className="space-y-3">
             <div className="flex justify-between text-gray-600 font-bold uppercase text-sm">
-              <span>Subtotal</span>
+              <span>{t('transactionDetail.subtotal')}</span>
               <span>{toIDR(subtotal)}</span>
             </div>
             <div className="border-t-2 border-dashed border-black/20 pt-3">
               <div className="flex justify-between items-end text-xl font-black text-gray-900 uppercase">
-                <span>Total</span>
+                <span>{t('transactionDetail.total')}</span>
                 <span className="text-aldesRed text-2xl italic">
                   {toIDR(transaction.amount)}
                 </span>

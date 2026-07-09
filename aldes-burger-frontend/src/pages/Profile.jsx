@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { 
   Mail, Phone, MapPin, Edit, Trash2,
   Plus, LogOut, Loader2, AlertCircle, Key,
-  Lock, Eye, EyeOff, Save, X 
+  Lock, Eye, EyeOff, Save, X, Globe 
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AddressBookModal from '../components/AddressBookModal'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
+import { useTranslation, useLanguage } from '../context/LanguageContext'
 
 function Profile() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
+  const { language, changeLanguage } = useLanguage()
   const [user, setUser] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [error, setError] = useState('')
@@ -180,10 +183,10 @@ function Profile() {
         {/* HEADER SECTION */}
         <div className="mb-2 flex flex-col items-start gap-2">
           <p className="inline-flex items-center rounded-xl bg-aldesYellow px-4 py-1.5 text-sm font-black uppercase tracking-widest text-black border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            My Profile
+            {t('profile.myProfile')}
           </p>
           <h1 className="text-4xl sm:text-5xl font-black text-aldesRed tracking-tight uppercase" style={{ WebkitTextStroke: '1.5px black' }}>
-            Hello, {user?.name?.split(' ')[0] ?? 'Guest'}!
+            {t('profile.hello', user?.name?.split(' ')[0] ?? t('profile.guest'))}
           </h1>
         </div>
 
@@ -205,8 +208,8 @@ function Profile() {
                 <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-aldesYellow border-4 border-black text-4xl font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   {initials}
                 </div>
-                <h2 className="text-2xl font-black text-black w-full truncate uppercase">{user?.name ?? 'Guest User'}</h2>
-                <p className="mt-1 text-sm font-bold text-aldesRed uppercase tracking-wider bg-aldesCream px-3 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Member</p>
+                <h2 className="text-2xl font-black text-black w-full truncate uppercase">{user?.name ?? t('profile.guest')}</h2>
+                <p className="mt-1 text-sm font-bold text-aldesRed uppercase tracking-wider bg-aldesCream px-3 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">{t('profile.member')}</p>
               </div>
 
               <div className="mt-6 space-y-5">
@@ -215,7 +218,7 @@ function Profile() {
                     <Mail className="h-6 w-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">Email</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">{t('profile.email')}</p>
                     <p className="truncate text-base font-bold text-black mt-0.5">{user?.email ?? '-'}</p>
                   </div>
                 </div>
@@ -225,9 +228,9 @@ function Profile() {
                     <Phone className="h-6 w-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">Phone</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-aldesRed">{t('profile.phone')}</p>
                     <p className="truncate text-base font-bold text-black mt-0.5">
-                      {user?.phone?.trim() ? user.phone : <span className="italic text-gray-500 font-bold">Unset</span>}
+                      {user?.phone?.trim() ? user.phone : <span className="italic text-gray-500 font-bold">{t('profile.unset')}</span>}
                     </p>
                   </div>
                 </div>
@@ -240,7 +243,7 @@ function Profile() {
                 <div className="p-2 bg-aldesYellow rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">
                   <Key className="h-6 w-6" />
                 </div>
-                <h2 className="text-2xl font-black text-black uppercase">Security</h2>
+                <h2 className="text-2xl font-black text-black uppercase">{t('profile.security')}</h2>
               </div>
 
               {!isChangingPassword ? (
@@ -250,7 +253,7 @@ function Profile() {
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border-4 border-black bg-aldesYellow py-4 text-sm font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none uppercase"
                 >
                   <Lock className="h-5 w-5" />
-                  CHANGE PASSWORD
+                  {t('profile.changePassword')}
                 </button>
               ) : (
                 <form onSubmit={handlePasswordSubmit} className="space-y-5">
@@ -271,7 +274,7 @@ function Profile() {
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Current Password"
+                        placeholder={t('profile.currentPassword')}
                         required
                         value={passwordForm.current_password}
                         onChange={(e) => setPasswordForm(p => ({...p, current_password: e.target.value}))}
@@ -281,7 +284,7 @@ function Profile() {
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
-                        placeholder="New Password"
+                        placeholder={t('profile.newPassword')}
                         required
                         value={passwordForm.password}
                         onChange={(e) => setPasswordForm(p => ({...p, password: e.target.value}))}
@@ -291,7 +294,7 @@ function Profile() {
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Confirm New Password"
+                        placeholder={t('profile.confirmNewPassword')}
                         required
                         value={passwordForm.password_confirmation}
                         onChange={(e) => setPasswordForm(p => ({...p, password_confirmation: e.target.value}))}
@@ -314,7 +317,7 @@ function Profile() {
                       className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-4 border-black bg-aldesRed py-3.5 text-base font-black tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
                     >
                       {pwdStatus.loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-5 w-5" />}
-                      SAVE
+                      {t('profile.save')}
                     </button>
                     <button
                       type="button"
@@ -334,6 +337,30 @@ function Profile() {
               )}
             </article>
 
+            {/* CARD: LANGUAGE */}
+            <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="mb-6 flex items-center gap-3 border-b-4 border-black pb-4">
+                <div className="p-2 bg-aldesYellow rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">
+                  <Globe className="h-6 w-6" />
+                </div>
+                <h2 className="text-2xl font-black text-black uppercase">{t('profile.language')}</h2>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`flex-1 rounded-2xl border-4 border-black py-3 font-black uppercase transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none ${language === 'en' ? 'bg-aldesRed text-white shadow-[4px_4px_0_0_#000]' : 'bg-white text-black shadow-[4px_4px_0_0_#000]'}`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => changeLanguage('id')}
+                  className={`flex-1 rounded-2xl border-4 border-black py-3 font-black uppercase transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none ${language === 'id' ? 'bg-aldesRed text-white shadow-[4px_4px_0_0_#000]' : 'bg-white text-black shadow-[4px_4px_0_0_#000]'}`}
+                >
+                  Indonesia
+                </button>
+              </div>
+            </article>
+
             {/* BUTTON: LOGOUT */}
             <button
               type="button"
@@ -346,7 +373,7 @@ function Profile() {
               ) : (
                 <>
                   <LogOut className="h-6 w-6" />
-                  LOG OUT ACCOUNT
+                  {t('profile.logOut')}
                 </>
               )}
             </button>
@@ -361,10 +388,10 @@ function Profile() {
                   <div className="p-3 bg-aldesRed rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-white">
                     <MapPin className="h-6 w-6" />
                   </div>
-                  <h2 className="text-2xl font-black text-black uppercase">Address Book</h2>
+                  <h2 className="text-2xl font-black text-black uppercase">{t('profile.addressBook')}</h2>
                 </div>
                 <span className="rounded-xl bg-aldesYellow border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5 text-xs font-black text-black uppercase">
-                  {addresses.length} Saved
+                  {t('profile.saved', addresses.length)}
                 </span>
               </div>
 
@@ -373,8 +400,8 @@ function Profile() {
                 {sortedAddresses.length === 0 ? (
                   <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-4 border-dashed border-black bg-aldesCream p-6 text-center">
                     <MapPin className="mb-4 h-14 w-14 text-black drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />
-                    <p className="text-xl font-black text-black uppercase">No Address Yet</p>
-                    <p className="mt-2 text-sm font-bold text-gray-700">Add a delivery address to make ordering faster.</p>
+                    <p className="text-xl font-black text-black uppercase">{t('profile.noAddressYet')}</p>
+                    <p className="mt-2 text-sm font-bold text-gray-700">{t('profile.addAddressDesc')}</p>
                   </div>
                 ) : (
                   sortedAddresses.map((address) => (
@@ -386,7 +413,7 @@ function Profile() {
                     >
                       <div className="flex flex-1 w-full min-w-0 flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-lg font-black text-black truncate uppercase">{address.recipient_name || 'Recipient'}</span>
+                          <span className="text-lg font-black text-black truncate uppercase">{address.recipient_name || t('profile.recipient')}</span>
                           {address.label && (
                             <span className="rounded-lg bg-white border-2 border-black px-2 py-0.5 text-[10px] font-black text-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                               {address.label}
@@ -394,7 +421,7 @@ function Profile() {
                           )}
                           {address.is_default && (
                             <span className="rounded-lg bg-aldesRed border-2 border-black px-2 py-0.5 text-[10px] font-black text-white uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                              Default
+                              {t('profile.default')}
                             </span>
                           )}
                         </div>
@@ -454,7 +481,7 @@ function Profile() {
                 className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border-4 border-black bg-aldesYellow py-4 text-base font-black tracking-widest text-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none uppercase"
               >
                 <Plus className="h-6 w-6 stroke-[3px]" />
-                ADD NEW ADDRESS
+                {t('profile.addNewAddress')}
               </button>
             </article>
           </div>
