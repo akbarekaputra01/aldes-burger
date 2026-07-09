@@ -108,7 +108,7 @@ function LandingPage() {
           <p className="text-xl font-bold text-gray-700 max-w-lg">
             {t('landing.subheadline')}
           </p>
-          <div className="flex flex-wrap gap-4 pt-4">
+          <div className="flex flex-wrap gap-4">
             <button onClick={handleStartCustomizing} className="bg-aldesRed text-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
               {t('landing.startBuilding')}
             </button>
