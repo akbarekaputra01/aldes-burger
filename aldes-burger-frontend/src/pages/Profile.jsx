@@ -102,6 +102,13 @@ function Profile() {
     return address?.address || '-'
   }
 
+  const getLocalizedLabel = (label) => {
+    if (!label) return '';
+    const key = `addressForm.${label.toLowerCase()}`;
+    const translated = t(key);
+    return translated === key ? label : translated;
+  }
+
   const handleDeleteAddress = async (addressId) => {
     setIsDeletingId(addressId)
     try {
@@ -416,7 +423,7 @@ function Profile() {
                           <span className="text-lg font-black text-black truncate uppercase">{address.recipient_name || t('profile.recipient')}</span>
                           {address.label && (
                             <span className="rounded-lg bg-white border-2 border-black px-2 py-0.5 text-[10px] font-black text-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                              {address.label}
+                              {getLocalizedLabel(address.label)}
                             </span>
                           )}
                           {address.is_default && (

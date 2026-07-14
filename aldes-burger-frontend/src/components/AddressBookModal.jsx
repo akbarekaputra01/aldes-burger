@@ -4,6 +4,7 @@ import api from '../lib/api'
 import { applySuggestionToForm, canSubmitAddress } from '../pages/addressbook/formLogic'
 import { geocodeAddress, searchAddressSuggestions, reverseGeocode } from '../pages/addressbook/geocoding'
 import { getCities, getDistricts, getPostalCodes, getProvinces } from '../pages/addressbook/regions'
+import { useTranslation } from '../context/LanguageContext'
 
 const defaultCenter = { lat: -6.2, lng: 106.816666 }
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
@@ -29,6 +30,7 @@ const loadLeaflet = async () => {
 }
 
 export default function AddressBookModal({ open, onClose, onSaved, initialAddress, userPhone }) {
+  const { t } = useTranslation()
   const isEdit = Boolean(initialAddress?.id)
   const [form, setForm] = useState({ recipient_name: '', phone_number: '', province: '', city: '', district: '', postal_code: '', street_address: '', detail_address: '', label: 'Home', is_default: false, is_pickup: false, is_return: false, latitude: null, longitude: null, pin_source: 'default', pin_confirmed: false })
   const [isSaving, setIsSaving] = useState(false)
@@ -307,7 +309,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser')
+      setError(t('addressForm.geolocationUnsupported'))
       return
     }
          
@@ -341,13 +343,13 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
         updatePin(lat, lng, 'current_location')
       }
     }, () => {
-      setError('Unable to retrieve your location. Please check browser permissions.')
+      setError(t('addressForm.retrieveLocationFailed'))
     })
   }
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmitAddress(form)) return setError('Please complete all address fields first.')
+    if (!canSubmitAddress(form)) return setError(t('addressForm.completeAllFields'))
     setIsSaving(true)
     try {
       if (isEdit) await api.put(`/addresses/${initialAddress.id}`, form)
@@ -357,7 +359,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       onSaved()
       onClose()
     } catch {
-      setError('Failed to save the address details.')
+      setError(t('addressForm.saveAddressFailed'))
     } finally { setIsSaving(false) }
   }
 
@@ -375,7 +377,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <ArrowLeft className='h-6 w-6 stroke-[3] text-black' />
             </button>
             <div>
-              <h3 className='text-xl sm:text-2xl font-black uppercase text-black'>Edit Pin Location</h3>
+              <h3 className='text-xl sm:text-2xl font-black uppercase text-black'>{t('addressForm.editPin')}</h3>
               <p className='text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 mt-0.5'>{fullAddressQuery}</p>
             </div>
           </div>
@@ -385,8 +387,8 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
              
              <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1000] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
                  <div className="mb-2 whitespace-nowrap rounded-xl border-4 border-black bg-aldesRed px-4 py-2.5 text-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative"> 
-                    <p className="text-sm font-black uppercase">Your pin is here</p>
-                    <p className="text-[10px] font-bold opacity-90 mt-0.5">DRAG MAP TO ADJUST</p>
+                    <p className="text-sm font-black uppercase">{t('addressForm.yourPinIsHere')}</p>
+                    <p className="text-[10px] font-bold opacity-90 mt-0.5">{t('addressForm.dragMap')}</p>
                     <div className="absolute -bottom-[9px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-black"></div>
                     <div className="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-aldesRed"></div>
                  </div>
@@ -401,7 +403,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
              </div>
              
              <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-3">
-                 <button type="button" className="rounded-2xl border-4 border-black bg-aldesYellow p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-y-1 active:shadow-none transition-all text-black" onClick={handleCurrentLocation} title="Use Current Location">
+                 <button type="button" className="rounded-2xl border-4 border-black bg-aldesYellow p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-y-1 active:shadow-none transition-all text-black" onClick={handleCurrentLocation} title={t('addressForm.useCurrentLocation')}>
                    <Navigation className="h-6 w-6 stroke-[3]" />
                  </button>
                  <button type="button" className="rounded-2xl border-4 border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all text-aldesRed" onClick={() => mapRef.current?.panTo([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng])} title="Go to pin"> 
@@ -410,8 +412,8 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
              </div>
           </div>
           <div className="flex justify-end gap-4 bg-aldesCream p-4 sm:p-5">
-            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all uppercase">Cancel</button>
-            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">Confirm</button>
+            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 active:translate-y-1 active:shadow-none transition-all uppercase">{t('addressForm.cancel')}</button>
+            <button type="button" onClick={() => setShowMapLayer(false)} className="min-w-[120px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black text-white shadow-[4px_4px_0_0px_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-1 active:shadow-none transition-all uppercase">{t('addressForm.confirm')}</button>
           </div>
         </div>
       </div>
@@ -424,7 +426,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
         
         {/* MODAL HEADER */}
         <div className="bg-aldesYellow border-b-4 border-black p-5 flex items-center justify-between rounded-t-2xl">
-          <h3 className="text-xl sm:text-2xl font-black uppercase text-black">{isEdit ? 'Edit Address' : 'New Address'}</h3>
+          <h3 className="text-xl sm:text-2xl font-black uppercase text-black">{isEdit ? t('profile.editAddress') : t('checkout.addNewAddress')}</h3>
           <button type='button' onClick={onClose} className="rounded-xl border-2 border-black bg-white p-1 hover:bg-aldesCream transition-transform active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <X className="h-6 w-6 stroke-[3] text-black" />
           </button>
@@ -439,29 +441,29 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 <input 
                   id="recipient_name"
                   className={inputClassName}
-                  placeholder="e.g. Sam Raimi" 
+                  placeholder={t('addressForm.recipientNamePlaceholder')} 
                   value={form.recipient_name || ''} 
                   onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))}
                 />
-                <label htmlFor="recipient_name" className={labelClassName}>Full Name</label>
+                <label htmlFor="recipient_name" className={labelClassName}>{t('signup.name')}</label>
               </div>
               <div className="relative pt-1.5">
                 <input 
                   id="phone_number"
                   className={inputClassName}
-                  placeholder="e.g. 081317539933" 
+                  placeholder={t('addressForm.phoneNumberPlaceholder')} 
                   value={form.phone_number || ''} 
                   onFocus={() => setShowPhoneReco(true)} 
                   onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))}
                 />
-                <label htmlFor="phone_number" className={labelClassName}>Phone Number</label>
+                <label htmlFor="phone_number" className={labelClassName}>{t('addressForm.phoneNumber')}</label>
                 
                 {/* SUGGESTION PHONE NUMBER */}
                 {showPhoneReco && userPhone && (
                   <div className="absolute w-full rounded-xl border-4 border-black bg-white p-3 text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mt-2" style={{ zIndex: 100 }}>
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-black">{userPhone}</span>
-                      <button type="button" className="text-aldesRed font-black uppercase bg-red-50 px-3 py-1 rounded-lg border-2 border-black" onClick={() => { setForm(p => ({ ...p, phone_number: userPhone })); setShowPhoneReco(false) }}>USE</button>
+                      <button type="button" className="text-aldesRed font-black uppercase bg-red-50 px-3 py-1 rounded-lg border-2 border-black" onClick={() => { setForm(p => ({ ...p, phone_number: userPhone })); setShowPhoneReco(false) }}>{t('addressForm.usePhone')}</button>
                     </div>
                   </div>
                 )}
@@ -483,34 +485,34 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 }}
               >
                 <span className={form.province ? 'text-black uppercase' : 'text-gray-400 font-bold'}>
-                  {[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ') || 'Select location points below'}
+                  {[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ') || t('addressForm.selectRegionPlaceholder')}
                 </span>
                 <ChevronDown className={`h-5 w-5 text-black stroke-[3] transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
               </div>
               
               <label className="pointer-events-none absolute left-3 -top-3 text-xs bg-white text-black border-black border-2 font-black uppercase rounded-lg px-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                Province, City, District, Postal Code
+                {t('addressForm.regionLabel')}
               </label>
 
               {showRegionSelector && (
                 <div className="absolute mt-2 w-full rounded-2xl border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden" style={{ zIndex: 100 }}>
                   <div className="flex border-b-4 border-black text-sm overflow-x-auto whitespace-nowrap scrollbar-hide bg-gray-50">
                     <button type="button" className={`px-4 py-3 font-black uppercase transition-colors ${activeRegionTab === 'province' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('province')}>
-                      {form.province || 'PROVINCE'}
+                      {form.province || t('addressForm.province')}
                     </button>
                     {(form.province || activeRegionTab === 'city') && (
                       <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'city' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('city')}>
-                        {form.city || 'CITY'}
+                        {form.city || t('addressForm.city')}
                       </button>
                     )}
                     {(form.city || activeRegionTab === 'district') && (
                       <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'district' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('district')}>
-                        {form.district || 'DISTRICT'}
+                        {form.district || t('addressForm.district')}
                       </button>
                     )}
                     {(form.district || activeRegionTab === 'postal_code') && (
                       <button type="button" className={`px-4 py-3 font-black uppercase transition-colors border-l-4 border-black ${activeRegionTab === 'postal_code' ? 'bg-aldesYellow border-b-4 border-black text-black' : 'text-gray-500 hover:bg-gray-200'}`} onClick={() => setActiveRegionTab('postal_code')}>
-                        {form.postal_code || 'POSTAL'}
+                        {form.postal_code || t('addressForm.postal')}
                       </button>
                     )}
                   </div>
@@ -554,7 +556,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 id="street_address"
                 disabled={!isRegionFilled}
                 className={`w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
-                placeholder="Street Name, Building, House No." 
+                placeholder={t('addressForm.streetAddressPlaceholder')} 
                 value={form.street_address || ''} 
                 onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))}
               />
@@ -562,7 +564,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 htmlFor="street_address" 
                 className="pointer-events-none absolute left-3 -top-3 px-2 text-xs font-black uppercase rounded-lg border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white border-black text-black z-10"
               >
-                {isRegionFilled ? 'Street Name, Building, House No.' : 'Select Region First'}
+                {isRegionFilled ? t('addressForm.streetAddressPlaceholder') : t('addressForm.selectRegionFirst')}
               </label>
 
               {suggestions.length > 0 && (
@@ -590,13 +592,13 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                     </div>
                   </div>
                   <div>
-                    <h4 className={`font-black uppercase text-sm ${hasStreet ? 'text-black' : 'text-gray-500'}`}>Place an accurate pin</h4>
-                    <p className={`text-xs font-bold mt-0.5 uppercase ${hasStreet ? 'text-gray-800' : 'text-gray-400'}`}>We will deliver to your map location.</p>
+                    <h4 className={`font-black uppercase text-sm ${hasStreet ? 'text-black' : 'text-gray-500'}`}>{t('addressForm.placeAccuratePin')}</h4>
+                    <p className={`text-xs font-bold mt-0.5 uppercase ${hasStreet ? 'text-gray-800' : 'text-gray-400'}`}>{t('addressForm.deliverToMap')}</p>
                   </div>
                 </div>
                 <button type="button" onClick={handleCurrentLocation} className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-white border-2 border-black px-3 py-2 text-xs font-black uppercase text-black hover:bg-aldesCream hover:-translate-y-0.5 active:translate-y-0 active:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
                   <Navigation className="h-4 w-4 stroke-[3]" />
-                  Current Loc
+                  {t('addressForm.currentLoc')}
                 </button>
               </div>
               
@@ -610,14 +612,14 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
                 {!hasStreet && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100"> 
                      <button type="button" disabled className="relative z-10 flex items-center gap-2 rounded-xl bg-white px-4 py-2 border-2 border-gray-300 text-sm font-black uppercase text-gray-400">
-                       <MapPin className="h-5 w-5 stroke-[2]" /> Add Location
+                       <MapPin className="h-5 w-5 stroke-[2]" /> {t('addressForm.addLocation')}
                      </button>
                   </div>
                 )}
                 
                 {hasStreet && (
                   <button type="button" className="absolute right-3 bottom-3 z-[1000] rounded-lg border-2 border-black bg-aldesYellow px-3 py-1.5 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    View Full Map
+                    {t('addressForm.viewFullMap')}
                   </button>
                 )}
               </div>
@@ -628,26 +630,26 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <textarea 
                 id="detail_address"
                 className={inputClassName}
-                placeholder="Other Details (e.g. Block / Unit No., Landmarks)" 
+                placeholder={t('addressForm.otherDetailsPlaceholder')} 
                 value={form.detail_address || ''} 
                 onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))}
               />
-              <label htmlFor="detail_address" className={labelClassName}>Other Details</label>
+              <label htmlFor="detail_address" className={labelClassName}>{t('addressForm.otherDetails')}</label>
             </div>
             
             <div className="pt-2 border-t-2 border-gray-200">
-              <span className="block text-sm font-black uppercase text-black mb-3">Label As:</span>
+              <span className="block text-sm font-black uppercase text-black mb-3">{t('addressForm.labelAs')}</span>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Home' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Home' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Home</button>
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Work' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Work' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Work</button>
-                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Other' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Other' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>Other</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Home' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Home' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>{t('addressForm.home')}</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Work' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Work' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>{t('addressForm.work')}</button>
+                <button type="button" onClick={() => setForm(p => ({ ...p, label: 'Other' }))} className={`rounded-xl border-2 px-5 py-2 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-none ${form.label === 'Other' ? 'border-black text-white bg-black' : 'border-black text-black bg-white hover:bg-gray-50'}`}>{t('addressForm.other')}</button>
               </div>
             </div>
             
             <div className="pt-2 text-sm text-black">
               <label className="flex items-center gap-3 cursor-pointer group w-max">
                 <input type="checkbox" className="h-5 w-5 accent-aldesRed border-2 border-black rounded cursor-pointer" checked={!!form.is_default} onChange={e => setForm(p => ({ ...p, is_default: e.target.checked }))} /> 
-                 <span className="font-black uppercase group-hover:text-aldesRed transition-colors">Set as Default Address</span>
+                 <span className="font-black uppercase group-hover:text-aldesRed transition-colors">{t('addressForm.setAsDefault')}</span>
               </label>
             </div>
             
@@ -655,9 +657,9 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             
             {/* SUBMIT BUTTONS */}
             <div className="flex justify-end gap-4 pt-6 border-t-4 border-black">
-              <button type="button" onClick={onClose} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 transition-transform active:translate-y-1 active:shadow-none">Cancel</button>
+              <button type="button" onClick={onClose} className="min-w-[120px] rounded-2xl border-4 border-black bg-white py-3 font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 transition-transform active:translate-y-1 active:shadow-none">{t('addressForm.cancel')}</button>
               <button disabled={isSaving} className="min-w-[140px] rounded-2xl border-4 border-black bg-aldesRed py-3 font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 transition-transform active:translate-y-1 active:shadow-none flex justify-center items-center disabled:opacity-50">
-                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'SAVE ADDRESS'}
+                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : t('addressForm.saveAddress')}
               </button>
             </div>
           </form>

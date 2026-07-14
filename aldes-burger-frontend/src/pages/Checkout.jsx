@@ -161,6 +161,13 @@ function Checkout() {
   const { removeFromCart, cartCount } = useCart();
   const { t } = useTranslation();
 
+  const getLocalizedLabel = (label) => {
+    if (!label) return '';
+    const key = `addressForm.${label.toLowerCase()}`;
+    const translated = t(key);
+    return translated === key ? label : translated;
+  }
+
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [userPhone, setUserPhone] = useState('');
@@ -336,7 +343,7 @@ function Checkout() {
                         <span className="font-black text-lg uppercase">{selectedAddress.recipient_name}</span>
                         {selectedAddress.label && (
                           <span className="px-2 py-0.5 border-2 border-black text-black text-[9px] font-black uppercase rounded bg-aldesYellow">
-                            <AddressLabelIcon label={selectedAddress.label} />{selectedAddress.label}
+                            <AddressLabelIcon label={selectedAddress.label} />{getLocalizedLabel(selectedAddress.label)}
                           </span>
                         )}
                         {selectedAddress.is_default && (
@@ -368,7 +375,7 @@ function Checkout() {
                           <span className="font-black text-sm uppercase">{addr.recipient_name}</span>
                           {addr.label && (
                             <span className="px-1.5 py-0.5 bg-aldesYellow border border-black text-[8px] font-black uppercase rounded">
-                              <AddressLabelIcon label={addr.label} />{addr.label}
+                              <AddressLabelIcon label={addr.label} />{getLocalizedLabel(addr.label)}
                             </span>
                           )}
                           {addr.is_default && (

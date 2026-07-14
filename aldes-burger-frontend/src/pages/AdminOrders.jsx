@@ -39,7 +39,7 @@ function OrderCard({ order, moveStatus, cancelOrder, isLoading }) {
           <div className="border-l-2 border-red-200 pl-3">
             <p className="text-[10px] font-black text-red-500 uppercase tracking-wider mb-1">{t('adminOrders.buildOrder')}</p>
             <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5 font-medium">
-              {modifiers.map((ing, idx) => <li key={idx} className="capitalize">{ing.replace(/_/g, ' ')}</li>)}
+              {modifiers.map((ing, idx) => <li key={idx} className="capitalize">{String(ing).replace(/_/g, ' ')}</li>)}
             </ul>
           </div>
         )}
@@ -68,7 +68,7 @@ function OrderCard({ order, moveStatus, cancelOrder, isLoading }) {
         <div>
           <p className="font-black text-gray-900 text-lg leading-tight">{order.user?.name || t('common.guest')}</p>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">#ORD-{order.id.split('-')[0]}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">#ORD-{order.id ? String(order.id).split('-')[0] : ''}</p>
             <span className="flex items-center text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
               <Clock className="w-3 h-3 mr-1" /> {formatTime(order.created_at)}
             </span>
@@ -100,7 +100,7 @@ function OrderCard({ order, moveStatus, cancelOrder, isLoading }) {
       {order.status !== 'done' && (
         <div className="mt-3 flex gap-2">
           <button type="button" disabled={isLoading} onClick={() => moveStatus(order.id)} className="flex-1 flex justify-center items-center rounded-xl bg-red-600 px-3 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-red-700 active:scale-[0.98] shadow-md shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed">
-            {isLoading ? <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> {t('common.loading')}</span> : (order.status === 'pending' ? t('adminOrders.markAs')('Cooking') : t('adminOrders.markAs')('Done'))}
+            {isLoading ? <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> {t('common.loading')}</span> : (order.status === 'pending' ? t('adminOrders.markAs', 'Cooking') : t('adminOrders.markAs', 'Done'))}
           </button>
           
           {/* Hanya muncul saat status 'pending' */}
