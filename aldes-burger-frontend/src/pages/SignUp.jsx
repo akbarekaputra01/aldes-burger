@@ -192,6 +192,7 @@ function SignUp() {
                       <div className="flex items-center bg-aldesCream/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                         <Lock size={18} className="mr-3 text-aldesRed shrink-0" />
                         <input type={showConfirmPassword ? 'text' : 'password'} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400 tracking-normal" placeholder="Confirm Password" required value={form.password_confirmation} onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })} />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="ml-2 text-black hover:text-aldesRed transition-colors shrink-0">{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                       </div>
                     </div>
                   </div>

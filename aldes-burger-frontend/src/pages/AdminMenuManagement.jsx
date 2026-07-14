@@ -38,12 +38,15 @@ function StockBadge({ stock }) {
   )
 }
 
+let cachedMenu = null
+let cachedAllIngredients = null
+
 // --- component ---
 function AdminMenuManagement() {
   const { t } = useTranslation()
-  const [menu, setMenu] = useState([])
-  const [allIngredients, setAllIngredients] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [menu, setMenu] = useState(cachedMenu || [])
+  const [allIngredients, setAllIngredients] = useState(cachedAllIngredients || [])
+  const [isLoading, setIsLoading] = useState(!cachedMenu || !cachedAllIngredients)
 
   // Edit price modal
   const [selectedMenu, setSelectedMenu] = useState(null)
@@ -72,16 +75,25 @@ function AdminMenuManagement() {
   const loadMenu = () =>
     api
       .get('/admin/menus')
-      .then(({ data }) => setMenu(data))
+      .then(({ data }) => {
+        setMenu(data)
+        cachedMenu = data
+      })
       .catch(() => setMenu([]))
 
   const loadIngredients = () =>
     api
       .get('/ingredients')
-      .then(({ data }) => setAllIngredients(data))
+      .then(({ data }) => {
+        setAllIngredients(data)
+        cachedAllIngredients = data
+      })
       .catch(() => {})
 
   useEffect(() => {
+    if (cachedMenu && cachedAllIngredients) {
+      return
+    }
     setIsLoading(true)
 
     Promise.all([loadMenu(), loadIngredients()]).finally(() => {

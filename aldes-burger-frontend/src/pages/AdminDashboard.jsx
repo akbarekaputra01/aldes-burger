@@ -10,15 +10,22 @@ const statusClass = {
   cancelled: 'bg-red-100 text-red-700'
 }
 
+let cachedDashboardOrders = null
+
 function AdminDashboard() {
   const { t } = useTranslation()
-  const [orders, setOrders] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [orders, setOrders] = useState(cachedDashboardOrders || [])
+  const [isLoading, setIsLoading] = useState(!cachedDashboardOrders)
   const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
+    if (cachedDashboardOrders) return
+
     api.get('/admin/orders')
-      .then(({ data }) => setOrders(data))
+      .then(({ data }) => {
+        setOrders(data)
+        cachedDashboardOrders = data
+      })
       .catch(() => setOrders([]))
       .finally(() => setIsLoading(false))
   }, [])

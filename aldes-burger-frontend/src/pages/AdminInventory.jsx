@@ -31,11 +31,13 @@ function StockBadge({ stock }) {
   )
 }
 
+let cachedInventory = null
+
 // component
 function AdminInventory() {
   const { t } = useTranslation()
-  const [inventory, setInventory] = useState([])
-  const [isLoadingInventory, setIsLoadingInventory] = useState(true)
+  const [inventory, setInventory] = useState(cachedInventory || [])
+  const [isLoadingInventory, setIsLoadingInventory] = useState(!cachedInventory)
 
   const [editTarget, setEditTarget] = useState(null)
   const [editStock, setEditStock] = useState('')
@@ -43,22 +45,28 @@ function AdminInventory() {
 
   const [successMessage, setSuccessMessage] = useState('')
 
-  const loadInventory = async ({ showLoading = false } = {}) => {
-    if (showLoading) setIsLoadingInventory(true)
+  const loadInventory = async ({ showLoading = false, force = false } = {}) => {
+    if (!force && cachedInventory) {
+      setInventory(cachedInventory)
+      setIsLoadingInventory(false)
+      return
+    }
+    if (showLoading && !cachedInventory) setIsLoadingInventory(true)
 
     try {
       const { data } = await api.get('/admin/inventory')
       setInventory(data)
+      cachedInventory = data
     } catch (error) {
       console.error(error)
       setInventory([])
     } finally {
-      if (showLoading) setIsLoadingInventory(false)
+      setIsLoadingInventory(false)
     }
   }
 
   useEffect(() => {
-    loadInventory({ showLoading: true })
+    loadInventory({ showLoading: true, force: false })
   }, [])
 
  const showSuccessNotification = (message) => {
@@ -95,7 +103,7 @@ function AdminInventory() {
 
       await api.patch(`/admin/inventory/${editTarget.id}`, { stock })
 
-      await loadInventory()
+      await loadInventory({ force: true })
 
       setEditTarget(null)
       setEditStock('')

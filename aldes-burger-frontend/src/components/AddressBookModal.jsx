@@ -42,8 +42,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   const [showRegionSelector, setShowRegionSelector] = useState(false)
   const [activeRegionTab, setActiveRegionTab] = useState('province')
   const regionSelectorRef = useRef(null)
+  const phoneSelectorRef = useRef(null)
   
   const [error, setError] = useState('')
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false)
   const previewMapElRef = useRef(null)
   const previewMapRef = useRef(null)
   const previewMarkerRef = useRef(null)
@@ -60,6 +62,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
   useEffect(() => {
     if (!open) return
     setError('')
+    setAttemptedSubmit(false)
     setForm(initialAddress ? { ...form, ...initialAddress } : { ...form, phone_number: userPhone || '' })
     setShowMapLayer(false)
     setShowRegionSelector(false)
@@ -177,6 +180,9 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     const handleClickOutside = (event) => {
       if (regionSelectorRef.current && !regionSelectorRef.current.contains(event.target)) {
         setShowRegionSelector(false)
+      }
+      if (phoneSelectorRef.current && !phoneSelectorRef.current.contains(event.target)) {
+        setShowPhoneReco(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -349,7 +355,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmitAddress(form)) return setError(t('addressForm.completeAllFields'))
+    if (!canSubmitAddress(form)) {
+      setAttemptedSubmit(true)
+      return setError(t('addressForm.completeAllFields'))
+    }
     setIsSaving(true)
     try {
       if (isEdit) await api.put(`/addresses/${initialAddress.id}`, form)
@@ -363,7 +372,12 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     } finally { setIsSaving(false) }
   }
 
-  const inputClassName = "w-full rounded-xl border-4 border-black bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold"
+  const getInputClassName = (value) => {
+    const isFilled = Boolean(value && String(value).trim().length > 0)
+    const borderColor = isFilled ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow')
+    return `w-full rounded-xl border-4 ${borderColor} bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold`
+  }
+  const optionalInputClassName = "w-full rounded-xl border-4 border-black bg-white px-4 py-3.5 text-sm font-bold text-black outline-none transition-transform focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 placeholder:text-gray-400 placeholder:font-bold"
   const labelClassName = "pointer-events-none absolute left-3 -top-3 bg-white px-2 text-xs font-black uppercase text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
 
   if (!open) return null
@@ -440,17 +454,17 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <div className="relative pt-1.5">
                 <input 
                   id="recipient_name"
-                  className={inputClassName}
+                  className={getInputClassName(form.recipient_name)}
                   placeholder={t('addressForm.recipientNamePlaceholder')} 
                   value={form.recipient_name || ''} 
                   onChange={e => setForm(p => ({ ...p, recipient_name: e.target.value }))}
                 />
                 <label htmlFor="recipient_name" className={labelClassName}>{t('signup.name')}</label>
               </div>
-              <div className="relative pt-1.5">
+              <div className="relative pt-1.5" ref={phoneSelectorRef}>
                 <input 
                   id="phone_number"
-                  className={inputClassName}
+                  className={getInputClassName(form.phone_number)}
                   placeholder={t('addressForm.phoneNumberPlaceholder')} 
                   value={form.phone_number || ''} 
                   onFocus={() => setShowPhoneReco(true)} 
@@ -473,7 +487,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             {/* 2. REGION SELECTOR */}
             <div className="relative z-40" ref={regionSelectorRef}>
               <div 
-                className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform border-black ${showRegionSelector ? 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : ''}`}
+                className={`w-full flex items-center justify-between rounded-xl border-4 bg-white px-4 py-3.5 text-sm font-bold cursor-pointer transition-transform ${isRegionFilled ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed' : 'border-aldesYellow')} ${showRegionSelector ? 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : ''}`}
                 onClick={() => {
                   setShowRegionSelector(!showRegionSelector)
                   if (!showRegionSelector) {
@@ -555,7 +569,7 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
               <textarea 
                 id="street_address"
                 disabled={!isRegionFilled}
-                className={`w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : 'border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'}`} 
+                className={`w-full min-h-[60px] rounded-xl border-4 px-4 py-3.5 text-sm font-bold text-black focus:outline-none transition-all resize-y ${!isRegionFilled ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-70 text-gray-400' : (form.street_address ? 'border-aldesYellow bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5' : (attemptedSubmit ? 'border-aldesRed focus:border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5' : 'border-aldesYellow focus:border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5'))}`} 
                 placeholder={t('addressForm.streetAddressPlaceholder')} 
                 value={form.street_address || ''} 
                 onChange={e => setForm(p => ({ ...p, street_address: e.target.value, pin_source: 'default', pin_confirmed: false }))}
@@ -626,16 +640,16 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
             </div>
 
             {/* 5. DETAIL ADDRESS */}
-            <div className="relative z-0">
-              <textarea 
-                id="detail_address"
-                className={inputClassName}
-                placeholder={t('addressForm.otherDetailsPlaceholder')} 
-                value={form.detail_address || ''} 
-                onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))}
-              />
-              <label htmlFor="detail_address" className={labelClassName}>{t('addressForm.otherDetails')}</label>
-            </div>
+             <div className="relative z-0">
+               <textarea 
+                 id="detail_address"
+                 className={optionalInputClassName}
+                 placeholder={t('addressForm.otherDetailsPlaceholder')} 
+                 value={form.detail_address || ''} 
+                 onChange={e => setForm(p => ({ ...p, detail_address: e.target.value }))}
+               />
+               <label htmlFor="detail_address" className={labelClassName}>{t('addressForm.otherDetails')}</label>
+             </div>
             
             <div className="pt-2 border-t-2 border-gray-200">
               <span className="block text-sm font-black uppercase text-black mb-3">{t('addressForm.labelAs')}</span>

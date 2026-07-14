@@ -37,6 +37,7 @@ function Auth() {
   const [newPassword, setNewPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
 
   // --- 1. LOGIN ---
   const handleSubmit = async (e) => {
@@ -137,6 +138,8 @@ function Auth() {
       setSuccess(t('auth.successReset'));
       localStorage.removeItem('reset_otp');
       setOtp(''); setNewPassword(''); setPasswordConfirmation('');
+      setShowNewPassword(false);
+      setShowNewPasswordConfirm(false);
       setTimeout(() => {
         setStep('login');
         setSuccess('');
@@ -338,7 +341,8 @@ function Auth() {
                     <label className="block text-[11px] font-black uppercase mb-2 text-gray-500 tracking-wider group-focus-within:text-[#D52518] transition-colors">{t('auth.confirmPassword')}</label>
                     <div className="flex items-center bg-[#F3E8CC]/60 border-[3px] border-black rounded-2xl px-4 py-3 focus-within:bg-white focus-within:shadow-[5px_5px_0_0_#FFC926] transition-all">
                       <Lock size={18} className="mr-3 text-[#D52518] shrink-0" />
-                      <input type={showNewPassword ? 'text' : 'password'} value={passwordConfirmation} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder={t('auth.reEnterNewPassword')} required onChange={(e) => setPasswordConfirmation(e.target.value)} />
+                      <input type={showNewPasswordConfirm ? 'text' : 'password'} value={passwordConfirmation} className="bg-transparent w-full outline-none font-bold text-sm placeholder:text-gray-400" placeholder={t('auth.reEnterNewPassword')} required onChange={(e) => setPasswordConfirmation(e.target.value)} />
+                      <button type="button" onClick={() => setShowNewPasswordConfirm(!showNewPasswordConfirm)} className="ml-2 text-black hover:text-[#D52518] transition-colors shrink-0">{showNewPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                     </div>
                   </div>
                   <button type="submit" disabled={isLoading} className="w-full bg-green-600 text-white py-4 rounded-2xl border-[4px] border-black font-black text-lg uppercase shadow-[0_8px_0_0_#000] hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#000] active:translate-y-[8px] active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-3 mt-3 group relative overflow-hidden">
