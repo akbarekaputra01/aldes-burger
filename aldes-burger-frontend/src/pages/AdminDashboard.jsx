@@ -188,7 +188,7 @@ function AdminDashboard() {
                     return (
                       <tr key={order.id} className="hover:bg-red-50/20 transition-colors">
                         <td className="px-5 py-4 font-mono text-gray-500 text-xs">
-                          #{order.id.includes('-') ? order.id.split('-')[0] : order.id}
+                          #{order.id ? (String(order.id).includes('-') ? String(order.id).split('-')[0] : order.id) : ''}
                         </td>
                         <td className="px-5 py-4 font-bold text-gray-800">
                           {order.user?.name || t('common.guest')}

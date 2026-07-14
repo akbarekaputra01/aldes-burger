@@ -132,7 +132,7 @@ function Transactions() {
                       )}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase text-aldesRed">#ADL-{order.id.split('-')[0]}</p>
+                      <p className="text-[10px] font-black uppercase text-aldesRed">#ADL-{order.id ? String(order.id).split('-')[0] : ''}</p>
                       <h3 className={`mt-1 text-xl font-black uppercase italic leading-none ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}`}>
                         {order.status}
                       </h3>
