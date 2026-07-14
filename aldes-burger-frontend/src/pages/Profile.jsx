@@ -204,10 +204,10 @@ function Profile() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* KOLOM KIRI: PROFIL & KEAMANAN */}
-          <div className="flex flex-col gap-8 h-full">
+          <div className="lg:col-span-5 flex flex-col gap-8">
             
             {/* CARD: USER INFO */}
             <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -373,7 +373,7 @@ function Profile() {
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="mt-auto flex w-full items-center justify-center gap-2 rounded-3xl border-4 border-black bg-white py-4 text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:bg-red-50 hover:text-aldesRed hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-70"
+              className="flex w-full items-center justify-center gap-2 rounded-3xl border-4 border-black bg-white py-4 text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:bg-red-50 hover:text-aldesRed hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-70"
             >
               {isLoggingOut ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -387,8 +387,8 @@ function Profile() {
           </div>
 
           {/* KOLOM KANAN: ALAMAT TERSIMPAN */}
-          <div className="h-full">
-            <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full">
+          <div className="lg:col-span-7">
+            <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full min-h-[600px]">
               
               <div className="mb-6 flex items-center justify-between border-b-4 border-black pb-5">
                 <div className="flex items-center gap-4">
@@ -403,7 +403,7 @@ function Profile() {
               </div>
 
               {/* Area List Alamat dengan Scroll */}
-              <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5">
+              <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5 max-h-[400px]">
                 {sortedAddresses.length === 0 ? (
                   <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-4 border-dashed border-black bg-aldesCream p-6 text-center">
                     <MapPin className="mb-4 h-14 w-14 text-black drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />
