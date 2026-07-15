@@ -131,6 +131,28 @@ function Kitchen() {
   const [isFetching, setIsFetching] = useState(true)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingVariation, setIsSavingVariation] = useState(false)
+
+  const getMaxQtyForStack = () => {
+    if (burgerStack.length === 0) return 1
+    
+    // Count occurrences of each ingredient ID in the current stack
+    const counts = {}
+    burgerStack.forEach(layer => {
+      counts[layer.ingredient_id] = (counts[layer.ingredient_id] ?? 0) + 1
+    })
+    
+    let maxQty = 999
+    for (const ingredientId in counts) {
+      const pantryIng = ingredients.find(i => i.id === Number(ingredientId))
+      const stock = pantryIng ? pantryIng.stock : 0
+      const reqQty = counts[ingredientId]
+      const possibleQty = Math.floor(stock / reqQty)
+      if (possibleQty < maxQty) {
+        maxQty = possibleQty
+      }
+    }
+    return Math.max(1, maxQty)
+  }
   
   const [draggingData, setDraggingData] = useState(null)
   const [isDragOverBox, setIsDragOverBox] = useState(false)
@@ -421,6 +443,15 @@ function Kitchen() {
 
   const handleAddAnotherVariation = () => {
     if (!canCheckout) return
+    const maxPossible = getMaxQtyForStack()
+    if (qty > maxPossible) {
+      alert(
+        localStorage.getItem('aldes_lang') === 'id'
+          ? `Gagal! Jumlah melebihi bahan yang tersedia (Maks: ${maxPossible}).`
+          : `Error! Quantity exceeds available ingredients (Max: ${maxPossible}).`
+      )
+      return
+    }
     setIsSavingVariation(true)
     const payload = {
       menu_id: selectedMenu.id,
@@ -441,6 +472,15 @@ function Kitchen() {
 
   const handleAddToCart = () => {
     if (!canCheckout) return
+    const maxPossible = getMaxQtyForStack()
+    if (qty > maxPossible) {
+      alert(
+        localStorage.getItem('aldes_lang') === 'id'
+          ? `Gagal! Jumlah melebihi bahan yang tersedia (Maks: ${maxPossible}).`
+          : `Error! Quantity exceeds available ingredients (Max: ${maxPossible}).`
+      )
+      return
+    }
     const payload = {
       menu_id: selectedMenu.id,
       name: selectedMenu.name,
@@ -465,7 +505,7 @@ function Kitchen() {
 
   const isBottomBunValid = burgerStack.length > 0 && isBottomBunItem(burgerStack[0]?.ingredient_name);
   const isTopBunValid = burgerStack.length > 1 && isTopBunItem(burgerStack[burgerStack.length - 1]?.ingredient_name);
-  const canCheckout = isBottomBunValid && isTopBunValid;
+  const canCheckout = isBottomBunValid && isTopBunValid && getMaxQtyForStack() >= 1;
 
   return (
     <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 select-none overflow-x-hidden">
@@ -727,7 +767,8 @@ function Kitchen() {
                       pantryIngredients.map((ingredient) => {
                         const isFoundationMissing = burgerStack.length === 0;
                         const isBottomBun = isBottomBunItem(ingredient.name);
-                        const isDisabled = isFoundationMissing && !isBottomBun;
+                        const isOutOfStock = ingredient.stock <= 0;
+                        const isDisabled = (isFoundationMissing && !isBottomBun) || isOutOfStock;
                         const itemPrice = Number(ingredient.price ?? 0);
                         
                         return (
@@ -758,7 +799,9 @@ function Kitchen() {
                             </div>
                             <div className="flex-1 min-w-0 pointer-events-none">
                               <p className={`truncate font-black text-xs sm:text-sm uppercase tracking-tight ${isDisabled ? 'text-gray-500' : 'text-black'}`}>{ingredient.name}</p>
-                              {itemPrice > 0 && (
+                              {isOutOfStock ? (
+                                <p className="text-[9px] sm:text-[10px] font-black text-aldesRed mt-0.5 uppercase">Out of Stock</p>
+                              ) : itemPrice > 0 && (
                                 <p className="text-[9px] sm:text-[10px] font-bold text-gray-500 mt-0.5">IDR {itemPrice.toLocaleString('id-ID')}</p>
                               )}
                             </div>
@@ -873,7 +916,7 @@ function Kitchen() {
                 <div className="flex items-center justify-between bg-white border-2 sm:border-[4px] border-black rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-[3px_3px_0_0_#000] sm:shadow-[4px_4px_0_0_#000]">
                   <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} className="p-2 sm:p-3 rounded-xl bg-white border border-black text-black hover:bg-[#FFC926] active:scale-95 transition-all"><Minus className="h-4 w-4 sm:h-5 sm:w-5 stroke-[4]" /></button>
                   <span className="text-xl sm:text-2xl font-black text-black w-10 text-center">{qty}</span>
-                  <button type="button" onClick={() => setQty(q => q + 1)} className="p-2 sm:p-3 rounded-xl bg-[#FFC926] border border-black text-black hover:bg-black hover:text-[#FFC926] active:scale-95 transition-all"><Plus className="h-4 w-4 sm:h-5 sm:w-5 stroke-[4]" /></button>
+                  <button type="button" onClick={() => setQty(q => Math.min(getMaxQtyForStack(), q + 1))} className="p-2 sm:p-3 rounded-xl bg-[#FFC926] border border-black text-black hover:bg-black hover:text-[#FFC926] active:scale-95 transition-all"><Plus className="h-4 w-4 sm:h-5 sm:w-5 stroke-[4]" /></button>
                 </div>
               </div>
             </div>
@@ -892,7 +935,7 @@ function Kitchen() {
               >
                 {!canCheckout ? (
                   <span className="text-xs sm:text-sm font-black uppercase text-center px-4">
-                    {!isBottomBunValid ? "Needs Bottom Bun!" : "Needs Top Bun!"}
+                    {getMaxQtyForStack() < 1 ? (localStorage.getItem('aldes_lang') === 'id' ? "Bahan tidak cukup!" : "Not enough stock!") : !isBottomBunValid ? "Needs Bottom Bun!" : "Needs Top Bun!"}
                   </span>
                 ) : (
                   <>

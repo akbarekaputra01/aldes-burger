@@ -1,5 +1,5 @@
 import { ChefHat, Utensils, ChevronDown, ChevronUp, Clock, RefreshCw, AlertCircle, XCircle } from 'lucide-react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import api from '../lib/api'
 import { useTranslation } from '../context/LanguageContext'
 
@@ -125,6 +125,15 @@ function AdminOrders() {
   
   // State untuk membatasi jumlah pesanan "Done" yang tampil (default 5)
   const [doneLimit, setDoneLimit] = useState(5)
+  const [sortBy, setSortBy] = useState('newest') // 'newest' or 'oldest'
+
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => {
+      const dateA = new Date(a.created_at || 0)
+      const dateB = new Date(b.created_at || 0)
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB
+    })
+  }, [orders, sortBy])
 
   const loadOrders = useCallback(async (showLoading = false, force = false) => {
     if (!force && cachedOrders && !showLoading) {
@@ -180,15 +189,28 @@ function AdminOrders() {
       <section className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="flex items-center gap-2 text-2xl font-black text-gray-900"><ChefHat className="h-8 w-8 text-red-600" /> {t('adminOrders.title')}</h1>
-          <button onClick={() => loadOrders(true, true)} disabled={isFetching} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition-all text-sm disabled:opacity-50">
-            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-red-600' : ''}`} /> {isFetching ? t('common.loading') : t('adminOrders.refresh')}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase text-gray-500">{t('adminOrders.sortBy')}:</span>
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-white border-2 border-black rounded-xl px-3 py-1.5 font-bold text-gray-700 text-sm outline-none cursor-pointer hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:border-red-600 transition-all"
+              >
+                <option value="newest">{t('adminOrders.newest')}</option>
+                <option value="oldest">{t('adminOrders.oldest')}</option>
+              </select>
+            </div>
+            <button onClick={() => loadOrders(true, true)} disabled={isFetching} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-xl font-bold text-gray-700 hover:bg-gray-50 active:scale-95 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-sm disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-red-600' : ''}`} /> {isFetching ? t('common.loading') : t('adminOrders.refresh')}
+            </button>
+          </div>
         </div>
         
         <div className="grid gap-6 lg:grid-cols-3 items-start">
           {columns.map((column) => {
             // 1. Filter pesanan berdasarkan status kolom saat ini
-            const columnOrders = orders.filter((order) => order.status === column);
+            const columnOrders = sortedOrders.filter((order) => order.status === column);
             
             // 2. Jika kolom adalah 'done', batasi jumlah yang tampil berdasarkan doneLimit
             const displayedOrders = column === 'done' 

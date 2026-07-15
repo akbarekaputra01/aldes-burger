@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import api from '../lib/api'
 import {
   Minus,
   Plus,
@@ -182,8 +183,59 @@ function Cart() {
   const updateQty = contextValue?.updateQty
 
   const [selectedIds, setSelectedIds] = useState([])
+  const [menus, setMenus] = useState([])
+  const [ingredients, setIngredients] = useState([])
 
-  const handleIncrease = (item) => updateQty(item.id, (item.qty ?? 1) + 1)
+  useEffect(() => {
+    api.get('/menus').then(res => setMenus(res.data)).catch(console.error)
+    api.get('/ingredients').then(res => setIngredients(res.data)).catch(console.error)
+  }, [])
+
+  const getCartItemStock = (item) => {
+    const menuItem = menus.find(m => m.id === item.menu_id);
+    if (!menuItem) return 999;
+    
+    if (item.is_customized || menuItem.is_custom) {
+      const counts = {};
+      (item.ingredients || []).forEach(name => {
+        counts[name.toLowerCase()] = (counts[name.toLowerCase()] ?? 0) + 1;
+      });
+      
+      let maxQty = 999;
+      for (const name in counts) {
+        const ing = ingredients.find(i => i.name.toLowerCase() === name);
+        const stock = ing ? ing.stock : 0;
+        const reqQty = counts[name];
+        maxQty = Math.min(maxQty, Math.floor(stock / reqQty));
+      }
+      return maxQty;
+    }
+    
+    if (menuItem.ingredients && menuItem.ingredients.length > 0) {
+      const stocks = menuItem.ingredients.map(ing => {
+        const pantryIng = ingredients.find(i => i.id === ing.id);
+        const stockVal = pantryIng ? pantryIng.stock : (ing.stock ?? 0);
+        const reqQty = Math.max(1, Number(ing.pivot?.quantity || 1));
+        return Math.floor(stockVal / reqQty);
+      });
+      return Math.min(...stocks);
+    }
+    
+    return Number(menuItem.stock ?? 0);
+  }
+
+  const handleIncrease = (item) => {
+    const maxStock = getCartItemStock(item);
+    if ((item.qty ?? 1) >= maxStock) {
+      alert(
+        localStorage.getItem('aldes_lang') === 'id'
+          ? `Gagal! Jumlah melebihi stok yang tersedia (Maks: ${maxStock}).`
+          : `Error! Quantity exceeds available stock (Max: ${maxStock}).`
+      );
+      return;
+    }
+    updateQty(item.id, (item.qty ?? 1) + 1);
+  }
 
   const handleDecrease = (item) => {
     if ((item.qty ?? 1) > 1) {
@@ -214,6 +266,10 @@ function Cart() {
     selectedIds.length === cart.length && cart.length > 0
       ? setSelectedIds([])
       : setSelectedIds(cart.map((i) => i.id))
+
+  const isAnySelectedOverStock = cart
+    .filter((item) => selectedIds.includes(item.id))
+    .some((item) => item.qty > getCartItemStock(item))
 
   const grandTotal = cart
     .filter((item) => selectedIds.includes(item.id))
@@ -329,6 +385,13 @@ function Cart() {
                     <p className="mt-2 text-sm md:text-lg font-black italic text-aldesRed">
                       {formatCurrency(getItemPrice(item))}
                     </p>
+                    {item.qty > getCartItemStock(item) && (
+                      <p className="mt-1 text-xs font-black text-aldesRed uppercase animate-pulse">
+                        {localStorage.getItem('aldes_lang') === 'id' 
+                          ? `⚠ Melebihi Stok (Maks: ${getCartItemStock(item)})` 
+                          : `⚠ Exceeds Stock (Max: ${getCartItemStock(item)})`}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -398,7 +461,7 @@ function Cart() {
         {/* Checkout */}
         <div className="mt-6">
           <button
-            disabled={selectedIds.length === 0}
+            disabled={selectedIds.length === 0 || isAnySelectedOverStock}
             onClick={() => {
               // (Opsional) Ambil hanya item yang dicentang
               const selectedItemsToCheckout = cart.filter(item => selectedIds.includes(item.id));
@@ -407,7 +470,7 @@ function Cart() {
               navigate('/checkout', { state: { checkoutItems: selectedItemsToCheckout } });
             }}
             className={`w-full py-4 rounded-xl border-[4px] border-black font-black text-lg md:text-xl uppercase tracking-tight flex justify-center items-center gap-2 ${
-              selectedIds.length > 0
+              (selectedIds.length > 0 && !isAnySelectedOverStock)
                 ? 'bg-aldesRed text-aldesYellow shadow-[0_6px_0_0_#000] hover:bg-red-700 active:translate-y-1 active:shadow-none transition-all'
                 : 'bg-gray-200 text-gray-400 border-gray-400 cursor-not-allowed shadow-none'
             }`}

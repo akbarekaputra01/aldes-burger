@@ -109,6 +109,7 @@ const translations = {
       seeAllMenu: 'See All Menu',
       imageNotFound: 'Image Not Found',
       addedToCart: (qty, name) => `Successfully added ${qty}x ${name}`,
+      outOfStock: 'Out of Stock',
     },
 
     // ──────────────────────────────────────
@@ -403,6 +404,9 @@ const translations = {
       cancelOrder: 'Cancel Order',
       cancelConfirm: 'Cancel this order?',
       viewDetails: 'View Details',
+      sortBy: 'Sort By',
+      newest: 'Newest First',
+      oldest: 'Oldest First',
     },
 
     // ──────────────────────────────────────
@@ -621,6 +625,7 @@ const translations = {
       seeAllMenu: 'Lihat Semua Menu',
       imageNotFound: 'Gambar Tidak Ada',
       addedToCart: (qty, name) => `Berhasil menambahkan ${qty}x ${name}`,
+      outOfStock: 'Stok Habis',
     },
 
     // ──────────────────────────────────────
@@ -915,6 +920,9 @@ const translations = {
       cancelOrder: 'Batalkan Pesanan',
       cancelConfirm: 'Batalkan pesanan ini?',
       viewDetails: 'Lihat Detail',
+      sortBy: 'Urutkan',
+      newest: 'Terbaru',
+      oldest: 'Terlama',
     },
 
     // ──────────────────────────────────────

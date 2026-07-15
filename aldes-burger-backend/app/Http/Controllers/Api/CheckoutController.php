@@ -103,6 +103,63 @@ class CheckoutController extends Controller
                 ];
             }
 
+            // ─── Stock Validation ───
+            $requiredMenuStock = [];
+            $requiredIngredientStock = [];
+
+            foreach ($details as $detail) {
+                $menu = $detail['_menu'];
+                $qty  = $detail['quantity'];
+
+                if ($menu->ingredients->isNotEmpty()) {
+                    // Signature / recipe-based menu: check ingredients stock
+                    foreach ($menu->ingredients as $ingredient) {
+                        $needed = ($ingredient->pivot->quantity ?? 1) * $qty;
+                        $requiredIngredientStock[$ingredient->id] = ($requiredIngredientStock[$ingredient->id] ?? 0) + $needed;
+                    }
+
+                    // Apply extra adds from modifiers
+                    foreach ($detail['_modifiers'] as $mod) {
+                        if ($mod['action'] === 'add') {
+                            $requiredIngredientStock[$mod['ingredient_id']] = ($requiredIngredientStock[$mod['ingredient_id']] ?? 0) + $qty;
+                        }
+                    }
+                } else {
+                    if ($menu->is_custom) {
+                        // Custom burger: check ingredient stack stock
+                        foreach ($detail['_ingredients_stack'] as $ingName) {
+                            $ingredient = Ingredient::query()->where('name', $ingName)->first();
+                            if ($ingredient) {
+                                $requiredIngredientStock[$ingredient->id] = ($requiredIngredientStock[$ingredient->id] ?? 0) + $qty;
+                            }
+                        }
+                    } else {
+                        // Regular menu with no ingredients (e.g. Side/Drink): checks menu stock
+                        $requiredMenuStock[$menu->id] = ($requiredMenuStock[$menu->id] ?? 0) + $qty;
+                    }
+                }
+            }
+
+            // Verify Menu Stocks
+            foreach ($requiredMenuStock as $menuId => $reqQty) {
+                $menu = Menu::query()->findOrFail($menuId);
+                if ($menu->stock < $reqQty) {
+                    abort(response()->json([
+                        'message' => "Stok untuk menu '{$menu->name}' tidak mencukupi (Tersedia: {$menu->stock})."
+                    ], 422));
+                }
+            }
+
+            // Verify Ingredient Stocks
+            foreach ($requiredIngredientStock as $ingredientId => $reqQty) {
+                $ingredient = Ingredient::query()->findOrFail($ingredientId);
+                if ($ingredient->stock < $reqQty) {
+                    abort(response()->json([
+                        'message' => "Stok untuk bahan '{$ingredient->name}' tidak mencukupi (Tersedia: {$ingredient->stock})."
+                    ], 422));
+                }
+            }
+
             $transaction = Transaction::query()->create([
                 'id'                  => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999),
                 'payment_id'          => $payment->id,

@@ -122,7 +122,9 @@ function Transactions() {
                           ? 'bg-aldesRed text-white' 
                           : order.status?.toLowerCase() === 'cancelled'
                             ? 'bg-red-100 text-red-600 border-red-600' // Styling khusus untuk cancelled
-                            : 'bg-gray-100 text-gray-400'}`}>
+                            : (order.status?.toLowerCase() === 'done' || order.status?.toLowerCase() === 'completed')
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-600' // Styling khusus untuk done / completed
+                              : 'bg-gray-100 text-gray-400'}`}>
                       {activeTab === 'on_progress' ? (
                         <Package size={28} className="animate-pulse" />
                       ) : order.status?.toLowerCase() === 'cancelled' ? (
@@ -133,7 +135,9 @@ function Transactions() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase text-aldesRed">#ADL-{order.id ? String(order.id).split('-')[0] : ''}</p>
-                      <h3 className={`mt-1 text-xl font-black uppercase italic leading-none ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}`}>
+                      <h3 className={`mt-1 text-xl font-black uppercase italic leading-none 
+                        ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}
+                        ${(order.status?.toLowerCase() === 'done' || order.status?.toLowerCase() === 'completed') ? 'text-emerald-700' : ''}`}>
                         {order.status}
                       </h3>
                     </div>
