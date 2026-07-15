@@ -61,6 +61,20 @@ const resolveSectionKey = (menu) => {
   return 'burgers'
 }
 
+const getMenuStock = (item) => {
+  if (item.is_custom) {
+    return 999
+  }
+  if (item.ingredients && item.ingredients.length > 0) {
+    const stocks = item.ingredients.map((ing) => {
+      const reqQty = Math.max(1, Number(ing.pivot?.quantity || 1))
+      return Math.floor(Number(ing.stock ?? 0) / reqQty)
+    })
+    return Math.min(...stocks)
+  }
+  return Number(item.stock ?? 0)
+}
+
 const bannerSlides = [
   { id: 1, image: promo1, alt: 'Spesial Promo Weekend' },
   { id: 2, image: promo2, alt: 'Aldes Burger Opening Offerings' },
@@ -72,7 +86,7 @@ const fetcher = (url) => api.get(url).then((res) => res.data)
 
 function Menu() {
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToCart, cart } = useCart()
   const { t } = useTranslation()
 
   // --- AMBIL QUERY SEARCH DARI URL ---
@@ -134,6 +148,9 @@ function Menu() {
     const isAuthenticated = localStorage.getItem('aldes_token');
     if (!isAuthenticated) { navigate('/login'); return; }
 
+    const stock = getMenuStock(item)
+    if (stock <= 0) return
+
     const sectionKey = resolveSectionKey(item)
 
     if (sectionKey === 'burgers') {
@@ -171,6 +188,18 @@ function Menu() {
           'Special Sauce', isChicken ? 'Chicken Patty' : 'Beef Patty', 'Cheese', 'Top Bun'
         ]
       }
+    }
+    const maxStock = getMenuStock(item)
+    const existingCartItem = (cart || []).find((c) => c.menu_id === item.id && !c.is_customized)
+    const existingQty = existingCartItem ? existingCartItem.qty : 0
+
+    if (existingQty + qty > maxStock) {
+      alert(
+        localStorage.getItem('aldes_lang') === 'id'
+          ? `Gagal menambahkan! Anda memiliki ${existingQty} di keranjang, dan stok maksimal adalah ${maxStock}.`
+          : `Cannot add more! You already have ${existingQty} in cart, and max stock is ${maxStock}.`
+      )
+      return
     }
 
     addToCart({
@@ -334,55 +363,69 @@ function Menu() {
             
             {/* Optimized Responsive Grid Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-              {menuBySection[section.key].map((item) => (
-                <article
-                  key={item.id}
-                  ref={activeActionId === item.id ? activeCardRef : null}
-                  className={`group flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 sm:hover:-translate-x-1 sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${
-                    item.is_custom ? 'shadow-[4px_4px_0px_0px_#EAB308]' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
-                  }`}
-                >
-                  {/* Image Aspect Box */}
-                  <div className="relative overflow-hidden border-b-2 border-black bg-white aspect-[16/10]">
-                    {menuImages[item.id] ? (
-                      <img src={menuImages[item.id]} alt={item.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-in-out sm:group-hover:scale-105" />
-                    ) : (
-                      <div className="absolute inset-0 h-full w-full bg-white flex items-center justify-center">
-                        <span className="text-black text-xs font-black uppercase">{t('menu.imageNotFound')}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Content Info Box */}
-                  <div className="p-4 flex flex-col flex-1 min-w-0">
-                    <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
-                      {item.is_custom ? <><Flame className="h-3.5 w-3.5" />{t('menu.kitchen')}</> : section.key === 'sides' ? t('menu.tastySide') : section.key === 'drinks' ? t('menu.refreshment') : t('menu.signatureBurger')}
+              {menuBySection[section.key].map((item) => {
+                const isItemOutOfStock = getMenuStock(item) <= 0
+                return (
+                  <article
+                    key={item.id}
+                    ref={activeActionId === item.id ? activeCardRef : null}
+                    className={`group flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 ${
+                      isItemOutOfStock ? 'opacity-60 grayscale' : 'sm:hover:-translate-x-1 sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)]'
+                    } ${item.is_custom ? 'shadow-[4px_4px_0_0_#EAB308]' : 'shadow-[4px_4px_0_0_rgba(0,0,0,1)]'}`}
+                  >
+                    {/* Image Aspect Box */}
+                    <div className="relative overflow-hidden border-b-2 border-black bg-white aspect-[16/10]">
+                      {isItemOutOfStock && (
+                        <div className="absolute inset-0 bg-black/45 flex items-center justify-center z-10 pointer-events-none">
+                          <span className="bg-aldesRed text-white border-2 border-black px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider rotate-[-5deg] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            {t('menu.outOfStock')}
+                          </span>
+                        </div>
+                      )}
+                      {menuImages[item.id] ? (
+                        <img src={menuImages[item.id]} alt={item.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-in-out sm:group-hover:scale-105" />
+                      ) : (
+                        <div className="absolute inset-0 h-full w-full bg-white flex items-center justify-center">
+                          <span className="text-black text-xs font-black uppercase">{t('menu.imageNotFound')}</span>
+                        </div>
+                      )}
                     </div>
                     
-                    <h3 className="text-base sm:text-lg font-black text-aldesRed uppercase tracking-tight truncate">{item.name}</h3>
-                    <p className="mt-1.5 text-xs sm:text-sm text-black font-medium flex-1 line-clamp-3 sm:line-clamp-2 leading-relaxed">{item.description}</p>
-                    <p className="mt-3 text-base sm:text-lg font-black text-black">{currencyFormatter.format(item.price ?? 0)}</p>
-                    
-                    {/* Action States */}
-                    {activeActionId === item.id ? (
-                      <div className="mt-4 flex items-center justify-between gap-2.5 h-10 w-full">
-                        <div className="flex h-full items-center overflow-hidden rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3.5 w-3.5" /></button>
-                          <span className="w-7 border-x-2 border-black text-center text-sm font-black text-black">{tempQty}</span>
-                          <button type="button" onClick={() => setTempQty((p) => p + 1)} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3.5 w-3.5" /></button>
-                        </div>
-                        <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-xs sm:text-sm text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
-                          {t('menu.confirm')} <ChevronRight className="h-4 w-4 shrink-0" />
-                        </button>
+                    {/* Content Info Box */}
+                    <div className="p-4 flex flex-col flex-1 min-w-0">
+                      <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
+                        {item.is_custom ? <><Flame className="h-3.5 w-3.5" />{t('menu.kitchen')}</> : section.key === 'sides' ? t('menu.tastySide') : section.key === 'drinks' ? t('menu.refreshment') : t('menu.signatureBurger')}
                       </div>
-                    ) : (
-                      <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-4 font-black uppercase text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
-                        {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-4 w-4 shrink-0" />
-                      </button>
-                    )}
-                  </div>
-                </article>
-              ))}
+                      
+                      <h3 className="text-base sm:text-lg font-black text-aldesRed uppercase tracking-tight truncate">{item.name}</h3>
+                      <p className="mt-1.5 text-xs sm:text-sm text-black font-medium flex-1 line-clamp-3 sm:line-clamp-2 leading-relaxed">{item.description}</p>
+                      <p className="mt-3 text-base sm:text-lg font-black text-black">{currencyFormatter.format(item.price ?? 0)}</p>
+                      
+                      {/* Action States */}
+                      {isItemOutOfStock ? (
+                        <button type="button" disabled className="cursor-not-allowed mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-gray-300 bg-gray-200 px-4 font-black uppercase text-xs sm:text-sm text-gray-400 shadow-none">
+                          {t('menu.outOfStock')}
+                        </button>
+                      ) : activeActionId === item.id ? (
+                        <div className="mt-4 flex items-center justify-between gap-2.5 h-10 w-full">
+                          <div className="flex h-full items-center overflow-hidden rounded-xl border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+                            <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3.5 w-3.5" /></button>
+                            <span className="w-7 border-x-2 border-black text-center text-sm font-black text-black">{tempQty}</span>
+                            <button type="button" onClick={() => setTempQty((p) => Math.min(getMenuStock(item), p + 1))} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3.5 w-3.5" /></button>
+                          </div>
+                          <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-xs sm:text-sm text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
+                            {t('menu.confirm')} <ChevronRight className="h-4 w-4 shrink-0" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-4 font-black uppercase text-xs sm:text-sm shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
+                          {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-4 w-4 shrink-0" />
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
           </section>
         ))
