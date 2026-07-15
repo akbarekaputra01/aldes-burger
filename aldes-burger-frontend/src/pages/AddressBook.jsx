@@ -30,6 +30,7 @@ function AddressBook() {
   const isEditMode = useMemo(() => Boolean(addressId), [addressId])
   const [form, setForm] = useState({ recipient_name: '', phone_number: '', province: '', city: '', district: '', postal_code: '', street_address: '', detail_address: '', label: 'Home', is_default: false, latitude: null, longitude: null, pin_source: 'default', pin_confirmed: false })
   const [suggestions, setSuggestions] = useState([]); const [error, setError] = useState(''); const [isSaving, setIsSaving] = useState(false)
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false)
   const [isSearching, setIsSearching] = useState(false); const [suggestionError, setSuggestionError] = useState('')
   const mapRef = useRef(null); const mapElRef = useRef(null); const markerRef = useRef(null)
 
@@ -110,6 +111,10 @@ function AddressBook() {
   const submit = async (e) => { 
     e.preventDefault(); 
     setError(''); 
+    if (!canSubmitAddress(form)) {
+      setAttemptedSubmit(true)
+      return setError(t('addressForm.completeAllFields'))
+    }
     if (!hasValidPinValue) return setError(t('addressForm.chooseLocationWarning')); 
     setIsSaving(true); 
     try { 
@@ -127,7 +132,82 @@ function AddressBook() {
     } 
   }
 
-  return <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-8"><section className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-md sm:p-8"><div className="mb-6 flex items-start justify-between"><h1 className="text-2xl font-black">{isEditMode ? t('profile.editAddress') : t('profile.addNewAddress')}</h1><MapPin className="h-6 w-6" /></div><form onSubmit={submit} className="space-y-3"><input value={form.recipient_name} onChange={(e)=>setForm((p)=>({ ...p, recipient_name: e.target.value }))} placeholder={t('addressForm.recipientName')} className="w-full rounded-2xl border px-4 py-3" required/><input value={form.phone_number} onChange={(e)=>setForm((p)=>({ ...p, phone_number: e.target.value }))} placeholder={t('addressForm.phoneNumber')} className="w-full rounded-2xl border px-4 py-3" required/><select value={form.province} onChange={(e)=>setForm((p)=>({ ...p, province: e.target.value, city: '', district: '', postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required><option value="">{t('addressForm.selectProvince')}</option>{provinceOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><select value={form.city} onChange={(e)=>setForm((p)=>({ ...p, city: e.target.value, district: '', postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.province}><option value="">{t('addressForm.selectCity')}</option>{cityOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><select value={form.district} onChange={(e)=>setForm((p)=>({ ...p, district: e.target.value, postal_code: '' }))} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.city}><option value="">{t('addressForm.selectDistrict')}</option>{districtOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}</select><input list="postal-code-options" value={form.postal_code} onChange={(e)=>setForm((p)=>({ ...p, postal_code: e.target.value.replace(/[^0-9]/g, '').slice(0, 5) }))} placeholder={form.district ? t('addressForm.selectPostalCode') : t('addressForm.selectDistrictFirst')} className="w-full rounded-2xl border px-4 py-3" required disabled={!form.district}/><datalist id="postal-code-options">{postalCodeOptions.map((x)=><option key={x.postalCode} value={x.postalCode}>{x.postalCode}</option>)}</datalist><input value={form.street_address} onChange={(e)=>setForm((p)=>({ ...p, street_address: e.target.value, pin_source:'default', pin_confirmed:false }))} placeholder={t('addressForm.streetAddress')} className="w-full rounded-2xl border px-4 py-3" required/><input value={form.detail_address} onChange={(e)=>setForm((p)=>({ ...p, detail_address: e.target.value }))} placeholder={t('addressForm.otherDetails')} className="w-full rounded-2xl border px-4 py-3" />
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4 py-8">
+      <section className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-md sm:p-8">
+        <div className="mb-6 flex items-start justify-between">
+          <h1 className="text-2xl font-black">{isEditMode ? t('profile.editAddress') : t('profile.addNewAddress')}</h1>
+          <MapPin className="h-6 w-6" />
+        </div>
+        <form onSubmit={submit} className="space-y-3">
+          <input 
+            value={form.recipient_name} 
+            onChange={(e)=>setForm((p)=>({ ...p, recipient_name: e.target.value }))} 
+            placeholder={t('addressForm.recipientName')} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${form.recipient_name ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow')}`} 
+            required
+          />
+          <input 
+            value={form.phone_number} 
+            onChange={(e)=>setForm((p)=>({ ...p, phone_number: e.target.value }))} 
+            placeholder={t('addressForm.phoneNumber')} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${form.phone_number ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow')}`} 
+            required
+          />
+          <select 
+            value={form.province} 
+            onChange={(e)=>setForm((p)=>({ ...p, province: e.target.value, city: '', district: '', postal_code: '' }))} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${form.province ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow')}`} 
+            required
+          >
+            <option value="">{t('addressForm.selectProvince')}</option>
+            {provinceOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}
+          </select>
+          <select 
+            value={form.city} 
+            onChange={(e)=>setForm((p)=>({ ...p, city: e.target.value, district: '', postal_code: '' }))} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${!form.province ? 'border-gray-200' : (form.city ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow'))}`} 
+            required 
+            disabled={!form.province}
+          >
+            <option value="">{t('addressForm.selectCity')}</option>
+            {cityOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}
+          </select>
+          <select 
+            value={form.district} 
+            onChange={(e)=>setForm((p)=>({ ...p, district: e.target.value, postal_code: '' }))} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${!form.city ? 'border-gray-200' : (form.district ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow'))}`} 
+            required 
+            disabled={!form.city}
+          >
+            <option value="">{t('addressForm.selectDistrict')}</option>
+            {districtOptions.map((x)=><option key={x.id} value={x.name}>{x.name}</option>)}
+          </select>
+          <input 
+            list="postal-code-options" 
+            value={form.postal_code} 
+            onChange={(e)=>setForm((p)=>({ ...p, postal_code: e.target.value.replace(/[^0-9]/g, '').slice(0, 5) }))} 
+            placeholder={form.district ? t('addressForm.selectPostalCode') : t('addressForm.selectDistrictFirst')} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${!form.district ? 'border-gray-200' : (form.postal_code ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow'))}`} 
+            required 
+            disabled={!form.district}
+          />
+          <datalist id="postal-code-options">
+            {postalCodeOptions.map((x)=><option key={x.postalCode} value={x.postalCode}>{x.postalCode}</option>)}
+          </datalist>
+          <input 
+            value={form.street_address} 
+            onChange={(e)=>setForm((p)=>({ ...p, street_address: e.target.value, pin_source:'default', pin_confirmed:false }))} 
+            placeholder={t('addressForm.streetAddress')} 
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition-colors ${form.street_address ? 'border-aldesYellow' : (attemptedSubmit ? 'border-aldesRed focus:border-black' : 'border-aldesYellow')}`} 
+            required
+          />
+          <input 
+            value={form.detail_address} 
+            onChange={(e)=>setForm((p)=>({ ...p, detail_address: e.target.value }))} 
+            placeholder={t('addressForm.otherDetails')} 
+            className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-black transition-colors" 
+          />
   {!form.postal_code && <p className="text-sm text-gray-500">{t('addressForm.postalCodeFirstWarning')}</p>}
   {form.district && postalCodeOptions.length === 0 && <p className="text-sm text-gray-500">{t('addressForm.postalCodeUnavailableWarning')}</p>}
   {isSearching && <p className="text-sm text-gray-500">{t('addressForm.searchingSuggestions')}</p>}
@@ -135,7 +215,8 @@ function AddressBook() {
   {suggestionError && <p className="text-sm text-aldesRed">{suggestionError}</p>}
   {suggestions.length>0 && <div className="rounded-xl border p-2">{suggestions.map((s)=><button type="button" key={s.id} className="block w-full text-left p-2 hover:bg-gray-50" onClick={()=>setForm((p)=>applySuggestionToForm(p, s))}><div className="font-semibold">{s.title}</div><div className="text-sm text-gray-500">{s.formattedAddress}</div></button>)}</div>}
   <div className="text-sm rounded-xl bg-gray-50 px-3 py-2">{[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ')}</div>
-  <div className="grid grid-cols-3 gap-2"><button type="button" onClick={async()=>{navigator.geolocation.getCurrentPosition(async (pos)=>{const latitude = Number(pos.coords.latitude.toFixed(8)); const longitude = Number(pos.coords.longitude.toFixed(8)); setForm((p)=>applyCurrentLocationToForm(p, latitude, longitude)); try { const r = await reverseGeocode(latitude, longitude); if (r.formattedAddress) setForm((p)=>({ ...p, street_address: p.street_address || r.formattedAddress })) } catch { /* noop */ } })}} className="rounded-xl border p-2">{t('addressForm.useCurrentLocation')}</button><select value={form.label ?? 'Home'} onChange={(e)=>setForm((p)=>({...p,label:e.target.value}))} className="rounded-xl border p-2"><option value="Home">{t('addressForm.home')}</option><option value="Work">{t('addressForm.work')}</option><option value="Other">{t('addressForm.other')}</option></select><label className="flex items-center gap-2"><input type="checkbox" checked={!!form.is_default} onChange={(e)=>setForm((p)=>({...p,is_default:e.target.checked}))}/>{t('addressForm.setAsDefault')}</label></div><div className="text-sm">{hasValidPinValue ? `${t('addressForm.pinLocation')}: ${form.latitude}, ${form.longitude}` : t('addressForm.noPinSelected')}</div>{hasStreetAddress ? <div ref={mapElRef} className="h-72 w-full overflow-hidden rounded-3xl border" /> : <div className="h-72 w-full rounded-3xl border bg-gray-50 text-sm text-gray-500 grid place-items-center">{t('addressForm.fillStreetFirst')}</div>}{!hasValidPinValue && <p className="text-sm text-aldesRed">{t('addressForm.chooseLocationWarning')}</p>}{error && <p className="text-sm text-aldesRed">{error}</p>}<div className="flex justify-end gap-3"><button type="button" onClick={() => navigate('/profile')} className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold"><X className="h-4 w-4" /> {t('addressForm.cancel')}</button><button type="submit" disabled={!canSubmit || isSaving} className="inline-flex items-center gap-2 rounded-2xl bg-aldesRed px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save className="h-4 w-4" /> {t('addressForm.saveAddress')}</button></div></form></section></main>
+  <div className="grid grid-cols-3 gap-2"><button type="button" onClick={async()=>{navigator.geolocation.getCurrentPosition(async (pos)=>{const latitude = Number(pos.coords.latitude.toFixed(8)); const longitude = Number(pos.coords.longitude.toFixed(8)); setForm((p)=>applyCurrentLocationToForm(p, latitude, longitude)); try { const r = await reverseGeocode(latitude, longitude); if (r.formattedAddress) setForm((p)=>({ ...p, street_address: p.street_address || r.formattedAddress })) } catch { /* noop */ } })}} className="rounded-xl border p-2">{t('addressForm.useCurrentLocation')}</button><select value={form.label ?? 'Home'} onChange={(e)=>setForm((p)=>({...p,label:e.target.value}))} className="rounded-xl border p-2"><option value="Home">{t('addressForm.home')}</option><option value="Work">{t('addressForm.work')}</option><option value="Other">{t('addressForm.other')}</option></select><label className="flex items-center gap-2"><input type="checkbox" checked={!!form.is_default} onChange={(e)=>setForm((p)=>({...p,is_default:e.target.checked}))}/>{t('addressForm.setAsDefault')}</label></div><div className="text-sm">{hasValidPinValue ? `${t('addressForm.pinLocation')}: ${form.latitude}, ${form.longitude}` : t('addressForm.noPinSelected')}</div>{hasStreetAddress ? <div ref={mapElRef} className="h-72 w-full overflow-hidden rounded-3xl border" /> : <div className="h-72 w-full rounded-3xl border bg-gray-50 text-sm text-gray-500 grid place-items-center">{t('addressForm.fillStreetFirst')}</div>}{!hasValidPinValue && <p className="text-sm text-aldesRed">{t('addressForm.chooseLocationWarning')}</p>}{error && <p className="text-sm text-aldesRed">{error}</p>}  <div className="flex justify-end gap-3"><button type="button" onClick={() => navigate('/profile')} className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold"><X className="h-4 w-4" /> {t('addressForm.cancel')}</button><button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-2xl bg-aldesRed px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save className="h-4 w-4" /> {t('addressForm.saveAddress')}</button></div></form></section></main>
+  )
 }
 
 export default AddressBook

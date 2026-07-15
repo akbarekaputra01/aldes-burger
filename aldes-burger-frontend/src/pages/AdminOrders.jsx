@@ -115,26 +115,38 @@ function OrderCard({ order, moveStatus, cancelOrder, isLoading }) {
   )
 }
 
+let cachedOrders = null
+
 function AdminOrders() {
   const { t } = useTranslation()
-  const [orders, setOrders] = useState([])
-  const [isFetching, setIsFetching] = useState(true)
+  const [orders, setOrders] = useState(cachedOrders || [])
+  const [isFetching, setIsFetching] = useState(!cachedOrders)
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   
   // State untuk membatasi jumlah pesanan "Done" yang tampil (default 5)
   const [doneLimit, setDoneLimit] = useState(5)
 
-  const loadOrders = useCallback(async (showLoading = false) => {
-    if (showLoading) setIsFetching(true)
+  const loadOrders = useCallback(async (showLoading = false, force = false) => {
+    if (!force && cachedOrders && !showLoading) {
+      setOrders(cachedOrders)
+      setIsFetching(false)
+      return
+    }
+    if (showLoading && !cachedOrders) setIsFetching(true)
     try {
       const { data } = await api.get('/admin/orders')
       setOrders(data)
-    } catch (error) { console.error("Failed to fetch orders:", error) } finally { setIsFetching(false) }
+      cachedOrders = data
+    } catch (error) { 
+      console.error("Failed to fetch orders:", error) 
+    } finally { 
+      setIsFetching(false) 
+    }
   }, [])
   
   useEffect(() => {
-    loadOrders(true)
-    const interval = setInterval(() => loadOrders(false), 15000)
+    loadOrders(true, false)
+    const interval = setInterval(() => loadOrders(false, true), 15000)
     return () => clearInterval(interval)
   }, [loadOrders])
 
@@ -144,7 +156,9 @@ function AdminOrders() {
     setUpdatingOrderId(id)
     try {
       await api.patch(`/admin/orders/${id}/status`, { status: nextStatus[order.status] })
-      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus[o.status] } : o))
+      const next = orders.map(o => o.id === id ? { ...o, status: nextStatus[o.status] } : o)
+      setOrders(next)
+      cachedOrders = next
     } catch (error) { console.error("Failed to update status:", error); alert("Failed to update status.") } finally { setUpdatingOrderId(null) }
   }
 
@@ -153,7 +167,9 @@ function AdminOrders() {
     setUpdatingOrderId(id)
     try {
       await api.patch(`/admin/orders/${id}/status`, { status: 'cancelled' })
-      setOrders(prev => prev.filter(o => o.id !== id))
+      const next = orders.filter(o => o.id !== id)
+      setOrders(next)
+      cachedOrders = next
     } catch (error) { console.error("Failed to cancel:", error); alert("Failed to cancel order.") } finally { setUpdatingOrderId(null) }
   }
 
@@ -164,7 +180,7 @@ function AdminOrders() {
       <section className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="flex items-center gap-2 text-2xl font-black text-gray-900"><ChefHat className="h-8 w-8 text-red-600" /> {t('adminOrders.title')}</h1>
-          <button onClick={() => loadOrders(true)} disabled={isFetching} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition-all text-sm disabled:opacity-50">
+          <button onClick={() => loadOrders(true, true)} disabled={isFetching} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition-all text-sm disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-red-600' : ''}`} /> {isFetching ? t('common.loading') : t('adminOrders.refresh')}
           </button>
         </div>
