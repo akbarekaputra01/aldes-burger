@@ -22,6 +22,11 @@ Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
 
 Route::post('/midtrans/callback', [MidtransController::class, 'callback']);
+
+// Endpoint Publik Sementara
+Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+
 // Endpoint yang membutuhkan Token (Login)
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
@@ -36,8 +41,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
-    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::patch('/transactions/{transaction}/payment-method', [TransactionController::class, 'changePaymentMethod']);
     Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel']);
     Route::get('/transactions/{transaction}/snap-token', [TransactionController::class, 'getSnapToken']);

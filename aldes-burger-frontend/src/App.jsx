@@ -49,7 +49,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/transactions" element={<Transactions />} />
-              <Route path="/transactions/:id" element={<TransactionDetail />} />
+            <Route path="/transactions/:id" element={<TransactionDetail />} />
             
 
             {/* Wajib Login (Dilindungi oleh ProtectedRoute) */}
@@ -57,8 +57,7 @@ function App() {
               <Route path="/kitchen" element={<Kitchen />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/transactions/:id" element={<TransactionDetail />} />
+              
               <Route path="/address-book" element={<AddressBook />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/payment-status" element={<PaymentStatus />} />
