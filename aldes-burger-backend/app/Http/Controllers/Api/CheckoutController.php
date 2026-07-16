@@ -167,7 +167,7 @@ class CheckoutController extends Controller
                 'destination_address' => $address->address,
                 'user_id'             => $user->id,
                 'amount'              => $totalAmount,
-                'status'              => 'pending',
+                'status'              => ($payload['payment_method'] === 'cash') ? 'pending' : 'waiting_for_payment',
             ]);
 
             foreach ($details as $detail) {
@@ -214,33 +214,35 @@ class CheckoutController extends Controller
             }
 
             // ── Midtrans Integration ────────────────────────────────
-            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-            // \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-            \Midtrans\Config::$isProduction = false; // Harus false untuk Sandbox
-            \Midtrans\Config::$isSanitized = true;
-            \Midtrans\Config::$is3ds = true;
-            \Midtrans\Config::$curlOptions = [
-                CURLOPT_SSL_VERIFYHOST => 0,
-                CURLOPT_SSL_VERIFYPEER => 0,
-                CURLOPT_HTTPHEADER => [], // Tambahkan baris ini untuk mencegah error 10023
-            ];
+            $snapToken = null;
+            if ($payload['payment_method'] !== 'cash') {
+                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+                // \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+                \Midtrans\Config::$isProduction = false; // Harus false untuk Sandbox
+                \Midtrans\Config::$isSanitized = true;
+                \Midtrans\Config::$is3ds = true;
+                \Midtrans\Config::$curlOptions = [
+                    CURLOPT_SSL_VERIFYHOST => 0,
+                    CURLOPT_SSL_VERIFYPEER => 0,
+                    CURLOPT_HTTPHEADER => [], // Tambahkan baris ini untuk mencegah error 10023
+                ];
 
-            $midtransParams = [
-                'transaction_details' => [
-                    'order_id' => $transaction->id,
-                    'gross_amount' => (int) $totalAmount, // Pastikan menjadi integer
-                ],
-                'customer_details' => [
-                    'first_name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $address->phone_number,
-                ]
-            ];
+                $midtransParams = [
+                    'transaction_details' => [
+                        'order_id' => $transaction->id,
+                        'gross_amount' => (int) $totalAmount, // Pastikan menjadi integer
+                    ],
+                    'customer_details' => [
+                        'first_name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $address->phone_number,
+                    ]
+                ];
 
-            $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
-            // dd(env('MIDTRANS_SERVER_KEY'));
-            // Return array berisi data transaksi dan snap token
-            $transaction->snap_token = $snapToken;
+                $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
+                $transaction->snap_token = $snapToken;
+            }
+            
             $transaction->save();
             return [
                 'transaction' => $transaction->load(['details', 'payment']),

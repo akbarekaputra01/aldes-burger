@@ -12,8 +12,9 @@ const toIDR = (price) =>
   }).format(price)
 
 const statusClass = {
-  pending: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-  cooking: 'bg-orange-100 text-orange-700 border-orange-300',
+  waiting_for_payment: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  pending: 'bg-orange-100 text-orange-700 border-orange-300',
+  cooking: 'bg-emerald-100 text-emerald-700 border-emerald-300', // Note: assuming cooking/done are different but maybe original had cooking orange, done emerald. Let's keep original for others.
   done: 'bg-emerald-100 text-emerald-700 border-emerald-300',
 }
 
@@ -23,6 +24,7 @@ function TransactionDetail() {
   const { t } = useTranslation()
   const [transaction, setTransaction] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isChangingPayment, setIsChangingPayment] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -73,10 +75,57 @@ function TransactionDetail() {
   }, [id])
 
   // --- Fungsi untuk memunculkan kembali popup Midtrans Snap ---
-  const handleContinuePayment = () => {
-    if (transaction?.snap_token) {
-      window.snap.pay(transaction.snap_token, {
-        onSuccess: () => {
+  const [tokenLoading, setTokenLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    
+    setIsCancelling(true);
+    try {
+      await api.patch(`/transactions/${transaction.id}/cancel`);
+      
+      // Update local state to cancelled
+      setTransaction(prev => ({ ...prev, status: 'cancelled' }));
+      sessionStorage.removeItem(`aldes_tx_detail_${id}`);
+      sessionStorage.removeItem('aldes_transactions_cache');
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.message || 'Failed to cancel order.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleContinuePayment = async () => {
+    let currentSnapToken = transaction?.snap_token;
+
+    if (!currentSnapToken) {
+      try {
+        setTokenLoading(true);
+        const res = await api.get(`/transactions/${transaction.id}/snap-token`);
+        currentSnapToken = res.data.snap_token;
+      } catch (e) {
+        alert('Failed to load payment token. Please try again.');
+        return;
+      } finally {
+        setTokenLoading(false);
+      }
+    }
+
+    if (currentSnapToken) {
+      window.snap.pay(currentSnapToken, {
+        onSuccess: async () => {
+          if (transaction.payment?.method === 'cash') {
+            try {
+              await api.patch(`/transactions/${transaction.id}/payment-method`, {
+                payment_method: 'bank_transfer',
+                is_success: true
+              })
+            } catch (e) {
+              console.error(e)
+            }
+          }
           sessionStorage.removeItem(`aldes_tx_detail_${id}`)
           sessionStorage.removeItem('aldes_transactions_cache')
           navigate('/payment-status?status=success')
@@ -93,6 +142,24 @@ function TransactionDetail() {
       })
     } else {
       alert('Failed to load payment token. Please ensure the backend includes snap_token.')
+    }
+  }
+
+  const handleChangePaymentMethod = async (newMethod) => {
+    try {
+      setIsChangingPayment(true)
+      const res = await api.patch(`/transactions/${transaction.id}/payment-method`, {
+        payment_method: newMethod
+      })
+      const txData = res.data.transaction || res.data
+      setTransaction(txData)
+      sessionStorage.setItem(`aldes_tx_detail_${id}`, JSON.stringify(txData))
+      alert(`Payment method changed to ${newMethod.replace('_', ' ')}`)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to change payment method')
+    } finally {
+      setIsChangingPayment(false)
     }
   }
 
@@ -147,7 +214,7 @@ function TransactionDetail() {
                 statusClass[transaction.status] || 'bg-gray-100 text-gray-700 border-gray-300'
               }`}
             >
-              {transaction.status === 'pending' ? t('paymentStatus.pending') : transaction.status}
+              {transaction.status === 'waiting_for_payment' ? 'Waiting for Payment' : transaction.status}
             </span>
           </div>
         </div>
@@ -181,19 +248,36 @@ function TransactionDetail() {
             <div className="mt-4 pt-3 border-t-2 border-dashed border-black/20 flex items-center justify-between gap-2">
               <span className="text-[10px] font-black uppercase text-gray-400">{t('transactionDetail.status')}</span>
               
-              {transaction.status === 'pending' ? (
-                transaction.payment?.method !== 'cash' ? (
+              {transaction.status === 'waiting_for_payment' ? (
+                <div className="flex gap-2">
+                  <button 
+                     onClick={() => handleChangePaymentMethod('cash')}
+                     disabled={isChangingPayment}
+                    className="rounded-lg bg-gray-200 px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black hover:bg-gray-300 active:translate-y-[1px] active:translate-x-[1px] transition-all disabled:opacity-50"
+                  >
+                    Change to Cash
+                  </button>
                   <button 
                      onClick={handleContinuePayment}
-                    className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1"
+                     disabled={isChangingPayment}
+                    className="rounded-lg bg-aldesYellow px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-400 active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all flex items-center gap-1 disabled:opacity-50"
                   >
                     {t('transactionDetail.payNow')}
                   </button>
-                ) : (
+                </div>
+              ) : transaction.status === 'pending' && transaction.payment?.method === 'cash' ? (
+                <div className="flex items-center gap-2">
                   <span className="rounded-lg bg-orange-100 px-3 py-1 text-[10px] font-black uppercase text-orange-700 border-2 border-orange-700">
-                    {t('paymentStatus.pending')}
+                    Pending
                   </span>
-                )
+                  <button 
+                     onClick={handleContinuePayment}
+                     disabled={isChangingPayment || tokenLoading}
+                    className="rounded-lg bg-gray-200 px-3 py-1.5 text-[11px] font-black uppercase text-black border-2 border-black hover:bg-gray-300 active:translate-y-[1px] active:translate-x-[1px] transition-all disabled:opacity-50"
+                  >
+                    {tokenLoading ? 'Loading...' : 'Change to Online'}
+                  </button>
+                </div>
               ) : transaction.status === 'cancelled' ? (
                 <span className="rounded-lg bg-red-100 px-3 py-1 text-[10px] font-black uppercase text-red-700 border-2 border-red-700">
                   Cancelled
@@ -255,6 +339,19 @@ function TransactionDetail() {
             </div>
           </div>
         </div>
+
+        {/* Tombol Cancel */}
+        {(transaction.status === 'pending' || transaction.status === 'waiting_for_payment') && (
+          <div className="mt-6 flex justify-center">
+             <button
+               onClick={handleCancelOrder}
+               disabled={isCancelling}
+               className="w-full rounded-2xl bg-red-100 py-4 text-sm font-black uppercase text-red-600 border-2 border-red-600 hover:bg-red-200 active:scale-95 transition-all disabled:opacity-50"
+             >
+               {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+             </button>
+          </div>
+        )}
       </section>
     </main>
   )

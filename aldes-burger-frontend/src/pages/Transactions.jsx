@@ -138,7 +138,7 @@ function Transactions() {
                       <h3 className={`mt-1 text-xl font-black uppercase italic leading-none 
                         ${order.status?.toLowerCase() === 'cancelled' ? 'text-red-600 line-through decoration-2' : ''}
                         ${(order.status?.toLowerCase() === 'done' || order.status?.toLowerCase() === 'completed') ? 'text-emerald-700' : ''}`}>
-                        {order.status}
+                        {order.status === 'waiting_for_payment' ? 'Waiting for Payment' : order.status}
                       </h3>
                     </div>
                   </div>
