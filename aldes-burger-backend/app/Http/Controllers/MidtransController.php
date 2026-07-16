@@ -38,13 +38,13 @@ class MidtransController extends Controller
 
         // 4. Update status berdasarkan laporan Midtrans
         if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
-            // Lunas -> Ubah status jadi cooking (atau status apapun yang Anda pakai untuk lunas)
-            $transaction->status = 'cooking'; 
+            // Lunas -> Ubah status jadi pending (menunggu admin approve)
+            $transaction->status = 'pending'; 
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
             // Gagal / Batal
             $transaction->status = 'cancelled';
         } else if ($transactionStatus == 'pending') {
-            $transaction->status = 'pending';
+            $transaction->status = 'waiting_for_payment';
         }
 
         // Simpan perubahan ke database

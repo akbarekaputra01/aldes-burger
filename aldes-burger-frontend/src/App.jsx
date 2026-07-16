@@ -48,6 +48,8 @@ function App() {
             {/* Bebas diakses tanpa perlu login (Bisa lihat menu & merakit burger) */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/menu" element={<Menu />} />
+            <Route path="/transactions" element={<Transactions />} />
+              <Route path="/transactions/:id" element={<TransactionDetail />} />
             
 
             {/* Wajib Login (Dilindungi oleh ProtectedRoute) */}
