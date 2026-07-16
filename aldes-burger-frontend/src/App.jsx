@@ -57,10 +57,6 @@ function App() {
               <Route path="/kitchen" element={<Kitchen />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-<<<<<<< HEAD
-              
-=======
->>>>>>> e1c233f3311a173f57da73287f6c9e716cac6d85
               <Route path="/address-book" element={<AddressBook />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/payment-status" element={<PaymentStatus />} />
