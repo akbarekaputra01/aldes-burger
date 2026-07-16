@@ -13,9 +13,9 @@ class TransactionController extends Controller
     {
         try {
             // Cari transaksi berdasarkan ID dan pastikan milik user yang sedang login
-            // 'details' dan 'payment' adalah relasi yang ingin kita ambil bersamaan (Eager Loading)
             $transaction = Transaction::with(['details', 'payment'])
                                     ->where('id', $id)
+                                    ->where('user_id', auth()->id())
                                     ->firstOrFail();
 
             // Karena data token sudah disimpan di database, 
