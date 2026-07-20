@@ -10,12 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/clarity": "^1.0.2",
     "@tailwindcss/postcss": "^4.2.2",
     "axios": "^1.8.4",
     "lucide-react": "^0.542.0",
     "react": "^19.2.4",
-    "react-clarity": "^0.4.0",
     "react-dom": "^19.2.4",
+    "react-microsoft-clarity": "^2.0.0",
     "react-router-dom": "^6.30.1",
     "swr": "^2.4.2"
   },
