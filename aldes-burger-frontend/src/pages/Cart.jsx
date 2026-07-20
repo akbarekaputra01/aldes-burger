@@ -276,8 +276,8 @@ function Cart() {
     .reduce((sum, item) => sum + getItemPrice(item) * (item.qty ?? 1), 0)
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream p-2 md:p-6 flex justify-center items-start">
-      <section className="w-full max-w-4xl bg-white border-[6px] border-black rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-10 shadow-[10px_10px_0_0_#000] relative mt-10">
+    <main className="min-h-screen w-full bg-aldesCream p-4 md:p-6 flex justify-center items-start pb-32 md:pb-6 relative">
+      <section className="w-full max-w-4xl bg-white border-4 md:border-[6px] border-black rounded-[2rem] md:rounded-[3rem] p-4 sm:p-5 md:p-10 shadow-[8px_8px_0_0_#000] md:shadow-[10px_10px_0_0_#000] relative mt-6 md:mt-10">
 
         {/* Badge */}
         <div className="absolute -top-8 -right-2 md:-top-12 md:-right-4 bg-aldesRed border-[4px] border-black px-4 py-2 md:px-7 md:py-3 rounded-2xl shadow-[6px_6px_0_0_#FFC926] rotate-6 z-30">
@@ -459,7 +459,7 @@ function Cart() {
         </div>
 
         {/* Checkout */}
-        <div className="mt-6">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t-4 border-black md:static md:bg-transparent md:border-0 md:p-0 md:mt-6 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] md:shadow-none">
           <button
             disabled={selectedIds.length === 0 || isAnySelectedOverStock}
             onClick={() => {
