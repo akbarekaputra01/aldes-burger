@@ -109,10 +109,10 @@ function LandingPage() {
             {t('landing.subheadline')}
           </p>
           <div className="flex flex-wrap gap-4 w-full">
-            <button onClick={handleStartCustomizing} className="w-full sm:w-auto bg-aldesRed text-white px-6 py-4 md:px-8 md:py-4 rounded-2xl font-black uppercase text-base md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
+            <button onClick={handleStartCustomizing} className="w-full sm:w-auto bg-aldesRed text-white px-5 py-3.5 md:px-8 md:py-4 rounded-2xl font-black uppercase text-sm md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] md:hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-[3px] md:border-4 border-black">
               {t('landing.startBuilding')}
             </button>
-            <button onClick={() => navigate('/menu')} className="w-full sm:w-auto bg-white px-6 py-4 md:px-8 md:py-4 rounded-2xl font-black uppercase text-base md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black text-black">
+            <button onClick={() => navigate('/menu')} className="w-full sm:w-auto bg-white px-5 py-3.5 md:px-8 md:py-4 rounded-2xl font-black uppercase text-sm md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] md:hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-[3px] md:border-4 border-black text-black">
               {t('landing.exploreMenu')}
             </button>
           </div>
@@ -120,8 +120,8 @@ function LandingPage() {
 
         {/* Live Preview Dummy */}
         <div className="flex-1 w-full flex justify-center relative z-10 mt-10 lg:mt-0">
-          <div className="relative bg-white p-6 rounded-[2.5rem] border-[6px] border-black shadow-[15px_15px_0_0_#000] rotate-3 hover:rotate-0 transition-transform duration-500 max-w-md w-full">
-             <img src={burgerImg} alt="Epic Burger" className="w-full object-cover rounded-[1.5rem] mb-6 border-4 border-black aspect-[4/3]" />
+          <div className="relative bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] border-4 md:border-[6px] border-black shadow-[8px_8px_0_0_#000] md:shadow-[15px_15px_0_0_#000] rotate-3 hover:rotate-0 transition-transform duration-500 max-w-md w-full">
+             <img src={burgerImg} alt="Epic Burger" className="w-full object-cover rounded-xl md:rounded-[1.5rem] mb-4 md:mb-6 border-[3px] md:border-4 border-black aspect-[4/3]" />
              <div className="space-y-3">
                 {['Beef Patty', 'No Onion', 'Extra Cheese'].map(item => (
                   <div key={item} className="flex items-center gap-2 font-black uppercase bg-aldesCream border-2 border-black/10 p-2.5 rounded-xl text-sm">
@@ -131,7 +131,7 @@ function LandingPage() {
              </div>
              <div className="mt-5 pt-5 border-t-[3px] border-dashed border-black flex justify-between items-center font-black text-xl uppercase">
                <span>{t('landing.estPrice')}</span>
-               <span className="text-aldesRed italic text-2xl">Rp 59.000</span>
+               <span className="text-aldesRed italic text-2xl">Rp 44.000</span>
              </div>
           </div>
         </div>
@@ -165,10 +165,10 @@ function LandingPage() {
           </div>
 
           <div className="relative w-full h-[400px] max-w-2xl mt-16">
-            <div className={`absolute top-[17%] right-4 md:right-16 bg-white border-[4px] border-black px-5 py-3 rounded-2xl shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <p className="text-[10px] font-black uppercase text-gray-500">{t('landing.yourMasterpiece')}</p>
-                <p className="text-2xl font-black italic text-black">Rp 36.500</p>
-                 <button onClick={handleStartCustomizing} className="mt-2 bg-aldesRed text-white text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:bg-black transition-colors">{t('landing.orderNow')}</button>
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 md:top-[17%] md:left-auto md:-translate-x-0 md:right-16 bg-white border-2 md:border-[4px] border-black px-4 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl shadow-[4px_4px_0_0_#D52518] md:shadow-[6px_6px_0_0_#D52518] z-[60] transition-all duration-500 transform ${progress >= 0.9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-500 text-center md:text-left">{t('landing.yourMasterpiece')}</p>
+                <p className="text-xl md:text-2xl font-black italic text-black text-center md:text-left">Rp 36.500</p>
+                 <button onClick={handleStartCustomizing} className="mt-1 md:mt-2 bg-aldesRed text-white text-[10px] md:text-xs px-3 py-1.5 rounded-lg border-2 border-black font-black uppercase w-full hover:-translate-y-[2px] hover:shadow-[3px_3px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all">{t('landing.orderNow')}</button>
             </div>
 
             {/* INGREDIENTS LAYERS */}
@@ -205,7 +205,7 @@ function LandingPage() {
               { icon: <ShoppingBag size={28} />, title: t('landing.step3Title'), desc: t('landing.step3Desc') },
               { icon: <Truck size={28} />, title: t('landing.step4Title'), desc: t('landing.step4Desc') }
             ].map((step, i) => (
-              <div key={i} className="bg-aldesCream border-[4px] border-black p-6 rounded-2xl shadow-[5px_5px_0_0_#000] flex flex-col justify-between hover:-translate-y-1 transition-transform group">
+              <div key={i} className="bg-aldesCream border-[3px] md:border-[4px] border-black p-5 md:p-6 rounded-2xl shadow-[4px_4px_0_0_#000] md:shadow-[5px_5px_0_0_#000] flex flex-col justify-between hover:-translate-y-1 transition-transform group">
                 <div>
                   <div className="w-14 h-14 bg-black text-aldesYellow border-2 border-black rounded-xl flex items-center justify-center mb-6 shadow-[3px_3px_0_0_#D52518] group-hover:bg-aldesRed group-hover:text-white transition-colors">
                     {step.icon}
@@ -238,7 +238,7 @@ function LandingPage() {
           </div>
 
           {/* RECEIPT BOX ACCORDION TICKET */}
-          <div className="bg-white border-[6px] border-black rounded-2xl p-6 md:p-10 shadow-[12px_12px_0_0_#000] relative border-t-[14px] border-t-black">
+          <div className="bg-white border-4 md:border-[6px] border-black rounded-2xl p-5 md:p-10 shadow-[6px_6px_0_0_#000] md:shadow-[12px_12px_0_0_#000] relative border-t-8 md:border-t-[14px] border-t-black">
             
             {/* Top Bar Receipt Info */}
             <div className="flex justify-between items-center border-b-2 border-dashed border-black pb-4 mb-6 text-xs font-mono font-black text-gray-400">
@@ -301,13 +301,13 @@ function LandingPage() {
             {t('landing.ctaSub')}
           </p>
           
-          <div className="pt-4">
+          <div className="pt-4 flex justify-center">
             <button 
               onClick={handleStartCustomizing} 
-              className="inline-flex items-center gap-3 bg-black text-aldesYellow px-10 py-5 rounded-2xl font-black uppercase text-lg md:text-2xl border-4 border-black shadow-[8px_8px_0_0_#D52518] hover:-translate-y-1 hover:shadow-[10px_10px_0_0_#000] active:translate-y-1 active:shadow-none transition-all duration-150"
+              className="inline-flex items-center justify-center gap-2 md:gap-3 bg-black text-aldesYellow px-6 py-4 md:px-10 md:py-5 rounded-2xl font-black uppercase text-base md:text-2xl border-[3px] md:border-4 border-black shadow-[5px_5px_0_0_#D52518] md:shadow-[8px_8px_0_0_#D52518] hover:-translate-y-1 hover:shadow-[7px_7px_0_0_#D52518] md:hover:shadow-[10px_10px_0_0_#D52518] active:translate-y-1 active:shadow-none transition-all duration-150 w-full sm:w-auto"
             >
               <span>{t('landing.ctaButton')}</span>
-              <ArrowRight strokeWidth={4} size={22} />
+              <ArrowRight strokeWidth={4} size={20} className="md:w-[22px] md:h-[22px]" />
             </button>
           </div>
 

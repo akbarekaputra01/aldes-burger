@@ -496,7 +496,7 @@ function Kitchen() {
     navigate('/cart')
   }
 
-  let currentBottomOffset = isMobileViewport ? -10 : 40;
+  let currentBottomOffset = isMobileViewport ? 42 : 45;
   const stackWithPositions = burgerStack.map((layer) => {
     const pos = currentBottomOffset;
     currentBottomOffset += getIngredientThickness(layer.ingredient_name, isMobileViewport);
@@ -635,7 +635,7 @@ function Kitchen() {
                   </button>
                 )}
 
-                <div className="absolute bottom-[40px] sm:bottom-[65px] w-[50%] h-6 sm:h-8 bg-black/15 rounded-[100%] blur-[4px] sm:blur-[6px] z-0" />
+                <div className="absolute bottom-[5px] sm:bottom-[65px] w-[50%] h-6 sm:h-8 bg-black/15 rounded-[100%] blur-[4px] sm:blur-[6px] z-0" />
 
                 {/* BIG VISUAL BURGER STACK */}
                 {isFetching ? (

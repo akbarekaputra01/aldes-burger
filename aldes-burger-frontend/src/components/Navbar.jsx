@@ -71,6 +71,13 @@ function Navbar({ isLoggedIn }) {
     }
   }
 
+  const handleLogoClick = () => {
+    const targetPath = isLoggedIn ? '/menu' : '/'
+    if (location.pathname === targetPath) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full bg-aldesRed shadow-[0_2px_10px_rgba(0,0,0,0.15)] overflow-visible">
       <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 overflow-visible">
@@ -78,6 +85,7 @@ function Navbar({ isLoggedIn }) {
         {/* Logo Left */}
         <Link
           to={isLoggedIn ? '/menu' : '/'}
+          onClick={handleLogoClick}
           className="flex flex-shrink-0 items-center transition-transform duration-200 hover:scale-[1.02]"
         >
           <img
