@@ -192,6 +192,7 @@ function Cart() {
   }, [])
 
   const getCartItemStock = (item) => {
+    if (menus.length === 0 || ingredients.length === 0) return 999;
     const menuItem = menus.find(m => m.id === item.menu_id);
     if (!menuItem) return 999;
     
