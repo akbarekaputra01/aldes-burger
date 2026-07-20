@@ -250,7 +250,7 @@ function TransactionDetail() {
              </div>
              <div className="flex flex-col gap-3">
                <p className="text-[11px] font-bold text-gray-600 uppercase">
-                 {transaction.payment?.method?.replace('_', ' ') || '-'}
+                 {transaction.payment?.method === 'bank_transfer' ? t('checkout.bankTransfer') : (transaction.payment?.method?.replace('_', ' ') || '-')}
                </p>
                
                {/* Mobile Status Actions */}
@@ -366,7 +366,7 @@ function TransactionDetail() {
                 <p className="font-black uppercase text-gray-900 text-sm">{t('transactionDetail.paymentMethod')}</p>
               </div>
               <p className="text-sm font-bold text-gray-600 uppercase">
-                {transaction.payment?.method?.replace('_', ' ') || '-'}
+                {transaction.payment?.method === 'bank_transfer' ? t('checkout.bankTransfer') : (transaction.payment?.method?.replace('_', ' ') || '-')}
               </p>
             </div>
             
