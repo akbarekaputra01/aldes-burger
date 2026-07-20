@@ -41,21 +41,50 @@ class CheckoutController extends Controller
         $user = $request->user();
         $address = Address::query()->where('user_id', $user->id)->findOrFail($payload['address_id']);
 
-        $result = DB::transaction(function () use ($payload, $user, $address) {
+        // --- OPTIMIZATION: Pre-fetch Menus and Ingredients to avoid N+1 queries ---
+        $menuIds = collect($payload['items'])->pluck('menu_id')->unique();
+        $menus = Menu::query()->with(['ingredients' => fn ($q) => $q->withPivot('quantity')])->whereIn('id', $menuIds)->get()->keyBy('id');
+
+        $modifierIngredientIds = collect($payload['items'])
+            ->pluck('modifiers')->flatten(1)->filter()
+            ->pluck('ingredient_id')->unique();
+            
+        $stackIngredientNames = collect($payload['items'])
+            ->pluck('ingredients')->flatten(1)->filter()
+            ->unique();
+
+        $ingredientsById = Ingredient::query()->whereIn('id', $modifierIngredientIds)->get()->keyBy('id');
+        $ingredientsByName = Ingredient::query()->whereIn('name', $stackIngredientNames)->get()->keyBy('name');
+
+        $recipeIngredientIds = [];
+        foreach ($menus as $menu) {
+            foreach ($menu->ingredients as $ing) {
+                $recipeIngredientIds[] = $ing->id;
+            }
+        }
+        $recipeIngredients = Ingredient::query()->whereIn('id', $recipeIngredientIds)->get()->keyBy('id');
+
+        // All ingredients that might be used
+        $allIngredients = $ingredientsById->merge($recipeIngredients)->concat($ingredientsByName->values())->keyBy('id');
+        // -------------------------------------------------------------------------
+
+        $transaction = DB::transaction(function () use ($payload, $user, $address, $menus, $ingredientsById, $ingredientsByName, $allIngredients) {
             $payment = Payment::query()->firstOrCreate(['method' => $payload['payment_method']]);
 
             $totalAmount = 0;
             $details = [];
 
             foreach ($payload['items'] as $item) {
-                $menu = Menu::query()->with(['ingredients' => fn ($q) => $q->withPivot('quantity')])->findOrFail($item['menu_id']);
+                $menu = $menus->get($item['menu_id']);
+                if (!$menu) abort(404, "Menu not found");
 
                 $addModifierPrice = 0;
                 $added = [];
                 $removed = [];
 
                 foreach ($item['modifiers'] ?? [] as $modifier) {
-                    $ingredient = Ingredient::query()->findOrFail($modifier['ingredient_id']);
+                    $ingredient = $ingredientsById->get($modifier['ingredient_id']);
+                    if (!$ingredient) abort(404, "Ingredient not found");
 
                     if ($modifier['action'] === 'add') {
                         $addModifierPrice += $ingredient->price;
@@ -103,7 +132,7 @@ class CheckoutController extends Controller
                 ];
             }
 
-            // ─── Stock Validation ───
+            // ─── Stock Validation & Deduction ───
             $requiredMenuStock = [];
             $requiredIngredientStock = [];
 
@@ -128,7 +157,7 @@ class CheckoutController extends Controller
                     if ($menu->is_custom) {
                         // Custom burger: check ingredient stack stock
                         foreach ($detail['_ingredients_stack'] as $ingName) {
-                            $ingredient = Ingredient::query()->where('name', $ingName)->first();
+                            $ingredient = $ingredientsByName->get($ingName);
                             if ($ingredient) {
                                 $requiredIngredientStock[$ingredient->id] = ($requiredIngredientStock[$ingredient->id] ?? 0) + $qty;
                             }
@@ -140,27 +169,31 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Verify Menu Stocks
+            // Verify and Deduct Menu Stocks
             foreach ($requiredMenuStock as $menuId => $reqQty) {
-                $menu = Menu::query()->findOrFail($menuId);
+                $menu = $menus->get($menuId);
                 if ($menu->stock < $reqQty) {
                     abort(response()->json([
                         'message' => "Stok untuk menu '{$menu->name}' tidak mencukupi (Tersedia: {$menu->stock})."
                     ], 422));
                 }
+                // DEDUCT MENU STOCK
+                $menu->decrement('stock', $reqQty);
             }
 
-            // Verify Ingredient Stocks
+            // Verify and Deduct Ingredient Stocks
             foreach ($requiredIngredientStock as $ingredientId => $reqQty) {
-                $ingredient = Ingredient::query()->findOrFail($ingredientId);
+                $ingredient = $allIngredients->get($ingredientId);
                 if ($ingredient->stock < $reqQty) {
                     abort(response()->json([
                         'message' => "Stok untuk bahan '{$ingredient->name}' tidak mencukupi (Tersedia: {$ingredient->stock})."
                     ], 422));
                 }
+                // DEDUCT INGREDIENT STOCK
+                $ingredient->decrement('stock', $reqQty);
             }
 
-            $transaction = Transaction::query()->create([
+            $trx = Transaction::query()->create([
                 'id'                  => 'TRX-' . date('dmy') . '-' . mt_rand(1000, 9999),
                 'payment_id'          => $payment->id,
                 'address_id'          => $address->id,
@@ -172,52 +205,23 @@ class CheckoutController extends Controller
 
             foreach ($details as $detail) {
                 TransactionDetail::query()->create([
-                    'transaction_id'     => $transaction->id,
+                    'transaction_id'     => $trx->id,
                     'menu_id'            => $detail['menu_id'],
                     'quantity'           => $detail['quantity'],
                     'snapshot_name'      => $detail['snapshot_name'],
                     'snapshot_price'     => $detail['snapshot_price'],
                     'snapshot_modifiers' => $detail['snapshot_modifiers'],
                 ]);
-
-                // ── Deduct ingredient stock ────────────────────────────────
-                /** @var Menu $menu */
-                $menu = $detail['_menu'];
-                $qty  = $detail['_quantity'];
-
-                if ($menu->ingredients->isNotEmpty()) {
-                    // Signature / recipe-based menu: deduct per recipe quantity × order qty
-                    foreach ($menu->ingredients as $ingredient) {
-                        $needed = ($ingredient->pivot->quantity ?? 1) * $qty;
-                        $ingredient->decrement('stock', $needed);
-                    }
-
-                    // Also apply extra adds from modifiers
-                    foreach ($detail['_modifiers'] as $mod) {
-                        if ($mod['action'] === 'add') {
-                            Ingredient::query()->where('id', $mod['ingredient_id'])->decrement('stock', $qty);
-                        }
-                    }
-                } else {
-                    // Custom burger: deduct 1 unit per ingredient in the stack × order qty
-                    // Count occurrences of each ingredient name in the stack
-                    $stackCounts = [];
-                    foreach ($detail['_ingredients_stack'] as $ingName) {
-                        $stackCounts[$ingName] = ($stackCounts[$ingName] ?? 0) + 1;
-                    }
-                    foreach ($stackCounts as $ingName => $count) {
-                        Ingredient::query()
-                            ->where('name', $ingName)
-                            ->decrement('stock', $count * $qty);
-                    }
-                }
             }
 
-            // ── Midtrans Integration ────────────────────────────────
-            $snapToken = null;
-            if ($payload['payment_method'] !== 'cash') {
+            return $trx;
+        });
+
+        // ── Midtrans Integration (Dipindah ke luar DB::transaction) ──
+        $snapToken = null;
+        if ($payload['payment_method'] !== 'cash') {
+            try {
                 \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-                // \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
                 \Midtrans\Config::$isProduction = false; // Harus false untuk Sandbox
                 \Midtrans\Config::$isSanitized = true;
                 \Midtrans\Config::$is3ds = true;
@@ -230,7 +234,7 @@ class CheckoutController extends Controller
                 $midtransParams = [
                     'transaction_details' => [
                         'order_id' => $transaction->id,
-                        'gross_amount' => (int) $totalAmount, // Pastikan menjadi integer
+                        'gross_amount' => (int) $transaction->amount, // Pastikan menjadi integer
                     ],
                     'customer_details' => [
                         'first_name' => $user->name,
@@ -241,17 +245,19 @@ class CheckoutController extends Controller
 
                 $snapToken = \Midtrans\Snap::getSnapToken($midtransParams);
                 $transaction->snap_token = $snapToken;
+                $transaction->save();
+            } catch (\Exception $e) {
+                // Ignore exception to let the checkout succeed even if Midtrans sandbox is slow/down
+                // Di aplikasi nyata, lebih baik log errornya.
+                \Illuminate\Support\Facades\Log::error('Midtrans Snap Token Error: ' . $e->getMessage());
             }
-            
-            $transaction->save();
-            return [
-                'transaction' => $transaction->load(['details', 'payment']),
-                'snap_token' => $snapToken
-            ];
-        });
+        }
 
         // Response dikembalikan sebagai JSON dengan HTTP status 201 Created
-        return response()->json($result, 201);
+        return response()->json([
+            'transaction' => $transaction->load(['details', 'payment']),
+            'snap_token' => $snapToken
+        ], 201);
     }
 
     public function storeAddress(Request $request): JsonResponse

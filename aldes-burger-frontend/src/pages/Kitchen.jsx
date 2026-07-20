@@ -508,7 +508,7 @@ function Kitchen() {
   const canCheckout = isBottomBunValid && isTopBunValid && getMaxQtyForStack() >= 1;
 
   return (
-    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 sm:p-8 select-none overflow-x-hidden">
+    <main className="relative z-0 min-h-screen bg-[#F3E8CC] px-3 py-6 pb-44 sm:p-8 select-none overflow-x-hidden">
       <style>
         {`
           @keyframes dropBounce {
@@ -921,8 +921,8 @@ function Kitchen() {
               </div>
             </div>
 
-            {/* 3. Multi-Variation Checkout Buttons */}
-            <div className="flex flex-col gap-3 sm:gap-4 md:col-span-1 lg:col-span-3 justify-center w-full">
+            {/* 3. Multi-Variation Checkout Buttons (Desktop) */}
+            <div className="hidden md:flex flex-col gap-3 sm:gap-4 md:col-span-1 lg:col-span-3 justify-center w-full">
               <button
                 type="button"
                 onClick={handleAddToCart}
@@ -965,6 +965,47 @@ function Kitchen() {
           </div>
         </article>
       </section>
+
+      {/* Mobile Sticky Action Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t-4 border-black z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleAddAnotherVariation}
+            disabled={!canCheckout || isSavingVariation}
+            className={`flex-1 py-2 rounded-xl font-black uppercase text-[10px] flex items-center justify-center gap-1 border-2 transition-all 
+                   ${canCheckout 
+                ? 'border-black bg-white text-black shadow-[2px_2px_0_0_#000] active:translate-y-0.5' 
+                : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed shadow-none'
+              }`}
+          >
+            {isSavingVariation ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3 stroke-[4]" />}
+            BUILD ANOTHER
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={!canCheckout || isAddingToCart}
+            className={`flex-[2] py-2 rounded-xl border-2 border-black font-black text-xs uppercase flex flex-col items-center justify-center gap-0 transition-all min-h-[50px] 
+                   ${canCheckout 
+                ? 'bg-[#D52518] text-[#FFC926] shadow-[2px_2px_0_0_#000] active:translate-y-0.5' 
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none border-gray-400'
+              }`}
+          >
+            {!canCheckout ? (
+              <span className="text-[10px] font-black uppercase text-center px-1">
+                {getMaxQtyForStack() < 1 ? (localStorage.getItem('aldes_lang') === 'id' ? "Bahan habis!" : "No stock!") : !isBottomBunValid ? "Needs Bottom Bun!" : "Needs Top Bun!"}
+              </span>
+            ) : (
+              <>
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">{t('kitchen.addToCart')}</span>
+                <span className="italic tracking-tighter text-sm">IDR {(unitPrice * qty).toLocaleString('id-ID')}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </main>
   )
 }

@@ -10,6 +10,9 @@ import useSWR from 'swr'
 // Import gambar Carousel
 import promo1 from '../assets/promo1.jpg'
 import promo2 from '../assets/promo2.jpg'
+import promo3 from '../assets/promo1_new.jpg'
+import promo4 from '../assets/promo2_new.jpg'
+import promo5 from '../assets/promo3_new.jpg'
 
 // Import gambar Menu
 import img1 from '../assets/menus/1.jpg'
@@ -78,6 +81,10 @@ const getMenuStock = (item) => {
 const bannerSlides = [
   { id: 1, image: promo1, alt: 'Spesial Promo Weekend' },
   { id: 2, image: promo2, alt: 'Aldes Burger Opening Offerings' },
+  // { id: 3, image: promo3, alt: 'Aldes Burger Student Deal' },
+  // { id: 4, image: promo4, alt: 'Aldes Burger Nugget' },
+  // { id: 5, image: promo5, alt: 'Aldes Burger World Cup Offerings' },
+
 ]
 
 const extendedSlides = [...bannerSlides, { ...bannerSlides[0], id: 'clone' }]
@@ -351,8 +358,12 @@ function Menu() {
         sectionDefinitions.map((section) => (
           <section key={section.key} className="w-full">
             <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{t(section.labelKey)}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-              {Array.from({ length: 3 }).map((_, index) => <MenuCardSkeleton key={`${section.key}-skeleton-${index}`} />)}
+            <div className="flex md:grid md:grid-cols-3 gap-3 md:gap-6 pb-4 md:pb-0 overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-black/10 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-aldesRed [&::-webkit-scrollbar-thumb]:rounded-full [-webkit-overflow-scrolling:touch]">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={`${section.key}-skeleton-wrap-${index}`} className="w-[46%] shrink-0 md:w-auto md:shrink">
+                  <MenuCardSkeleton key={`${section.key}-skeleton-${index}`} />
+                </div>
+              ))}
             </div>
           </section>
         ))
@@ -361,16 +372,16 @@ function Menu() {
           <section key={section.key} className="w-full">
             <h2 className="mb-4 text-xl sm:text-2xl font-black text-aldesRed tracking-tight uppercase">{t(section.labelKey)}</h2>
             
-            {/* Optimized Responsive Grid Layout */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {/* Horizontal Slider Layout for Mobile, Grid for Desktop */}
+            <div className="flex md:grid md:grid-cols-3 gap-3 md:gap-6 pb-4 md:pb-0 overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-black/10 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-aldesRed [&::-webkit-scrollbar-thumb]:rounded-full [-webkit-overflow-scrolling:touch]">
               {menuBySection[section.key].map((item) => {
                 const isItemOutOfStock = getMenuStock(item) <= 0
                 return (
                   <article
                     key={item.id}
                     ref={activeActionId === item.id ? activeCardRef : null}
-                    className={`group flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 ${
-                      isItemOutOfStock ? 'opacity-60 grayscale' : 'sm:hover:-translate-x-1 sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)]'
+                    className={`group w-[46%] shrink-0 md:w-auto md:shrink flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 ${
+                      isItemOutOfStock ? 'opacity-60 grayscale' : 'sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)]'
                     } ${item.is_custom ? 'shadow-[4px_4px_0_0_#EAB308]' : 'shadow-[4px_4px_0_0_rgba(0,0,0,1)]'}`}
                   >
                     {/* Image Aspect Box */}
@@ -392,34 +403,34 @@ function Menu() {
                     </div>
                     
                     {/* Content Info Box */}
-                    <div className="p-4 flex flex-col flex-1 min-w-0">
-                      <div className={`mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
-                        {item.is_custom ? <><Flame className="h-3.5 w-3.5" />{t('menu.kitchen')}</> : section.key === 'sides' ? t('menu.tastySide') : section.key === 'drinks' ? t('menu.refreshment') : t('menu.signatureBurger')}
+                    <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
+                      <div className={`mb-2 sm:mb-3 self-start inline-flex items-center gap-1 rounded-lg border-2 border-black px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] md:text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${item.is_custom ? 'bg-aldesYellow text-black' : 'bg-white text-black'}`}>
+                        {item.is_custom ? <><Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{t('menu.kitchen')}</> : section.key === 'sides' ? t('menu.tastySide') : section.key === 'drinks' ? t('menu.refreshment') : t('menu.signatureBurger')}
                       </div>
                       
-                      <h3 className="text-base sm:text-lg font-black text-aldesRed uppercase tracking-tight truncate">{item.name}</h3>
-                      <p className="mt-1.5 text-xs sm:text-sm text-black font-medium flex-1 line-clamp-3 sm:line-clamp-2 leading-relaxed">{item.description}</p>
-                      <p className="mt-3 text-base sm:text-lg font-black text-black">{currencyFormatter.format(item.price ?? 0)}</p>
+                      <h3 className="text-sm sm:text-base md:text-lg font-black text-aldesRed uppercase tracking-tight line-clamp-2 leading-tight">{item.name}</h3>
+                      <p className="mt-1 sm:mt-1.5 text-[10px] sm:text-xs md:text-sm text-black font-medium flex-1 line-clamp-2 leading-tight sm:leading-relaxed">{item.description}</p>
+                      <p className="mt-2 sm:mt-3 text-sm sm:text-base md:text-lg font-black text-black">{currencyFormatter.format(item.price ?? 0)}</p>
                       
                       {/* Action States */}
                       {isItemOutOfStock ? (
-                        <button type="button" disabled className="cursor-not-allowed mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-gray-300 bg-gray-200 px-4 font-black uppercase text-xs sm:text-sm text-gray-400 shadow-none">
+                        <button type="button" disabled className="cursor-not-allowed mt-3 sm:mt-4 flex h-8 sm:h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-gray-300 bg-gray-200 px-2 sm:px-4 font-black uppercase text-[10px] sm:text-xs md:text-sm text-gray-400 shadow-none">
                           {t('menu.outOfStock')}
                         </button>
                       ) : activeActionId === item.id ? (
-                        <div className="mt-4 flex items-center justify-between gap-2.5 h-10 w-full">
+                        <div className="mt-3 sm:mt-4 flex items-center justify-between gap-1.5 sm:gap-2.5 h-8 sm:h-10 w-full">
                           <div className="flex h-full items-center overflow-hidden rounded-xl border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-                            <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3.5 w-3.5" /></button>
-                            <span className="w-7 border-x-2 border-black text-center text-sm font-black text-black">{tempQty}</span>
-                            <button type="button" onClick={() => setTempQty((p) => Math.min(getMenuStock(item), p + 1))} className="flex h-8 w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3.5 w-3.5" /></button>
+                            <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-full w-6 sm:w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /></button>
+                            <span className="w-5 sm:w-7 border-x-2 border-black text-center text-xs sm:text-sm font-black text-black flex items-center justify-center h-full">{tempQty}</span>
+                            <button type="button" onClick={() => setTempQty((p) => Math.min(getMenuStock(item), p + 1))} className="flex h-full w-6 sm:w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /></button>
                           </div>
-                          <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-xs sm:text-sm text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
-                            {t('menu.confirm')} <ChevronRight className="h-4 w-4 shrink-0" />
+                          <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-0.5 sm:gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-[10px] sm:text-xs md:text-sm text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
+                            {t('menu.confirm')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                           </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-4 flex h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-4 font-black uppercase text-xs sm:text-sm shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
-                          {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-4 w-4 shrink-0" />
+                        <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-3 sm:mt-4 flex h-8 sm:h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-2 sm:px-4 font-black uppercase text-[10px] sm:text-xs md:text-sm shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
+                          {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                         </button>
                       )}
                     </div>

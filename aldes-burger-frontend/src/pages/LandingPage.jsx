@@ -101,18 +101,18 @@ function LandingPage() {
           <div className="inline-block bg-black text-aldesYellow px-4 py-1.5 rounded-full font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#D52518]">
             {t('landing.badge')}
           </div>
-          <h1 className="text-[3.5rem] md:text-8xl font-black uppercase tracking-tighter leading-[1.05]">
+          <h1 className="text-4xl sm:text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[1.05]">
             {t('landing.headline1')}<br />
-            <span className="text-aldesRed italic border-b-[8px] border-aldesRed pb-1">{t('landing.headline2')}</span>
+            <span className="text-aldesRed italic border-b-[6px] md:border-b-[8px] border-aldesRed pb-1">{t('landing.headline2')}</span>
           </h1>
-          <p className="text-xl font-bold text-gray-700 max-w-lg">
+          <p className="text-base sm:text-lg md:text-xl font-bold text-gray-700 max-w-lg">
             {t('landing.subheadline')}
           </p>
-          <div className="flex flex-wrap gap-4">
-            <button onClick={handleStartCustomizing} className="bg-aldesRed text-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
+          <div className="flex flex-wrap gap-4 w-full">
+            <button onClick={handleStartCustomizing} className="w-full sm:w-auto bg-aldesRed text-white px-6 py-4 md:px-8 md:py-4 rounded-2xl font-black uppercase text-base md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black">
               {t('landing.startBuilding')}
             </button>
-            <button onClick={() => navigate('/menu')} className="bg-white px-8 py-4 rounded-2xl font-black uppercase text-lg shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black text-black">
+            <button onClick={() => navigate('/menu')} className="w-full sm:w-auto bg-white px-6 py-4 md:px-8 md:py-4 rounded-2xl font-black uppercase text-base md:text-lg shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000] active:translate-y-1 active:shadow-none transition-all border-4 border-black text-black">
               {t('landing.exploreMenu')}
             </button>
           </div>
@@ -156,7 +156,7 @@ function LandingPage() {
 
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute top-[20%] text-center z-50 px-4 w-full">
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">
               {t('landing.seeHowTitle')}
             </h2>
             <p className="mt-2 text-sm font-bold uppercase tracking-widest text-black/60">
@@ -187,10 +187,10 @@ function LandingPage() {
         <div className="max-w-6xl mx-auto">
           
           <div className="text-center mb-20 space-y-3">
-            <div className="inline-flex items-center gap-2 bg-aldesYellow border-2 border-black px-4 py-1 rounded-full font-black text-xs uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 bg-aldesYellow border-2 border-black px-4 py-1 rounded-full font-black text-[10px] sm:text-xs uppercase tracking-wider">
               <Truck size={14} /> {t('landing.fromKitchenBadge')}
             </div>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black uppercase tracking-tighter">
               {t('landing.fromKitchenTitle')}
             </h2>
             <p className="text-gray-500 font-bold max-w-xl mx-auto text-sm">
@@ -229,7 +229,7 @@ function LandingPage() {
         <div className="max-w-4xl mx-auto relative z-10">
           
           <div className="text-center mb-16 space-y-2">
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white drop-shadow-[4px_4px_0_#000]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter text-white drop-shadow-[4px_4px_0_#000]">
               {t('landing.reviewsTitle')}
             </h2>
             <p className="text-aldesYellow font-black text-sm uppercase tracking-wider">
@@ -288,13 +288,13 @@ function LandingPage() {
       <section className="bg-aldesYellow py-32 px-6 text-center relative z-40 border-t-2 border-black">
         <div className="max-w-2xl mx-auto space-y-6">
           
-          <div className="inline-block bg-black text-white px-4 py-1.5 rounded-full border-2 border-black font-black uppercase text-xs tracking-wider shadow-[3px_3px_0_0_#D52518]">
+          <div className="inline-block bg-black text-white px-4 py-1.5 rounded-full border-2 border-black font-black uppercase text-[10px] sm:text-xs tracking-wider shadow-[3px_3px_0_0_#D52518]">
             {t('landing.ctaBadge')}
           </div>
           
-          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-black">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-black">
             {t('landing.ctaTitle1')} <br />
-            <span className="text-aldesRed italic drop-shadow-[4px_4px_0_#fff]">{t('landing.ctaTitle2')}</span>
+            <span className="text-aldesRed italic drop-shadow-[3px_3px_0_#fff] md:drop-shadow-[4px_4px_0_#fff]">{t('landing.ctaTitle2')}</span>
           </h2>
           
           <p className="text-sm md:text-lg font-bold text-black/70 max-w-md mx-auto leading-relaxed">

@@ -275,7 +275,7 @@ function Checkout() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-aldesCream text-black pb-20 relative">
+    <main className="min-h-screen w-full bg-aldesCream text-black pb-36 md:pb-20 relative">
       
       {/* ── Overlay Animasi Loading (Neo-Brutalist & English) ── */}
       {loading && (
@@ -512,22 +512,44 @@ function Checkout() {
                 <Flame className="text-aldesRed animate-pulse" size={32} fill="currentColor" />
               </div>
 
-              {!selectedAddressId && !loadingAddresses && (
-                <p className="text-[10px] text-red-500 font-bold mb-3 text-center uppercase">
-                  {t('checkout.selectAddressWarning')}
-                </p>
-              )}
+              <div className="hidden md:block">
+                {!selectedAddressId && !loadingAddresses && (
+                  <p className="text-[10px] text-red-500 font-bold mb-3 text-center uppercase">
+                    {t('checkout.selectAddressWarning')}
+                  </p>
+                )}
 
-              <button
-                onClick={handlePlaceOrder}
-                disabled={checkoutItems.length === 0 || loading || !selectedAddressId}
-                className="w-full py-4 rounded-xl bg-aldesRed text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? t('checkout.ordering') : t('checkout.placeOrder')} <CheckCircle2 size={20} strokeWidth={4} />
-              </button>
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={checkoutItems.length === 0 || loading || !selectedAddressId}
+                  className="w-full py-4 rounded-xl bg-aldesRed text-white border-2 border-black font-black text-lg uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? t('checkout.ordering') : t('checkout.placeOrder')} <CheckCircle2 size={20} strokeWidth={4} />
+                </button>
+              </div>
             </div>
           </aside>
         </div>
+      </div>
+
+      {/* Mobile Sticky Action Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t-4 border-black z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] flex flex-col gap-2">
+        <div className="flex justify-between items-center px-1 mb-1">
+           <span className="font-black text-xs uppercase text-aldesRed">{t('checkout.grandTotal')}</span>
+           <span className="font-black text-lg italic text-black">IDR {total.toLocaleString('id-ID')}</span>
+        </div>
+        {!selectedAddressId && !loadingAddresses && (
+          <p className="text-[10px] text-red-500 font-bold text-center uppercase mb-1">
+            {t('checkout.selectAddressWarning')}
+          </p>
+        )}
+        <button
+          onClick={handlePlaceOrder}
+          disabled={checkoutItems.length === 0 || loading || !selectedAddressId}
+          className="w-full py-3.5 rounded-xl bg-aldesRed text-white border-2 border-black font-black text-base uppercase shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_3px_0_0_#000] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? t('checkout.ordering') : t('checkout.placeOrder')} <CheckCircle2 size={18} strokeWidth={4} />
+        </button>
       </div>
 
       <AddressBookModal

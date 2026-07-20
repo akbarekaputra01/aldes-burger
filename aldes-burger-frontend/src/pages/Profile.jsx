@@ -203,7 +203,7 @@ function Profile() {
   }
 
   return (
-    <main className="min-h-screen bg-aldesCream px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-aldesCream px-4 py-8 pb-24 md:pb-8 sm:px-6">
       
       {/* Custom Scrollbar bergaya Brutalism */}
       <style>{`
@@ -285,7 +285,7 @@ function Profile() {
             </div>
 
             {/* Area List Alamat dengan Scroll */}
-            <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5 max-h-[300px] mb-4">
+            <div className="flex-1 overflow-y-auto custom-scroll pr-3 space-y-5 max-h-[300px] mb-4 overscroll-contain [-webkit-overflow-scrolling:touch]">
               {sortedAddresses.length === 0 ? (
                 <div className="flex min-h-[200px] flex-col items-center justify-center rounded-3xl border-4 border-dashed border-black bg-aldesCream p-6 text-center">
                   <MapPin className="mb-4 h-14 w-14 text-black drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />
