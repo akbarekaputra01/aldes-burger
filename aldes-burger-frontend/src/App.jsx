@@ -33,7 +33,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
 
           {/* 🔴 ADMIN ROUTES: Wajib Login (Dilindungi) */}
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute adminOnly />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<AdminOrders />} />

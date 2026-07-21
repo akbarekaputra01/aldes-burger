@@ -34,7 +34,7 @@ function Profile() {
     password: '',
     password_confirmation: ''
   })
-  const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' })
+  const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '', fieldErrors: {} })
 
   // Typing Animation for Welcome Title
   const welcomeText = useMemo(() => {
@@ -148,32 +148,42 @@ function Profile() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
-    setPwdStatus({ loading: true, error: '', success: '' })
+    setPwdStatus({ loading: true, error: '', success: '', fieldErrors: {} })
     
     if (passwordForm.password !== passwordForm.password_confirmation) {
-      setPwdStatus({ loading: false, error: 'New password confirmation does not match!', success: '' })
+      setPwdStatus({ loading: false, error: '', success: '', fieldErrors: { password_confirmation: [t('profile.passwordMismatch', 'New password confirmation does not match!')] } })
       return
     }
     
     try {
       await api.put('/user/password', passwordForm)
       
-      setPwdStatus({ loading: false, error: '', success: 'Password updated successfully!' })
+      setPwdStatus({ loading: false, error: '', success: 'Password updated successfully!', fieldErrors: {} })
       setPasswordForm({ current_password: '', password: '', password_confirmation: '' })
       
       setTimeout(() => {
         setIsChangingPassword(false)
-        setPwdStatus({ loading: false, error: '', success: '' })
+        setPwdStatus({ loading: false, error: '', success: '', fieldErrors: {} })
         setShowCurrentPassword(false)
         setShowNewPassword(false)
         setShowConfirmNewPassword(false)
       }, 2000)
     } catch (err) {
-      setPwdStatus({
-        loading: false,
-        error: err.response?.data?.message || 'Failed to change password. Please ensure your current password is correct.',
-        success: ''
-      })
+      if (err.response?.status === 422 && err.response?.data?.errors) {
+        setPwdStatus({
+          loading: false,
+          error: '',
+          success: '',
+          fieldErrors: err.response.data.errors
+        })
+      } else {
+        setPwdStatus({
+          loading: false,
+          error: err.response?.data?.message || 'Failed to change password. Please ensure your current password is correct.',
+          success: '',
+          fieldErrors: {}
+        })
+      }
     }
   }
 
@@ -233,10 +243,10 @@ function Profile() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           
           {/* CARD: USER INFO */}
-          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between h-full">
+          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
             <div className="flex flex-col items-center text-center pb-6 border-b-4 border-black">
               <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-aldesYellow border-4 border-black text-4xl font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 {initials}
@@ -271,7 +281,7 @@ function Profile() {
           </article>
 
           {/* CARD: ALAMAT TERSIMPAN */}
-          <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full justify-between">
+          <article className="flex flex-col rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] justify-between">
             <div className="mb-6 flex items-center justify-between border-b-4 border-black pb-5">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-aldesRed rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-white">
@@ -377,7 +387,7 @@ function Profile() {
           </article>
 
           {/* CARD: KEAMANAN AKUN */}
-          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full">
+          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <div className="mb-6 flex items-center gap-3 border-b-4 border-black pb-4">
               <div className="p-2 bg-aldesYellow rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">
                 <Key className="h-6 w-6" />
@@ -417,7 +427,7 @@ function Profile() {
                       required
                       value={passwordForm.current_password}
                       onChange={(e) => setPasswordForm(p => ({...p, current_password: e.target.value}))}
-                      className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
+                      className={`w-full rounded-2xl border-4 bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 ${pwdStatus.fieldErrors?.current_password ? 'border-aldesRed focus:border-black' : 'border-black'}`}
                     />
                     <button
                       type="button"
@@ -426,6 +436,12 @@ function Profile() {
                     >
                       {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
+                    {pwdStatus.fieldErrors?.current_password && (
+                      <p className="mt-2 text-xs font-black text-aldesRed flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {pwdStatus.fieldErrors.current_password[0]}
+                      </p>
+                    )}
                   </div>
                   <div className="relative">
                     <input
@@ -434,7 +450,7 @@ function Profile() {
                       required
                       value={passwordForm.password}
                       onChange={(e) => setPasswordForm(p => ({...p, password: e.target.value}))}
-                      className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
+                      className={`w-full rounded-2xl border-4 bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 ${pwdStatus.fieldErrors?.password ? 'border-aldesRed focus:border-black' : 'border-black'}`}
                     />
                     <button
                       type="button"
@@ -443,6 +459,12 @@ function Profile() {
                     >
                       {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
+                    {pwdStatus.fieldErrors?.password && (
+                      <p className="mt-2 text-xs font-black text-aldesRed flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {pwdStatus.fieldErrors.password[0]}
+                      </p>
+                    )}
                   </div>
                   <div className="relative">
                     <input
@@ -451,7 +473,7 @@ function Profile() {
                       required
                       value={passwordForm.password_confirmation}
                       onChange={(e) => setPasswordForm(p => ({...p, password_confirmation: e.target.value}))}
-                      className="w-full rounded-2xl border-4 border-black bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5"
+                      className={`w-full rounded-2xl border-4 bg-aldesCream px-4 py-3.5 pr-12 text-sm font-bold text-black outline-none transition-all focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-0.5 ${pwdStatus.fieldErrors?.password_confirmation ? 'border-aldesRed focus:border-black' : 'border-black'}`}
                     />
                     <button
                       type="button"
@@ -460,6 +482,12 @@ function Profile() {
                     >
                       {showConfirmNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
+                    {pwdStatus.fieldErrors?.password_confirmation && (
+                      <p className="mt-2 text-xs font-black text-aldesRed flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {pwdStatus.fieldErrors.password_confirmation[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
@@ -493,7 +521,7 @@ function Profile() {
           </article>
 
           {/* CARD: LANGUAGE */}
-          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-full flex flex-col justify-between">
+          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
             <div>
               <div className="mb-6 flex items-center gap-3 border-b-4 border-black pb-4">
                 <div className="p-2 bg-aldesYellow rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">

@@ -97,14 +97,26 @@ const getVisualOffset = (name) => {
 }
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
-  let currentBottom = 4;
-  const scaleValue = ingredients.length > 8 ? 0.65 : ingredients.length > 6 ? 0.8 : 1;
+  let totalThickness = 0
+  ingredients.forEach((name) => {
+    totalThickness += getIngredientThickness(name)
+  })
+  
+  const containerHeight = totalThickness + 30 
+  const maxSafeHeight = 85; 
+  const scaleValue = containerHeight > maxSafeHeight ? maxSafeHeight / containerHeight : 0.9;
+
+  let currentBottom = 0;
 
   return (
-    <div className="relative w-24 h-28 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
+    <div className="relative w-24 h-28 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000] z-0" style={{ isolation: 'isolate' }}>
       <div
-        className="absolute bottom-2 w-full flex center items-end"
-        style={{ transform: `scale(${scaleValue})`, transformOrigin: 'bottom' }}
+        className="relative w-full flex justify-center"
+        style={{
+          height: `${containerHeight}px`,
+          transform: `scale(${scaleValue})`,
+          transformOrigin: 'center' 
+        }}
       >
         {ingredients.map((name, index) => {
           const img = getIngredientImage(name);
@@ -117,7 +129,7 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
               className="absolute left-1/2 -translate-x-1/2 w-20"
               style={{ bottom: `${pos + getVisualOffset(name)}px`, zIndex: index }}
             >
-              {img && <img src={img} alt={name} className="w-full h-auto drop-shadow-sm" />}
+              {img && <img src={img} alt={name} className="w-full h-auto drop-shadow-sm pointer-events-none" />}
             </div>
           )
         })}

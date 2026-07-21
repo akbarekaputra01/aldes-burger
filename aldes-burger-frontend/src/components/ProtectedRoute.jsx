@@ -1,17 +1,19 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { getStoredUser, getToken } from '../utils/auth'
+import NotFound from '../pages/NotFound'
 
-function ProtectedRoute() {
-  // Cek apakah user sudah login. 
-  // (Sesuaikan ini dengan cara Anda menyimpan sesi login, misalnya dari localStorage atau Context)
-  const isAuthenticated = localStorage.getItem('aldes_token') 
+function ProtectedRoute({ adminOnly = false }) {
+  const token = getToken()
+  const user = getStoredUser()
 
-  // Jika tidak ada token (belum login), arahkan paksa ke halaman /login
-  // 'replace' digunakan agar user tidak bisa menekan tombol "Back" di browser untuk kembali ke rute terlarang
-  if (!isAuthenticated) {
+  if (!token || !user) {
     return <Navigate to="/login" replace />
   }
 
-  // Jika sudah login, biarkan mereka lewat dan render halaman yang dituju
+  if (adminOnly && user.role !== 'admin') {
+    return <NotFound />
+  }
+
   return <Outlet />
 }
 

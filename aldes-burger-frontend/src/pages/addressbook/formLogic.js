@@ -19,31 +19,11 @@ export function applySuggestionToForm(form, suggestion) {
     pin_source: 'suggestion',
     pin_confirmed: true,
   }
-  
-  if (suggestion.raw?.address) {
-    const address = suggestion.raw.address;
-    updates.province = address.state ? address.state.toUpperCase() : '';
-    
-    let city = address.city || address.town || address.county || '';
-    if (city) {
-      if (city.toLowerCase().startsWith('kota ')) updates.city = city.toUpperCase();
-      else if (city.toLowerCase().startsWith('kabupaten ')) updates.city = city.toUpperCase();
-      else if (address.city) updates.city = `KOTA ${city.toUpperCase()}`; // guess
-      else updates.city = `KABUPATEN ${city.toUpperCase()}`;
-    } else {
-      updates.city = '';
-    }
-    
-    let district = address.suburb || address.city_district || address.village || '';
-    updates.district = district ? district.toUpperCase() : '';
-    updates.postal_code = address.postcode || '';
-  } else {
-    updates.province = '';
-    updates.city = '';
-    updates.district = '';
-    updates.postal_code = '';
-  }
 
+  // We intentionally do NOT update province, city, district, and postal_code here,
+  // because the user has already explicitly selected them from strict dropdowns
+  // before the street_address suggestions are even enabled.
+  
   return { ...form, ...updates }
 }
 
