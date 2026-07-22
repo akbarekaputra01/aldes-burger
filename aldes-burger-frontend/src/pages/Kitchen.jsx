@@ -313,7 +313,38 @@ function Kitchen() {
     return base + extra
   }, [burgerStack, selectedMenu])
 
+  const canAddIngredient = (ingredient) => {
+    const nameLower = (ingredient.name || '').toLowerCase()
+    const isBottom = nameLower.includes('bottom') || nameLower.includes('bawah')
+    const isTop = nameLower.includes('top') || nameLower.includes('atas') || (nameLower.includes('bun') && !nameLower.includes('bottom') && !nameLower.includes('bawah'))
+
+    if (isBottom) {
+      const bottomCount = burgerStack.filter(l => {
+        const ln = (l.ingredient_name || '').toLowerCase()
+        return ln.includes('bottom') || ln.includes('bawah')
+      }).length
+      if (bottomCount >= 3) return false
+    }
+
+    if (isTop) {
+      const topCount = burgerStack.filter(l => {
+        const ln = (l.ingredient_name || '').toLowerCase()
+        return ln.includes('top') || ln.includes('atas') || (ln.includes('bun') && !ln.includes('bottom') && !ln.includes('bawah'))
+      }).length
+      if (topCount >= 1) return false
+    }
+
+    const currentCount = burgerStack.filter(l => l.ingredient_id === ingredient.id).length
+    if (currentCount >= 5) return false
+
+    return true
+  }
+
   const addIngredientToStack = (ingredient, atIndex = burgerStack.length, animateDrop = false) => {
+    if (!canAddIngredient(ingredient)) {
+      alert(localStorage.getItem('aldes_lang') === 'id' ? `Maksimal tercapai untuk ${ingredient.name}!` : `Maximum limit reached for ${ingredient.name}!`)
+      return
+    }
     const newLayer = {
       instance_id: makeUid(),
       ingredient_id: ingredient.id,
@@ -376,6 +407,11 @@ function Kitchen() {
         return;
       }
       if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) return;
+      if (!canAddIngredient(draggingData.ingredient)) {
+        alert(localStorage.getItem('aldes_lang') === 'id' ? `Maksimal tercapai untuk ${draggingData.ingredient.name}!` : `Maximum limit reached for ${draggingData.ingredient.name}!`);
+        setDraggingData(null);
+        return;
+      }
       setBurgerStack(prev => {
         const targetIdx = prev.findIndex(l => l.instance_id === targetInstanceId);
         const newLayer = {
@@ -413,6 +449,11 @@ function Kitchen() {
         return;
       }
       if (burgerStack.length === 0 && !isBottomBunItem(draggingData.ingredient.name)) {
+        setDraggingData(null);
+        return;
+      }
+      if (!canAddIngredient(draggingData.ingredient)) {
+        alert(localStorage.getItem('aldes_lang') === 'id' ? `Maksimal tercapai untuk ${draggingData.ingredient.name}!` : `Maximum limit reached for ${draggingData.ingredient.name}!`);
         setDraggingData(null);
         return;
       }
@@ -653,7 +694,15 @@ function Kitchen() {
                     </div>
                   </div>
                 ) : (
-                  stackWithPositions.map((layer, index) => {
+                  <div className="absolute inset-0 pointer-events-none" style={{ 
+                     transform: `scale(${ (() => {
+                        const totalVisualHeight = stackWithPositions.length > 0 ? stackWithPositions[stackWithPositions.length - 1].bottomPos + 100 : 0;
+                        const maxContainerHeight = isMobileViewport ? 250 : 380; 
+                        return totalVisualHeight > maxContainerHeight ? maxContainerHeight / totalVisualHeight : 1;
+                     })() })`, 
+                     transformOrigin: isMobileViewport ? '50% calc(100% - 90px)' : '50% calc(100% - 110px)'
+                  }}>
+                  {stackWithPositions.map((layer, index) => {
                     const n = layer.ingredient_name.toLowerCase();
                     let imgWidthClass = 'w-[125px] sm:w-[180px]';
                     if (n.includes('bun') || n.includes('bottom') || n.includes('top')) {
@@ -706,6 +755,8 @@ function Kitchen() {
                       </div>
                     )
                   })
+                  }
+                  </div>
                 )}
               </div>
             </div>
@@ -768,7 +819,8 @@ function Kitchen() {
                         const isFoundationMissing = burgerStack.length === 0;
                         const isBottomBun = isBottomBunItem(ingredient.name);
                         const isOutOfStock = ingredient.stock <= 0;
-                        const isDisabled = (isFoundationMissing && !isBottomBun) || isOutOfStock;
+                        const isLimitReached = !canAddIngredient(ingredient);
+                        const isDisabled = (isFoundationMissing && !isBottomBun) || isOutOfStock || isLimitReached;
                         const itemPrice = Number(ingredient.price ?? 0);
                         
                         return (
@@ -801,6 +853,8 @@ function Kitchen() {
                               <p className={`truncate font-black text-xs sm:text-sm uppercase tracking-tight ${isDisabled ? 'text-gray-500' : 'text-black'}`}>{ingredient.name}</p>
                               {isOutOfStock ? (
                                 <p className="text-[9px] sm:text-[10px] font-black text-aldesRed mt-0.5 uppercase">Out of Stock</p>
+                              ) : isLimitReached ? (
+                                <p className="text-[9px] sm:text-[10px] font-black text-[#D52518] mt-0.5 uppercase">Limit Reached</p>
                               ) : itemPrice > 0 && (
                                 <p className="text-[9px] sm:text-[10px] font-bold text-gray-500 mt-0.5">IDR {itemPrice.toLocaleString('id-ID')}</p>
                               )}
@@ -905,10 +959,11 @@ function Kitchen() {
 
             {/* 2. Price & Qty */}
             <div className="flex flex-col gap-4 sm:gap-5 md:col-span-1 lg:col-span-3 justify-center">
-              <div className="flex justify-between items-end border-b-[3px] border-black/10 pb-4 mb-4">
-                <span className="text-sm sm:text-base font-black text-gray-500 uppercase">{t('kitchen.totalPrice')}</span>
-                <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#D52518] tracking-tighter italic">
-                  IDR {(unitPrice * qty).toLocaleString('id-ID')}
+              <div className="flex flex-col items-start border-b-[4px] border-dashed border-black pb-4 mb-4 gap-1">
+                <span className="text-xs sm:text-sm font-black text-gray-500 uppercase tracking-widest">{t('kitchen.totalPrice')}</span>
+                <span className="text-4xl sm:text-5xl lg:text-5xl font-black text-[#D52518] tracking-tighter italic flex items-center whitespace-nowrap">
+                  <span className="text-2xl sm:text-3xl lg:text-3xl mr-2 italic">IDR</span>
+                  {(unitPrice * qty).toLocaleString('id-ID')}
                 </span>
               </div>
               <div>

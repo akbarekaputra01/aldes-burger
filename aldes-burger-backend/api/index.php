@@ -1,8 +1,11 @@
 <?php
 
-// Handle preflight OPTIONS requests directly at the entrypoint
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: *');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowed = getenv('FRONTEND_URL') ?: 'https://aldes-burger.vercel.app';
+    if ($origin === $allowed || $origin === 'http://localhost:5173') {
+        header("Access-Control-Allow-Origin: $origin");
+    }
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
     header('Access-Control-Max-Age: 86400');

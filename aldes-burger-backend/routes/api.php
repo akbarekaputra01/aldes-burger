@@ -9,14 +9,16 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MidtransController;
 
-// Endpoint Autentikasi Publik
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/verify-otp', [AuthController::class, 'verifyRegisterOtp']); // Route verifikasi registrasi baru
-Route::post('/login', [AuthController::class, 'login']);
+// Endpoint Autentikasi Publik & Lupa Password dengan Rate Limiting
+Route::middleware('throttle:6,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/verify-otp', [AuthController::class, 'verifyRegisterOtp']); // Route verifikasi registrasi baru
+    Route::post('/login', [AuthController::class, 'login']);
 
-// Endpoint Lupa Password
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']); // Request OTP
-Route::post('/reset-password', [AuthController::class, 'resetPassword']); // Submit OTP & Password Baru
+    // Endpoint Lupa Password
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']); // Request OTP
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']); // Submit OTP & Password Baru
+});
 
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/ingredients', [IngredientController::class, 'index']);
@@ -35,7 +37,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/addresses/{address}', [CheckoutController::class, 'destroyAddress']);
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
-    Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);

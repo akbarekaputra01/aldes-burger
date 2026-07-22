@@ -90,30 +90,25 @@ const getVisualOffset = (name) => {
 }
 
 const BurgerMiniPreview = ({ ingredients = [] }) => {
-  // 1. Skala dinamis agar burger tinggi tidak menabrak batas atas
-  const scaleValue =
-    ingredients.length > 8 ? 0.6 : ingredients.length > 5 ? 0.75 : 0.9
-
-  // 2. Kalkulasi tinggi total tumpukan burger INI saja
   let totalThickness = 0
   ingredients.forEach((name) => {
     totalThickness += getIngredientThickness(name)
   })
-  // Angka 30 adalah kompensasi visual untuk ketebalan gambar roti paling atas
+  
   const containerHeight = totalThickness + 30 
+  const maxSafeHeight = 55; // For w-16 h-16 / w-20 h-20 
+  const scaleValue = containerHeight > maxSafeHeight ? maxSafeHeight / containerHeight : 0.9;
 
   let currentBottom = 0
 
   return (
-    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
-      
-      {/* 3. Container relative dengan height spesifik, sehingga Flexbox (items-center) parent bisa meratakannya tepat di tengah */}
+    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-aldesCream/50 border-4 border-black rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-[4px_4px_0_0_#000] z-0" style={{ isolation: 'isolate' }}>
       <div
         className="relative w-full flex justify-center"
         style={{
           height: `${containerHeight}px`,
           transform: `scale(${scaleValue})`,
-          transformOrigin: 'center', // Pastikan skala terpusat, bukan dari bawah
+          transformOrigin: 'center',
         }}
       >
         {ingredients.map((name, index) => {
@@ -135,7 +130,7 @@ const BurgerMiniPreview = ({ ingredients = [] }) => {
                 <img 
                   src={img} 
                   alt={name} 
-                  className="w-full h-auto drop-shadow-sm" 
+                  className="w-full h-auto drop-shadow-sm pointer-events-none" 
                 />
               )}
             </div>

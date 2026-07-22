@@ -191,11 +191,26 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
 
   useEffect(() => {
     const q = form.street_address?.trim()
-    if (!q || q.length < 3 || form.pin_source !== 'default') return setSuggestions([])
+    if (!q || q.length < 3 || form.pin_source !== 'default') {
+      setSuggestions([])
+      return
+    }
          
-    searchAddressSuggestions(q, { province: form.province, city: form.city, district: form.district, postalCode: form.postal_code })
-      .then(setSuggestions)
-      .catch(() => setSuggestions([]))
+    let cancelled = false
+    const timer = setTimeout(() => {
+      searchAddressSuggestions(q, { province: form.province, city: form.city, district: form.district, postalCode: form.postal_code })
+        .then((res) => {
+          if (!cancelled) setSuggestions(res)
+        })
+        .catch(() => {
+          if (!cancelled) setSuggestions([])
+        })
+    }, 400) // 400ms debounce
+    
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [form.street_address, form.province, form.city, form.district, form.postal_code, form.pin_source])
 
   useEffect(() => {
@@ -332,19 +347,13 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
           pin_confirmed: true
         }
                  
-        if (reverseData.province) updates.province = reverseData.province.toUpperCase()
-                 
-        let city = reverseData.city || ''
-        if (city) {
-          city = city.replace(/^(KOTA|KABUPATEN|KAB\.|KAB|KOTA KAB)\s+/i, '').trim()
-          updates.city = city.toUpperCase()
-        }
-                 
-        updates.district = reverseData.district ? reverseData.district.toUpperCase() : ''
-        updates.postal_code = reverseData.postalCode || ''
-        updates.street_address = reverseData.formattedAddress || ''
-                 
-        setForm(prev => ({ ...prev, ...updates }))
+        setForm(prev => {
+          const nextForm = { ...prev, ...updates }
+          if (!prev.street_address && reverseData.formattedAddress) {
+            nextForm.street_address = reverseData.formattedAddress
+          }
+          return nextForm
+        })
       } catch (err) {
         updatePin(lat, lng, 'current_location')
       }

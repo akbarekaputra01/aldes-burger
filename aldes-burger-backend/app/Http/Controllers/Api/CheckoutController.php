@@ -86,11 +86,13 @@ class CheckoutController extends Controller
                     $ingredient = $ingredientsById->get($modifier['ingredient_id']);
                     if (!$ingredient) abort(404, "Ingredient not found");
 
+                    $modQty = $modifier['quantity'] ?? 1;
+
                     if ($modifier['action'] === 'add') {
-                        $addModifierPrice += $ingredient->price;
-                        $added[] = $ingredient->name;
+                        $addModifierPrice += ($ingredient->price * $modQty);
+                        $added[] = $ingredient->name . ($modQty > 1 ? " (x{$modQty})" : "");
                     } else {
-                        $removed[] = $ingredient->name;
+                        $removed[] = $ingredient->name . ($modQty > 1 ? " (x{$modQty})" : "");
                     }
                 }
 
@@ -140,17 +142,53 @@ class CheckoutController extends Controller
                 $menu = $detail['_menu'];
                 $qty  = $detail['quantity'];
 
-                if ($menu->ingredients->isNotEmpty()) {
+                $topBunCount = 0;
+                $bottomBunCount = 0;
+                $ingredientCounts = [];
+
+                if (!$menu->is_custom && $menu->ingredients->isNotEmpty()) {
                     // Signature / recipe-based menu: check ingredients stock
                     foreach ($menu->ingredients as $ingredient) {
                         $needed = ($ingredient->pivot->quantity ?? 1) * $qty;
                         $requiredIngredientStock[$ingredient->id] = ($requiredIngredientStock[$ingredient->id] ?? 0) + $needed;
+                        
+                        // Limit tracking per single burger
+                        $baseQty = $ingredient->pivot->quantity ?? 1;
+                        $ingredientCounts[$ingredient->id] = ($ingredientCounts[$ingredient->id] ?? 0) + $baseQty;
+                        $nameLower = strtolower($ingredient->name);
+                        if (str_contains($nameLower, 'top') || str_contains($nameLower, 'atas') || (str_contains($nameLower, 'bun') && !str_contains($nameLower, 'bottom') && !str_contains($nameLower, 'bawah'))) {
+                            $topBunCount += $baseQty;
+                        } elseif (str_contains($nameLower, 'bottom') || str_contains($nameLower, 'bawah')) {
+                            $bottomBunCount += $baseQty;
+                        }
                     }
 
                     // Apply extra adds from modifiers
                     foreach ($detail['_modifiers'] as $mod) {
+                        $ingredient = $ingredientsById->get($mod['ingredient_id']);
+                        $modQty = $mod['quantity'] ?? 1;
                         if ($mod['action'] === 'add') {
-                            $requiredIngredientStock[$mod['ingredient_id']] = ($requiredIngredientStock[$mod['ingredient_id']] ?? 0) + $qty;
+                            $requiredIngredientStock[$mod['ingredient_id']] = ($requiredIngredientStock[$mod['ingredient_id']] ?? 0) + ($qty * $modQty);
+                            
+                            $ingredientCounts[$mod['ingredient_id']] = ($ingredientCounts[$mod['ingredient_id']] ?? 0) + $modQty;
+                            if ($ingredient) {
+                                $nameLower = strtolower($ingredient->name);
+                                if (str_contains($nameLower, 'top') || str_contains($nameLower, 'atas') || (str_contains($nameLower, 'bun') && !str_contains($nameLower, 'bottom') && !str_contains($nameLower, 'bawah'))) {
+                                    $topBunCount += $modQty;
+                                } elseif (str_contains($nameLower, 'bottom') || str_contains($nameLower, 'bawah')) {
+                                    $bottomBunCount += $modQty;
+                                }
+                            }
+                        } else {
+                            $ingredientCounts[$mod['ingredient_id']] = max(0, ($ingredientCounts[$mod['ingredient_id']] ?? 0) - $modQty);
+                            if ($ingredient) {
+                                $nameLower = strtolower($ingredient->name);
+                                if (str_contains($nameLower, 'top') || str_contains($nameLower, 'atas') || (str_contains($nameLower, 'bun') && !str_contains($nameLower, 'bottom') && !str_contains($nameLower, 'bawah'))) {
+                                    $topBunCount -= $modQty;
+                                } elseif (str_contains($nameLower, 'bottom') || str_contains($nameLower, 'bawah')) {
+                                    $bottomBunCount -= $modQty;
+                                }
+                            }
                         }
                     }
                 } else {
@@ -160,11 +198,33 @@ class CheckoutController extends Controller
                             $ingredient = $ingredientsByName->get($ingName);
                             if ($ingredient) {
                                 $requiredIngredientStock[$ingredient->id] = ($requiredIngredientStock[$ingredient->id] ?? 0) + $qty;
+                                $ingredientCounts[$ingredient->id] = ($ingredientCounts[$ingredient->id] ?? 0) + 1;
+                                
+                                $nameLower = strtolower($ingredient->name);
+                                if (str_contains($nameLower, 'top') || str_contains($nameLower, 'atas') || (str_contains($nameLower, 'bun') && !str_contains($nameLower, 'bottom') && !str_contains($nameLower, 'bawah'))) {
+                                    $topBunCount += 1;
+                                } elseif (str_contains($nameLower, 'bottom') || str_contains($nameLower, 'bawah')) {
+                                    $bottomBunCount += 1;
+                                }
                             }
                         }
                     } else {
                         // Regular menu with no ingredients (e.g. Side/Drink): checks menu stock
                         $requiredMenuStock[$menu->id] = ($requiredMenuStock[$menu->id] ?? 0) + $qty;
+                    }
+                }
+                
+                // Perform Limits Check
+                if ($topBunCount > 1) {
+                    abort(response()->json(['message' => "Maksimal Top Bun adalah 1 dalam satu burger."], 422));
+                }
+                if ($bottomBunCount > 3) {
+                    abort(response()->json(['message' => "Maksimal Bottom Bun adalah 3 dalam satu burger."], 422));
+                }
+                foreach ($ingredientCounts as $id => $count) {
+                    if ($count > 5) {
+                        $ingName = $allIngredients->get($id)->name ?? 'Bahan';
+                        abort(response()->json(['message' => "Maksimal {$ingName} adalah 5 dalam satu burger."], 422));
                     }
                 }
             }
@@ -240,6 +300,9 @@ class CheckoutController extends Controller
                         'first_name' => $user->name,
                         'email' => $user->email,
                         'phone' => $address->phone_number,
+                    ],
+                    'callbacks' => [
+                        'finish' => env('FRONTEND_URL', 'http://localhost:5173') . '/payment-status'
                     ]
                 ];
 
