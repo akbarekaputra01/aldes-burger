@@ -133,12 +133,8 @@ class AuthController extends Controller
 
         $user = User::query()->where('email', $credentials['email'])->first();
 
-        if (! $user) {
-            return response()->json(['message' => 'This email is not registered. Please check your email or create a new account.'], 404);
-        }
-
-        if (! Hash::check($credentials['password'], $user->password)) {
-            return response()->json(['message' => 'The password does not match the registered email.'], 401);
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
         // Block login until the account has completed OTP verification.
@@ -165,41 +161,50 @@ class AuthController extends Controller
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email']
+            'email' => ['required', 'email']
         ]);
 
         $user = User::query()->where('email', $request->email)->first();
 
-        $otp = (string) rand(100000, 999999);
-        $user->update([
-            'otp' => $otp,
-            'otp_expires_at' => now()->addMinutes(10)
-        ]);
+        if ($user) {
+            $otp = (string) rand(100000, 999999);
+            $user->update([
+                'otp' => $otp,
+                'otp_expires_at' => now()->addMinutes(10)
+            ]);
 
-        Mail::to($user->email)->send(new OtpVerificationMail($otp));
+            Mail::to($user->email)->send(new OtpVerificationMail($otp));
+        }
 
         return response()->json([
-            'message' => 'An OTP code to reset your password has been sent to your email.'
+            'message' => 'If an account with that email exists, an OTP code to reset your password has been sent.'
         ]);
     }
 
     // 4. Reset password using OTP
-   // Ubah metode ini agar tidak lagi melakukan validasi OTP (atau sesuai kebutuhan alur Anda)
     public function resetPassword(Request $request): JsonResponse
     {
         $request->validate([
             'email' => ['required', 'email', 'exists:users,email'],
+            'otp' => ['required', 'string'],
             'password' => ['required', 'confirmed', 'min:6'],
         ]);
 
         $user = User::query()->where('email', $request->email)->first();
 
-        // Langsung update password dan hapus OTP di sini (karena ini adalah langkah terakhir)
+        if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
+            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
+        }
+
+        // Langsung update password dan hapus OTP di sini
         $user->update([
             'password' => $request->password,
             'otp' => null,
             'otp_expires_at' => null,
         ]);
+
+        // Hapus token aktif jika ada
+        $user->tokens()->delete();
 
         return response()->json([
             'message' => 'Password reset successfully. Please log in with your new password.'
