@@ -3,7 +3,7 @@
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $allowed = getenv('FRONTEND_URL') ?: 'https://aldes-burger.vercel.app';
-    if ($origin === $allowed || $origin === 'http://localhost:5173') {
+    if ($origin === $allowed || $origin === 'https://aldesburger.vercel.app' || $origin === 'http://localhost:5173') {
         header("Access-Control-Allow-Origin: $origin");
     }
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
