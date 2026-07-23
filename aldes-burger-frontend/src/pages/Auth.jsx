@@ -104,8 +104,8 @@ function Auth() {
     setError(''); setSuccess(''); setIsLoading(true);
 
     try {
-      // Validasi OTP murni ke backend
-      await api.post('/verify-otp', { email: form.email.trim().toLowerCase(), otp });
+      // Validasi OTP murni ke backend (untuk reset password, jangan pakai /verify-otp yg menghapus OTP)
+      await api.post('/verify-reset-otp', { email: form.email.trim().toLowerCase(), otp });
       localStorage.setItem('reset_otp', otp);
       setSuccess(t('auth.successOtpVerified'));
       
@@ -132,6 +132,7 @@ function Auth() {
     try {
       await api.post('/reset-password', {
       email: form.email.trim().toLowerCase(),
+      otp: otp,
       password: newPassword,
       password_confirmation: passwordConfirmation
       });

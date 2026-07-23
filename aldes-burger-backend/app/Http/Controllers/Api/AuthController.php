@@ -181,6 +181,23 @@ class AuthController extends Controller
         ]);
     }
 
+    // 3.5 Verify OTP for reset password (doesn't consume it)
+    public function verifyResetOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+            'otp' => ['required', 'string'],
+        ]);
+
+        $user = User::query()->where('email', $request->email)->first();
+
+        if ($user->otp !== $request->otp || now()->greaterThan($user->otp_expires_at)) {
+            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
+        }
+
+        return response()->json(['message' => 'OTP is valid.']);
+    }
+
     // 4. Reset password using OTP
     public function resetPassword(Request $request): JsonResponse
     {
