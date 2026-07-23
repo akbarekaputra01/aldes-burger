@@ -17,6 +17,7 @@ Route::middleware('throttle:6,1')->group(function () {
 
     // Endpoint Lupa Password
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']); // Request OTP
+    Route::post('/verify-reset-otp', [AuthController::class, 'verifyResetOtp']); // Verifikasi OTP (Tanpa Hapus)
     Route::post('/reset-password', [AuthController::class, 'resetPassword']); // Submit OTP & Password Baru
 });
 
