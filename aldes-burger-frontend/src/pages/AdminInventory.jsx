@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api'
+import GifLoader from '../components/GifLoader'
 import { useTranslation } from '../context/LanguageContext'
 
 // helpers
@@ -182,7 +183,7 @@ function AdminInventory() {
 
                 {isLoadingInventory ? (
                   <div className="mt-1 flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-red-600" />
+                    <div className="h-8 w-12 rounded-lg bg-red-200 animate-pulse"></div>
                   </div>
                 ) : (
                   <p className="text-2xl font-black text-red-600">
@@ -235,8 +236,8 @@ function AdminInventory() {
                   <tr>
                     <td colSpan={5} className="px-4 py-14">
                       <div className="flex flex-col items-center justify-center gap-3 text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-                          <Loader2 className="h-7 w-7 animate-spin" />
+                        <div className="flex items-center justify-center py-12">
+                          <GifLoader isLoading={true} size="w-32" text={t('common.loadingInventory')} />
                         </div>
 
                         <div>

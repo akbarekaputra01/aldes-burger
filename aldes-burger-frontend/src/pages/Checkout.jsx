@@ -23,6 +23,8 @@ import {
 
 import { useCart } from '../context/CartContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useDelayedLoading } from '../hooks/useDelayedLoading';
+import loadingGif from '../assets/loading_animation.gif';
 import AddressBookModal from '../components/AddressBookModal';
 
 // --- Burger ingredient image assets ---
@@ -181,6 +183,7 @@ function Checkout() {
   }
 
   const [loading, setLoading] = useState(false);
+  const showLoadingOverlay = useDelayedLoading(loading, 300);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [userPhone, setUserPhone] = useState('');
 
@@ -290,7 +293,7 @@ function Checkout() {
     <main className="min-h-screen w-full bg-aldesCream text-black pb-36 md:pb-20 relative">
       
       {/* ── Overlay Animasi Loading (Neo-Brutalist & English) ── */}
-      {loading && (
+      {showLoadingOverlay && (
         <div className="fixed inset-0 z-[9999] bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-300">
           <div className="bg-white border-4 border-black rounded-[2rem] p-8 flex flex-col items-center shadow-[12px_12px_0_0_#FFC926] max-w-sm w-[90%] text-center relative overflow-hidden animate-in zoom-in duration-300">
             
@@ -299,17 +302,8 @@ function Checkout() {
               <div className="absolute inset-0 bg-aldesRed/20 rounded-full blur-xl animate-pulse scale-150"></div>
               
               {/* Main Icon Circle */}
-              <div className="relative bg-aldesRed border-4 border-black w-24 h-24 rounded-full flex items-center justify-center shadow-[6px_6px_0_0_#000]">
-                 {paymentMethod === 'cash' ? (
-                   <ChefHat className="text-white w-12 h-12" />
-                 ) : (
-                   <CreditCard className="text-white w-12 h-12" />
-                 )}
-              </div>
-              
-              {/* Spinning Loader */}
-              <div className="absolute -bottom-3 -right-3 bg-white border-4 border-black rounded-full w-12 h-12 flex items-center justify-center shadow-[4px_4px_0_0_#000]">
-                <Loader2 className="animate-spin text-aldesRed w-7 h-7" />
+              <div className="relative bg-aldesCream border-4 border-black w-24 h-24 rounded-full flex items-center justify-center shadow-[6px_6px_0_0_#000] overflow-hidden">
+                 <img src={loadingGif} alt="Loading" className="w-full h-full object-cover" />
               </div>
             </div>
             

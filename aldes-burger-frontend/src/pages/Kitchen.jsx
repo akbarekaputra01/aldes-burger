@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ListItemSkeleton } from '../components/Skeletons'
 import { useCart } from '../context/CartContext'
 import { useTranslation } from '../context/LanguageContext'
+import GifLoader from '../components/GifLoader'
 import api from '../lib/api'
 
 // --- IMPORT ASSETS ---
@@ -681,10 +682,7 @@ function Kitchen() {
                 {/* BIG VISUAL BURGER STACK */}
                 {isFetching ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pt-16 z-20 transition-all">
-                    <Loader2 className="h-12 w-12 sm:h-16 sm:w-16 text-[#D52518] animate-spin mb-3 drop-shadow-md" />
-                    <div className="bg-white border-2 sm:border-[4px] border-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-[4px_4px_0_0_#000] sm:shadow-[6px_6px_0_0_#000] flex flex-col items-center anonymity-pulse">
-                      <span className="font-black text-sm sm:text-lg text-black uppercase tracking-wide text-center">{t('common.loading')}</span>
-                    </div>
+                    <GifLoader isLoading={true} size="w-48 sm:w-64 drop-shadow-2xl" text={t('common.loading')} />
                   </div>
                 ) : burgerStack.length === 0 ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pt-16 z-20 transition-all">

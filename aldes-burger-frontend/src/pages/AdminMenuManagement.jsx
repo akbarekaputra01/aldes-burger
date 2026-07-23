@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
 import { useTranslation } from '../context/LanguageContext'
+import GifLoader from '../components/GifLoader'
 
 // --- helpers ---
 function StockBadge({ stock }) {
@@ -328,10 +329,7 @@ function AdminMenuManagement() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-aldesCream">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-10 w-10 animate-spin text-red-600" />
-          <p className="text-sm font-bold text-gray-500">
-            Loading Menu Management...
-          </p>
+          <GifLoader isLoading={true} text={t('common.loadingMenuManagement')} />
         </div>
       </main>
     )
