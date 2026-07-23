@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import AddressBookModal from '../components/AddressBookModal'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
+import GifLoader from '../components/GifLoader'
 import { useTranslation, useLanguage } from '../context/LanguageContext'
 
 function Profile() {
@@ -207,7 +208,7 @@ function Profile() {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-aldesCream flex items-center justify-center p-4">
-        <Loader2 className="w-10 h-10 text-aldesRed animate-spin" />
+        <GifLoader isLoading={true} text={t('common.loadingProfile')} />
       </main>
     )
   }

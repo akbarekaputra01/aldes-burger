@@ -1,4 +1,5 @@
-import { ReceiptText, Truck, Loader2, MapPin, CreditCard } from 'lucide-react'
+import { ReceiptText, Truck, MapPin, CreditCard } from 'lucide-react'
+import GifLoader from '../components/GifLoader'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -179,8 +180,7 @@ function TransactionDetail() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-aldesCream px-4">
         <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 shadow-[4px_4px_0_0_#000] border-[3px] border-black">
-          <Loader2 className="h-8 w-8 animate-spin text-aldesRed" />
-          <p className="font-black uppercase text-gray-700 tracking-wider">{t('common.loading')}</p>
+          <GifLoader isLoading={true} text={t('common.loadingOrderDetails')} />
         </div>
       </main>
     )

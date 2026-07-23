@@ -1,4 +1,5 @@
 import { ChartColumnBig, Clock3, Flame, Wallet, Loader2, Trash2 } from 'lucide-react'
+import GifLoader from '../components/GifLoader'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
 import { useTranslation } from '../context/LanguageContext'
@@ -63,8 +64,8 @@ function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-aldesCream">
-        <Loader2 className="h-10 w-10 animate-spin text-aldesRed" />
+      <div className="flex h-[80vh] items-center justify-center">
+        <GifLoader isLoading={true} text={t('common.loadingDashboard')} />
       </div>
     )
   }
