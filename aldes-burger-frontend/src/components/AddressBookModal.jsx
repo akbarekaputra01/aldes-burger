@@ -261,6 +261,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
       if (!mounted || !previewMapElRef.current) return
       
       // BERSIHKAN LEAFLET ID SEBELUM MEMBUAT MAP BARU (Mencegah Reuse Error)
+      if (previewMapRef.current) {
+        previewMapRef.current.remove();
+        previewMapRef.current = null;
+      }
       if (previewMapElRef.current) {
         previewMapElRef.current._leaflet_id = null;
       }
@@ -296,6 +300,16 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     let map = null
     loadLeaflet().then((L) => {
       if (!mounted || !mapElRef.current) return
+      
+      // Mencegah error "Map container is being reused"
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      if (mapElRef.current) {
+        mapElRef.current._leaflet_id = null;
+      }
+      
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
       map = L.map(mapElRef.current, { zoomControl: false }).setView([lat, lng], 16)
@@ -352,6 +366,10 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
           if (!prev.street_address && reverseData.formattedAddress) {
             nextForm.street_address = reverseData.formattedAddress
           }
+          if (reverseData.province) nextForm.province = reverseData.province.toUpperCase()
+          if (reverseData.city) nextForm.city = reverseData.city.toUpperCase()
+          if (reverseData.district) nextForm.district = reverseData.district.toUpperCase()
+          if (reverseData.postalCode) nextForm.postal_code = reverseData.postalCode
           return nextForm
         })
       } catch (err) {

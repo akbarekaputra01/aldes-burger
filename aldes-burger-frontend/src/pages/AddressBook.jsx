@@ -104,7 +104,38 @@ function AddressBook() {
     return () => clearTimeout(timer)
   }, [form.street_address, form.province, form.city, form.district, form.postal_code, t])
 
-  useEffect(() => { if (!hasStreetAddress) return; let mounted = true; loadLeaflet().then((L) => { if (!mounted || mapRef.current || !mapElRef.current) return; mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); mapRef.current.on('click', (event) => { setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) }) }).catch(() => setError(t('addressForm.loadMapFailed'))); return () => { mounted = false; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null } } }, [hasStreetAddress, form.latitude, form.longitude, t])
+  useEffect(() => { 
+    if (!hasStreetAddress) return; 
+    let mounted = true; 
+    loadLeaflet().then((L) => { 
+      if (!mounted || !mapElRef.current) return; 
+      
+      // Mencegah error "Map container is being reused"
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      if (mapElRef.current) {
+        mapElRef.current._leaflet_id = null;
+      }
+
+      mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); 
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); 
+      markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); 
+      mapRef.current.on('click', (event) => { 
+        setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) 
+      }) 
+    }).catch(() => setError(t('addressForm.loadMapFailed'))); 
+    
+    return () => { 
+      mounted = false; 
+      if (mapRef.current) { 
+        mapRef.current.remove(); 
+        mapRef.current = null; 
+        markerRef.current = null 
+      } 
+    } 
+  }, [hasStreetAddress, form.latitude, form.longitude, t])
 
   useEffect(() => { if (!mapRef.current || !markerRef.current || form.latitude === null || form.longitude === null) return; markerRef.current.setLatLng([form.latitude, form.longitude]); mapRef.current.panTo([form.latitude, form.longitude]) }, [form.latitude, form.longitude])
 
@@ -215,7 +246,7 @@ function AddressBook() {
   {suggestionError && <p className="text-sm text-aldesRed">{suggestionError}</p>}
   {suggestions.length>0 && <div className="rounded-xl border p-2">{suggestions.map((s)=><button type="button" key={s.id} className="block w-full text-left p-2 hover:bg-gray-50" onClick={()=>setForm((p)=>applySuggestionToForm(p, s))}><div className="font-semibold">{s.title}</div><div className="text-sm text-gray-500">{s.formattedAddress}</div></button>)}</div>}
   <div className="text-sm rounded-xl bg-gray-50 px-3 py-2">{[form.province, form.city, form.district, form.postal_code].filter(Boolean).join(', ')}</div>
-  <div className="grid grid-cols-3 gap-2"><button type="button" onClick={async()=>{navigator.geolocation.getCurrentPosition(async (pos)=>{const latitude = Number(pos.coords.latitude.toFixed(8)); const longitude = Number(pos.coords.longitude.toFixed(8)); setForm((p)=>applyCurrentLocationToForm(p, latitude, longitude)); try { const r = await reverseGeocode(latitude, longitude); if (r.formattedAddress) setForm((p)=>({ ...p, street_address: p.street_address || r.formattedAddress })) } catch { /* noop */ } })}} className="rounded-xl border p-2">{t('addressForm.useCurrentLocation')}</button><select value={form.label ?? 'Home'} onChange={(e)=>setForm((p)=>({...p,label:e.target.value}))} className="rounded-xl border p-2"><option value="Home">{t('addressForm.home')}</option><option value="Work">{t('addressForm.work')}</option><option value="Other">{t('addressForm.other')}</option></select><label className="flex items-center gap-2"><input type="checkbox" checked={!!form.is_default} onChange={(e)=>setForm((p)=>({...p,is_default:e.target.checked}))}/>{t('addressForm.setAsDefault')}</label></div><div className="text-sm">{hasValidPinValue ? `${t('addressForm.pinLocation')}: ${form.latitude}, ${form.longitude}` : t('addressForm.noPinSelected')}</div>{hasStreetAddress ? <div ref={mapElRef} className="h-72 w-full overflow-hidden rounded-3xl border" /> : <div className="h-72 w-full rounded-3xl border bg-gray-50 text-sm text-gray-500 grid place-items-center">{t('addressForm.fillStreetFirst')}</div>}{!hasValidPinValue && <p className="text-sm text-aldesRed">{t('addressForm.chooseLocationWarning')}</p>}{error && <p className="text-sm text-aldesRed">{error}</p>}  <div className="flex justify-end gap-3"><button type="button" onClick={() => navigate('/profile')} className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold"><X className="h-4 w-4" /> {t('addressForm.cancel')}</button><button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-2xl bg-aldesRed px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save className="h-4 w-4" /> {t('addressForm.saveAddress')}</button></div></form></section></main>
+  <div className="grid grid-cols-3 gap-2"><button type="button" onClick={async()=>{navigator.geolocation.getCurrentPosition(async (pos)=>{const latitude = Number(pos.coords.latitude.toFixed(8)); const longitude = Number(pos.coords.longitude.toFixed(8)); setForm((p)=>applyCurrentLocationToForm(p, latitude, longitude)); try { const r = await reverseGeocode(latitude, longitude); if (r.formattedAddress) setForm((p)=>({ ...p, street_address: p.street_address || r.formattedAddress, ...(r.province && { province: r.province.toUpperCase() }), ...(r.city && { city: r.city.toUpperCase() }), ...(r.district && { district: r.district.toUpperCase() }), ...(r.postalCode && { postal_code: r.postalCode }) })) } catch { /* noop */ } })}} className="rounded-xl border p-2">{t('addressForm.useCurrentLocation')}</button><select value={form.label ?? 'Home'} onChange={(e)=>setForm((p)=>({...p,label:e.target.value}))} className="rounded-xl border p-2"><option value="Home">{t('addressForm.home')}</option><option value="Work">{t('addressForm.work')}</option><option value="Other">{t('addressForm.other')}</option></select><label className="flex items-center gap-2"><input type="checkbox" checked={!!form.is_default} onChange={(e)=>setForm((p)=>({...p,is_default:e.target.checked}))}/>{t('addressForm.setAsDefault')}</label></div><div className="text-sm">{hasValidPinValue ? `${t('addressForm.pinLocation')}: ${form.latitude}, ${form.longitude}` : t('addressForm.noPinSelected')}</div>{hasStreetAddress ? <div ref={mapElRef} className="h-72 w-full overflow-hidden rounded-3xl border" /> : <div className="h-72 w-full rounded-3xl border bg-gray-50 text-sm text-gray-500 grid place-items-center">{t('addressForm.fillStreetFirst')}</div>}{!hasValidPinValue && <p className="text-sm text-aldesRed">{t('addressForm.chooseLocationWarning')}</p>}{error && <p className="text-sm text-aldesRed">{error}</p>}  <div className="flex justify-end gap-3"><button type="button" onClick={() => navigate('/profile')} className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold"><X className="h-4 w-4" /> {t('addressForm.cancel')}</button><button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-2xl bg-aldesRed px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save className="h-4 w-4" /> {t('addressForm.saveAddress')}</button></div></form></section></main>
   )
 }
 

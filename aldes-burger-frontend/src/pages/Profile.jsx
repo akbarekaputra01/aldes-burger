@@ -86,9 +86,15 @@ function Profile() {
     const cachedAddresses = sessionStorage.getItem('aldes_addresses_cache')
     
     if (cachedUser && cachedAddresses) {
-      setUser(JSON.parse(cachedUser))
-      setAddresses(JSON.parse(cachedAddresses))
-      setIsLoading(false)
+      try {
+        setUser(JSON.parse(cachedUser))
+        setAddresses(JSON.parse(cachedAddresses))
+        setIsLoading(false)
+      } catch (e) {
+        sessionStorage.removeItem('aldes_user_cache')
+        sessionStorage.removeItem('aldes_addresses_cache')
+        setIsLoading(true)
+      }
     } else {
       setIsLoading(true)
     }
@@ -244,10 +250,11 @@ function Profile() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          
-          {/* CARD: USER INFO */}
-          <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
+        <div className="flex flex-col gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            
+            {/* CARD: USER INFO */}
+            <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
             <div className="flex flex-col items-center text-center pb-6 border-b-4 border-black">
               <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-aldesYellow border-4 border-black text-4xl font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 {initials}
@@ -386,7 +393,9 @@ function Profile() {
               {t('profile.addNewAddress')}
             </button>
           </article>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* CARD: KEAMANAN AKUN */}
           <article className="rounded-3xl bg-white p-6 lg:p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <div className="mb-6 flex items-center gap-3 border-b-4 border-black pb-4">
@@ -546,6 +555,7 @@ function Profile() {
               </button>
             </div>
           </article>
+          </div>
 
         </div>
 
