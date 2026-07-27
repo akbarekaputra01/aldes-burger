@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AddressBookModal from '../components/AddressBookModal'
+import SilentErrorBoundary from '../components/SilentErrorBoundary'
 import api from '../lib/api'
 import { clearAuthSession } from '../utils/auth'
 import GifLoader from '../components/GifLoader'
@@ -579,17 +580,22 @@ function Profile() {
         </div>
       </div>
 
-      <AddressBookModal 
-         open={isAddressModalOpen} 
-         initialAddress={editingAddress} 
-         userPhone={user?.phone} 
-         onClose={() => setIsAddressModalOpen(false)} 
-         onSaved={async () => {
-           const { data } = await api.get('/addresses');
-           setAddresses(data)
-           sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(data))
-         }} 
-       />
+      <SilentErrorBoundary
+        resetKey={isAddressModalOpen ? 'open' : 'closed'}
+        onError={() => setIsAddressModalOpen(false)}
+      >
+        <AddressBookModal 
+           open={isAddressModalOpen} 
+           initialAddress={editingAddress} 
+           userPhone={user?.phone} 
+           onClose={() => setIsAddressModalOpen(false)} 
+           onSaved={async () => {
+             const { data } = await api.get('/addresses');
+             setAddresses(data)
+             sessionStorage.setItem('aldes_addresses_cache', JSON.stringify(data))
+           }} 
+         />
+      </SilentErrorBoundary>
     </main>
   )
 }

@@ -34,6 +34,16 @@ function AddressBook() {
   const [isSearching, setIsSearching] = useState(false); const [suggestionError, setSuggestionError] = useState('')
   const mapRef = useRef(null); const mapElRef = useRef(null); const markerRef = useRef(null)
 
+  const safeRemoveMap = (mapInstance, containerEl) => {
+    try {
+      if (mapInstance) { mapInstance.off(); mapInstance.remove() }
+    } catch (e) { /* Leaflet may throw if container already cleaned up */ }
+    if (containerEl) {
+      try { delete containerEl._leaflet_id } catch(e) {}
+      try { containerEl.innerHTML = '' } catch(e) {}
+    }
+  }
+
   const [provinceOptions, setProvinceOptions] = useState([])
   const [cityOptions, setCityOptions] = useState([])
   const [districtOptions, setDistrictOptions] = useState([])
@@ -108,29 +118,38 @@ function AddressBook() {
     if (!hasStreetAddress) return; 
     let mounted = true; 
     loadLeaflet().then((L) => { 
-      if (!mounted || !mapElRef.current) return; 
-      
-      // Mencegah error "Map container is being reused"
+      if (!mounted || !mapElRef.current) return;
+
       if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      if (mapElRef.current) {
-        mapElRef.current._leaflet_id = null;
+        safeRemoveMap(mapRef.current, mapElRef.current)
+        mapRef.current = null
+        markerRef.current = null
+      } else {
+        let c = mapElRef.current
+        if (c) {
+          try { delete c._leaflet_id } catch(e) {}
+          try { c.innerHTML = '' } catch(e) {}
+        }
       }
 
-      mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); 
-      markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); 
-      mapRef.current.on('click', (event) => { 
-        setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) 
-      }) 
+      if (!mounted || !mapElRef.current) return;
+
+      try {
+        mapRef.current = L.map(mapElRef.current).setView([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng], 13); 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current); 
+        markerRef.current = L.marker([form.latitude ?? defaultCenter.lat, form.longitude ?? defaultCenter.lng]).addTo(mapRef.current); 
+        mapRef.current.on('click', (event) => { 
+          setForm((prev) => ({ ...prev, latitude: Number(event.latlng.lat.toFixed(8)), longitude: Number(event.latlng.lng.toFixed(8)), pin_source: 'manual_adjusted', pin_confirmed: true })) 
+        }) 
+      } catch (e) {
+        console.warn('Leaflet map init error', e);
+      }
     }).catch(() => setError(t('addressForm.loadMapFailed'))); 
     
     return () => { 
       mounted = false; 
       if (mapRef.current) { 
-        mapRef.current.remove(); 
+        safeRemoveMap(mapRef.current, mapElRef.current)
         mapRef.current = null; 
         markerRef.current = null 
       } 

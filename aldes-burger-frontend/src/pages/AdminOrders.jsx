@@ -6,7 +6,7 @@ import { useTranslation } from '../context/LanguageContext'
 const nextStatus = { pending: 'cooking', cooking: 'done', done: 'done' }
 const badgeClass = { 
   pending: 'bg-yellow-100 text-yellow-700 border border-yellow-200', 
-  cooking: 'bg-orange-100 text-orange-700 border border-orange-200', 
+  cooking: 'bg-blue-100 text-blue-700 border border-blue-200', 
   done: 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
 }
 

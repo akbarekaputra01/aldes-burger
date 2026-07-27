@@ -245,10 +245,32 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     }))
   }
 
+  const safeRemoveMap = (mapInstance, containerEl) => {
+    try {
+      if (mapInstance) {
+        mapInstance.off()
+        mapInstance.remove()
+      }
+    } catch (e) {
+      // Leaflet may throw if container already cleaned up
+    }
+    if (containerEl) {
+      try { delete containerEl._leaflet_id } catch(e) {}
+      try { containerEl.innerHTML = '' } catch(e) {}
+    }
+  }
+
   useEffect(() => {
     return () => {
-      if (previewMapRef.current) { previewMapRef.current.remove(); previewMapRef.current = null; previewMarkerRef.current = null; }
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+      if (previewMapRef.current) {
+        safeRemoveMap(previewMapRef.current, previewMapElRef.current)
+        previewMapRef.current = null
+        previewMarkerRef.current = null
+      }
+      if (mapRef.current) {
+        safeRemoveMap(mapRef.current, mapElRef.current)
+        mapRef.current = null
+      }
     }
   }, [])
 
@@ -260,36 +282,50 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     loadLeaflet().then((L) => {
       if (!mounted || !previewMapElRef.current) return
       
-      // BERSIHKAN LEAFLET ID SEBELUM MEMBUAT MAP BARU (Mencegah Reuse Error)
+      // Bersihkan instance lama sebelum membuat yang baru
       if (previewMapRef.current) {
-        previewMapRef.current.remove();
-        previewMapRef.current = null;
+        safeRemoveMap(previewMapRef.current, previewMapElRef.current)
+        previewMapRef.current = null
+        previewMarkerRef.current = null
+      } else {
+        // Container mungkin masih punya _leaflet_id dari render sebelumnya
+        let c = previewMapElRef.current
+        if (c) {
+          try { delete c._leaflet_id } catch(e) {}
+          try { c.innerHTML = '' } catch(e) {}
+        }
       }
-      if (previewMapElRef.current) {
-        previewMapElRef.current._leaflet_id = null;
-      }
+
+      if (!mounted || !previewMapElRef.current) return
 
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
-      map = L.map(previewMapElRef.current, {
-        zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, keyboard: false
-      }).setView([lat, lng], 15)
+      
+      try {
+        map = L.map(previewMapElRef.current, {
+          zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, keyboard: false
+        }).setView([lat, lng], 15)
+              
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+        const marker = L.marker([lat, lng]).addTo(map)
+              
+        previewMapRef.current = map
+        previewMarkerRef.current = marker
+      } catch (e) {
+        console.warn('Leaflet preview map init error', e)
+        map = null
+      }
             
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
-      const marker = L.marker([lat, lng]).addTo(map)
-            
-      previewMapRef.current = map
-      previewMarkerRef.current = marker
-            
-      setTimeout(() => { if (map) map.invalidateSize() }, 100)
+      setTimeout(() => { if (map) { try { map.invalidateSize() } catch(e) {} } }, 100)
     }).catch(() => {})
         
     return () => { 
       mounted = false
       if (map) {
-        map.remove()
+        safeRemoveMap(map, previewMapElRef.current)
         previewMapRef.current = null
         previewMarkerRef.current = null
+        map = null
       }
     }
   }, [showMapLayer, hasStreet])
@@ -301,33 +337,45 @@ export default function AddressBookModal({ open, onClose, onSaved, initialAddres
     loadLeaflet().then((L) => {
       if (!mounted || !mapElRef.current) return
       
-      // Mencegah error "Map container is being reused"
+      // Bersihkan instance lama sebelum membuat yang baru
       if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
+        safeRemoveMap(mapRef.current, mapElRef.current)
+        mapRef.current = null
+      } else {
+        let c = mapElRef.current
+        if (c) {
+          try { delete c._leaflet_id } catch(e) {}
+          try { c.innerHTML = '' } catch(e) {}
+        }
       }
-      if (mapElRef.current) {
-        mapElRef.current._leaflet_id = null;
-      }
+
+      if (!mounted || !mapElRef.current) return
       
       const lat = form.latitude ?? defaultCenter.lat
       const lng = form.longitude ?? defaultCenter.lng
-      map = L.map(mapElRef.current, { zoomControl: false }).setView([lat, lng], 16)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
-      map.on('moveend', () => {
-        const center = map.getCenter()
-        updatePin(Number(center.lat.toFixed(8)), Number(center.lng.toFixed(8)), 'manual_map')
-      })
-             
-      mapRef.current = map
-      setTimeout(() => { if (map) map.invalidateSize() }, 150)
+      
+      try {
+        map = L.map(mapElRef.current, { zoomControl: false }).setView([lat, lng], 16)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+        map.on('moveend', () => {
+          const center = map.getCenter()
+          updatePin(Number(center.lat.toFixed(8)), Number(center.lng.toFixed(8)), 'manual_map')
+        })
+               
+        mapRef.current = map
+      } catch (e) {
+        console.warn('Leaflet fullmap init error', e)
+        map = null
+      }
+      setTimeout(() => { if (map) { try { map.invalidateSize() } catch(e) {} } }, 150)
     }).catch(() => {})
          
     return () => { 
       mounted = false
       if (map) {
-         map.remove()
-         mapRef.current = null
+        safeRemoveMap(map, mapElRef.current)
+        mapRef.current = null
+        map = null
       }
     }
   }, [showMapLayer])

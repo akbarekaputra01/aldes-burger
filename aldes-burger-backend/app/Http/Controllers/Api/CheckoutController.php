@@ -35,6 +35,7 @@ class CheckoutController extends Controller
             'items.*.modifiers' => ['nullable', 'array'],
             'items.*.modifiers.*.ingredient_id' => ['required', 'integer', 'exists:ingredients,id'],
             'items.*.modifiers.*.action' => ['required', 'in:add,remove'],
+            'items.*.modifiers.*.quantity' => ['nullable', 'integer', 'min:1'],
             'items.*.ingredients' => ['nullable', 'array'], // FIX: Menerima urutan bahan dari react
         ]);
 
