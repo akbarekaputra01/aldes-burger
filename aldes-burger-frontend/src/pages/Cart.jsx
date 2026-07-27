@@ -194,7 +194,8 @@ function Cart() {
     if (item.is_customized || menuItem.is_custom) {
       const counts = {};
       (item.ingredients || []).forEach(name => {
-        counts[name.toLowerCase()] = (counts[name.toLowerCase()] ?? 0) + 1;
+        const n = name ? name.toLowerCase() : '';
+        counts[n] = (counts[n] ?? 0) + 1;
       });
       
       let maxQty = 999;
@@ -396,23 +397,38 @@ function Cart() {
                     <Trash2 size={20} />
                   </button>
 
-                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-0.5 shadow-[3px_3px_0_0_#000]">
+                  <div className="flex items-center bg-white border-4 border-black rounded-xl p-1 shadow-[3px_3px_0_0_#000]">
                     <button
                       onClick={() => handleDecrease(item)}
-                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center border-2 border-black rounded-md"
+                      className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center border-2 border-black rounded-lg hover:bg-gray-200 transition-colors"
                     >
-                      <Minus size={12} strokeWidth={4} />
+                      <Minus size={16} strokeWidth={4} />
                     </button>
 
-                    <span className="w-8 text-center text-sm md:text-base font-black">
-                      {item.qty ?? 1}
-                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={getCartItemStock(item)}
+                      value={item.qty === '' ? '' : (item.qty ?? 1)}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          updateQty(item.id, Math.min(getCartItemStock(item), Math.max(1, val)));
+                        } else {
+                          updateQty(item.id, "");
+                        }
+                      }}
+                      onBlur={() => {
+                        if (item.qty === "" || !item.qty) updateQty(item.id, 1);
+                      }}
+                      className="w-10 md:w-12 text-center text-base md:text-lg font-black bg-transparent border-none outline-none m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
 
                     <button
                       onClick={() => handleIncrease(item)}
-                      className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center bg-aldesYellow border-2 border-black rounded-md"
+                      className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center bg-aldesYellow border-2 border-black rounded-lg hover:bg-yellow-400 transition-colors"
                     >
-                      <Plus size={12} strokeWidth={4} />
+                      <Plus size={16} strokeWidth={4} />
                     </button>
                   </div>
                 </div>

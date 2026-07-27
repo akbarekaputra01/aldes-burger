@@ -303,7 +303,7 @@ function Checkout() {
               
               {/* Main Icon Circle */}
               <div className="relative bg-aldesCream border-4 border-black w-24 h-24 rounded-full flex items-center justify-center shadow-[6px_6px_0_0_#000] overflow-hidden">
-                 <img src={loadingGif} alt="Loading" className="w-full h-full object-cover" />
+                 <Loader2 className="w-12 h-12 text-[#D52518] animate-spin" />
               </div>
             </div>
             

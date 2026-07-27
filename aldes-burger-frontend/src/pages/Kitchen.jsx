@@ -58,6 +58,7 @@ const isTopBunItem = (name) => {
 
 // Burger layer order helper (bottom to top)
 const getStackOrder = (name) => {
+  if (!name) return 99;
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
   if (n.includes('lettuce') || n.includes('selada')) return 2

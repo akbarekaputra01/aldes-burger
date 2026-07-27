@@ -45,6 +45,7 @@ const sideKeywords = ['fries', 'side', 'nugget', 'onion ring', 'salad']
 const drinkKeywords = ['drink', 'cola', 'coke', 'tea', 'coffee', 'juice', 'soda', 'water']
 
 const getStackOrder = (name) => {
+  if (!name) return 99;
   const n = name.toLowerCase()
   if (n.includes('bottom') || n.includes('bawah')) return 1
   if (n.includes('lettuce') || n.includes('selada')) return 2
@@ -189,7 +190,7 @@ function Menu() {
           })
           .sort((a, b) => getStackOrder(a) - getStackOrder(b));
       } else {
-        const isChicken = item.name.toLowerCase().includes('chicken')
+        const isChicken = (item.name || '').toLowerCase().includes('chicken')
         itemIngredients = [
           'Bottom Bun', 'Lettuce', 'Tomato', 'Pickles',
           'Special Sauce', isChicken ? 'Chicken Patty' : 'Beef Patty', 'Cheese', 'Top Bun'
@@ -380,8 +381,13 @@ function Menu() {
                   <article
                     key={item.id}
                     ref={activeActionId === item.id ? activeCardRef : null}
-                    className={`group w-[46%] shrink-0 md:w-auto md:shrink flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 ${
-                      isItemOutOfStock ? 'opacity-60 grayscale' : 'sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)]'
+                    onClick={() => {
+                      if (!isItemOutOfStock && activeActionId !== item.id) {
+                        handleInitialClick(item);
+                      }
+                    }}
+                    className={`group cursor-pointer w-[46%] shrink-0 md:w-auto md:shrink flex flex-col overflow-hidden rounded-2xl border-2 border-black bg-white transition-all duration-200 ${
+                      isItemOutOfStock ? 'opacity-60 grayscale cursor-not-allowed' : 'sm:hover:-translate-y-1 sm:hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)]'
                     } ${item.is_custom ? 'shadow-[4px_4px_0_0_#EAB308]' : 'shadow-[4px_4px_0_0_rgba(0,0,0,1)]'}`}
                   >
                     {/* Image Aspect Box */}
@@ -420,16 +426,16 @@ function Menu() {
                       ) : activeActionId === item.id ? (
                         <div className="mt-3 sm:mt-4 flex items-center justify-between gap-1.5 sm:gap-2.5 h-8 sm:h-10 w-full">
                           <div className="flex h-full items-center overflow-hidden rounded-xl border-2 border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-                            <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-full w-6 sm:w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /></button>
-                            <input type="number" min="1" max={getMenuStock(item)} value={tempQty} onChange={(e) => { const val = parseInt(e.target.value, 10); if (!isNaN(val)) { setTempQty(Math.min(getMenuStock(item), Math.max(1, val))); } else { setTempQty(''); } }} onBlur={() => { if (!tempQty) setTempQty(1); }} className="w-8 sm:w-10 border-x-2 border-black text-center text-xs sm:text-sm font-black text-black flex items-center justify-center h-full focus:outline-none bg-transparent m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                            <button type="button" onClick={() => setTempQty((p) => Math.min(getMenuStock(item), p + 1))} className="flex h-full w-6 sm:w-8 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /></button>
+                            <button type="button" onClick={() => setTempQty((p) => Math.max(1, p - 1))} className="flex h-full w-8 sm:w-10 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></button>
+                            <input type="number" min="1" max={getMenuStock(item)} value={tempQty} onChange={(e) => { const val = parseInt(e.target.value, 10); if (!isNaN(val)) { setTempQty(Math.min(getMenuStock(item), Math.max(1, val))); } else { setTempQty(''); } }} onBlur={() => { if (!tempQty) setTempQty(1); }} className="w-8 sm:w-10 border-x-2 border-black text-center text-sm font-black text-black flex items-center justify-center h-full focus:outline-none bg-transparent m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            <button type="button" onClick={() => setTempQty((p) => Math.min(getMenuStock(item), p + 1))} className="flex h-full w-8 sm:w-10 items-center justify-center font-bold text-black transition hover:bg-gray-200 active:bg-gray-300"><Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></button>
                           </div>
                           <button type="button" onClick={() => handleDirectAddToCart(item, tempQty)} className="flex h-full flex-1 items-center justify-center gap-0.5 sm:gap-1 rounded-xl border-2 border-black bg-aldesYellow font-black uppercase text-[10px] sm:text-xs md:text-sm text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-yellow-400">
                             {t('menu.confirm')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                           </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => handleInitialClick(item)} className={`cursor-pointer mt-3 sm:mt-4 flex h-8 sm:h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-2 sm:px-4 font-black uppercase text-[10px] sm:text-xs md:text-sm shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); handleInitialClick(item) }} className={`cursor-pointer mt-3 sm:mt-4 flex h-8 sm:h-10 w-full items-center justify-center gap-1 rounded-xl border-2 border-black px-2 sm:px-4 font-black uppercase text-[10px] sm:text-xs md:text-sm shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${item.is_custom ? 'bg-aldesYellow text-black hover:bg-yellow-400' : 'bg-aldesRed text-white hover:brightness-110'}`}>
                           {section.key === 'burgers' ? (item.is_custom ? t('menu.customize') : t('menu.add')) : t('menu.add')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                         </button>
                       )}
